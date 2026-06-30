@@ -4,3 +4,6 @@
 /prd.md
 /PRODUCT.md
 /TASK.md
+node_modules/
+.dev.vars
+.wrangler/

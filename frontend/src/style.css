@@ -18,6 +18,14 @@
   --color-tier-thriving: #22c55e;
 }
 
+.dark {
+  --color-surface-bg: #0f172a;
+  --color-surface-card: #1e293b;
+  --color-ink: #f1f5f9;
+  --color-ink-muted: #94a3b8;
+  --color-border-subtle: #334155;
+}
+
 body {
   @apply bg-surface-bg text-ink antialiased;
   font-family: 'Sarabun', 'Noto Sans Thai', system-ui, sans-serif;
@@ -89,14 +97,30 @@ body {
 
 .meta-label {
   @apply text-sm font-medium text-ink-muted;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
 }
 
 .tile-label {
-  @apply text-sm font-semibold text-ink-muted;
+  @apply text-sm font-semibold leading-snug text-ink-muted;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .field-label {
   @apply block text-sm font-medium text-ink mb-1;
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+}
+
+.tile-pastel__body {
+  @apply min-w-0 flex-1;
 }
 
 .page-shell {
@@ -229,6 +253,23 @@ body {
 .mission-card {
   @apply relative overflow-hidden rounded-xl p-5;
   background: color-mix(in oklch, var(--color-primary) 9%, white);
+  min-height: 11rem;
+}
+
+.mission-card__pocket {
+  @apply pointer-events-none absolute flex opacity-90;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  align-items: center;
+  justify-content: center;
+  width: 5.5rem;
+}
+
+.mission-card__disc {
+  @apply flex items-center justify-center rounded-full bg-white/50 dark:bg-slate-700/50;
+  width: 4.5rem;
+  height: 4.5rem;
 }
 
 .tile-pastel {
@@ -290,6 +331,58 @@ body {
 
 .chat-input-bar {
   @apply sticky bottom-0 -mx-1 border-t border-border-subtle bg-surface-bg pt-3;
+}
+
+.dark .streak-day--pending {
+  @apply bg-slate-700;
+}
+
+.dark .mission-card {
+  background: color-mix(in oklch, var(--color-primary) 16%, var(--color-surface-card));
+}
+
+.dark .tile-pastel--sky {
+  background: color-mix(in oklch, var(--color-tier-steady) 20%, var(--color-surface-card));
+}
+
+.dark .tile-pastel--teal {
+  background: color-mix(in oklch, var(--color-primary) 18%, var(--color-surface-card));
+}
+
+.dark .tile-pastel--amber {
+  background: color-mix(in oklch, var(--color-tier-building) 22%, var(--color-surface-card));
+}
+
+.dark .tile-pastel--mint {
+  background: color-mix(in oklch, var(--color-accent-emerald) 18%, var(--color-surface-card));
+}
+
+.dark .tile-pastel .tile-label {
+  color: color-mix(in oklch, var(--color-ink) 88%, var(--color-ink-muted));
+}
+
+.dark .circle-teaser {
+  background: color-mix(in oklch, var(--color-primary) 12%, var(--color-surface-card));
+}
+
+.dark .circle-teaser:hover {
+  background: color-mix(in oklch, var(--color-primary) 18%, var(--color-surface-card));
+}
+
+.dark .chat-bubble--assistant {
+  background: color-mix(in oklch, var(--color-primary) 14%, var(--color-surface-card));
+}
+
+.dark .input-field {
+  @apply border-slate-600 bg-slate-800/80 text-ink;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
 }
 
 @media (prefers-reduced-motion: reduce) {

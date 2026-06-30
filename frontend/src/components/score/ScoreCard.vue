@@ -1,7 +1,10 @@
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Flame, Play } from 'lucide-vue-next'
 import { tierColor } from '../../composables/useFormat.js'
+
+const { t } = useI18n()
 
 const props = defineProps({
   score: { type: Number, required: true },
@@ -56,7 +59,7 @@ const streakDaysState = computed(() => {
     :class="compact ? '!p-4' : ''"
   >
     <div class="w-full flex justify-between items-center mb-4">
-      <span class="meta-label">สุขภาพการเงินของฉัน</span>
+      <span class="meta-label">{{ t('score.title') }}</span>
       <span class="chip text-[11px] font-semibold" :class="tierColor(tier)">
         {{ tierTh }}
       </span>
@@ -89,9 +92,9 @@ const streakDaysState = computed(() => {
       </svg>
 
       <div class="absolute inset-0 flex flex-col items-center justify-center pt-2">
-        <span class="meta-label leading-none">คะแนนปัจจุบัน</span>
+        <span class="meta-label leading-none">{{ t('score.current') }}</span>
         <span class="font-brand text-4xl font-bold tracking-tight mt-1 leading-none text-ink">{{ score }}</span>
-        <span class="meta-label mt-1 leading-none">เต็ม 100</span>
+        <span class="meta-label mt-1 leading-none">{{ t('score.max') }}</span>
       </div>
     </div>
 
@@ -99,7 +102,7 @@ const streakDaysState = computed(() => {
       <div class="h-8 w-8 rounded-full bg-accent-emerald flex items-center justify-center text-white shrink-0">
         <Play class="h-3.5 w-3.5 fill-current" aria-hidden="true" />
       </div>
-      <span class="text-xs font-medium text-ink-muted">รักษาสตรีคประจำวันของคุณ</span>
+      <span class="text-xs font-medium text-ink-muted">{{ t('score.streakHint') }}</span>
     </div>
 
     <div class="w-full flex items-center justify-between border-t border-border-subtle pt-4">

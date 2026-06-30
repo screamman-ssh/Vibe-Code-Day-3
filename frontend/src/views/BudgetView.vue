@@ -70,15 +70,15 @@ const aggregate = computed(() => {
       <div class="grid grid-cols-3 gap-3">
         <div class="tile-pastel tile-pastel--sky !min-h-0 !cursor-default">
           <Target class="h-5 w-5 text-tier-steady" aria-hidden="true" />
-          <div>
-            <p class="tile-label">{{ t('budget.limit') }}</p>
+          <div class="tile-pastel__body">
+            <p class="tile-label" :title="t('budget.limit')">{{ t('budget.limit') }}</p>
             <p class="stat-value text-sm">{{ formatTHB(aggregate.totalLimit) }}</p>
           </div>
         </div>
         <div class="tile-pastel tile-pastel--amber !min-h-0 !cursor-default">
           <TrendingDown class="h-5 w-5 text-tier-building" aria-hidden="true" />
-          <div>
-            <p class="tile-label">{{ t('budget.spent') }}</p>
+          <div class="tile-pastel__body">
+            <p class="tile-label" :title="t('budget.spent')">{{ t('budget.spent') }}</p>
             <p class="stat-value text-sm" :class="{ 'text-tier-risk': aggregate.totalSpent > aggregate.totalLimit }">
               {{ formatTHB(aggregate.totalSpent) }}
             </p>
@@ -86,8 +86,8 @@ const aggregate = computed(() => {
         </div>
         <div class="tile-pastel tile-pastel--mint !min-h-0 !cursor-default">
           <PiggyBank class="h-5 w-5 text-accent-emerald" aria-hidden="true" />
-          <div>
-            <p class="tile-label">{{ t('budget.remaining') }}</p>
+          <div class="tile-pastel__body">
+            <p class="tile-label" :title="t('budget.remaining')">{{ t('budget.remaining') }}</p>
             <p class="stat-value text-sm text-accent-emerald">{{ formatTHB(aggregate.remaining) }}</p>
           </div>
         </div>
@@ -95,8 +95,8 @@ const aggregate = computed(() => {
 
       <div class="surface-soft">
         <div class="mb-2 flex justify-between text-sm font-medium text-ink-muted">
-          <span>ใช้ไป {{ aggregate.percent }}%</span>
-          <span>เหลือ {{ 100 - aggregate.percent }}%</span>
+          <span>{{ t('common.percentUsed', { pct: aggregate.percent }) }}</span>
+          <span>{{ t('common.percentLeft', { pct: 100 - aggregate.percent }) }}</span>
         </div>
         <div class="h-2.5 overflow-hidden rounded-full bg-slate-100">
           <div
@@ -141,7 +141,7 @@ const aggregate = computed(() => {
                 :style="{ width: `${pct(cat.spentAmount, cat.limitAmount)}%` }"
               />
             </div>
-            <p class="meta-label mt-1.5">ใช้ไป {{ pct(cat.spentAmount, cat.limitAmount) }}%</p>
+            <p class="meta-label mt-1.5">{{ t('common.percentUsed', { pct: pct(cat.spentAmount, cat.limitAmount) }) }}</p>
           </div>
 
           <div v-else class="mt-3 flex items-center gap-2">

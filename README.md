@@ -87,3 +87,56 @@ Build the optimized multi-stage release image (< 50MB):
 docker build -t moneycircle-backend ./backend
 docker run -p 8080:8080 -e DATABASE_URL="sqlite://moneycircle.db" moneycircle-backend
 ```
+
+## Cloudflare Pages + D1 API (Production)
+
+The frontend on Cloudflare Pages uses **Pages Functions** with a **D1 SQLite** database for the real API at `/api/v1/*`. The Go backend remains available for local development.
+
+### One-time setup
+
+1. **Create the D1 database** (from project root):
+   ```bash
+   npm install
+   npx wrangler d1 create moneycircle
+   ```
+   Copy the `database_id` into `wrangler.toml` (`REPLACE_WITH_YOUR_D1_DATABASE_ID`).
+
+2. **Run migrations**:
+   ```bash
+   npm run db:migrate:local    # local dev
+   npm run db:migrate:remote   # production D1
+   ```
+
+3. **Set secrets** (production):
+   ```bash
+   npx wrangler pages secret put JWT_SECRET
+   ```
+
+4. **Cloudflare Pages dashboard** (if not using `wrangler pages deploy`):
+   - Build command: `npm run build`
+   - Build output: `frontend/dist`
+   - Bind D1 database `moneycircle` to binding name `DB`
+
+### Local full-stack dev (D1 API)
+
+```bash
+cp .dev.vars.example .dev.vars
+npm run db:migrate:local
+npm run pages:dev
+```
+
+Open http://localhost:8788 — the app uses the real D1 API automatically on non-localhost hosts; for local Wrangler dev, run:
+
+```js
+localStorage.setItem('useRealApi', 'true')
+```
+
+Then refresh. To switch back to mock data: `localStorage.setItem('useRealApi', 'false')`.
+
+### Deploy
+
+```bash
+npm run pages:deploy
+```
+
+Ensure the D1 binding and `JWT_SECRET` are configured on the Pages project.

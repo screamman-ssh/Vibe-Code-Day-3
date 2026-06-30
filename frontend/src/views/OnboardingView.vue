@@ -92,8 +92,9 @@ async function submit() {
         </div>
 
         <div v-if="tab === 'join'">
-          <label class="field-label">{{ t('onboarding.inviteCode') }}</label>
+          <label class="field-label" for="onboarding-invite-code">{{ t('onboarding.inviteCode') }}</label>
           <input
+            id="onboarding-invite-code"
             v-model="inviteCode"
             class="input-field uppercase font-semibold"
           />
@@ -101,8 +102,9 @@ async function submit() {
         </div>
 
         <div v-else>
-          <label class="field-label">{{ t('onboarding.groupName') }}</label>
+          <label class="field-label" for="onboarding-group-name">{{ t('onboarding.groupName') }}</label>
           <input
+            id="onboarding-group-name"
             v-model="groupName"
             class="input-field"
           />

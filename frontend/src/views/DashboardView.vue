@@ -167,7 +167,7 @@ async function quickAdd() {
             type="number"
             inputmode="decimal"
             placeholder="฿ 0"
-            class="input-field bg-white/80"
+            class="input-field bg-white/80 dark:bg-slate-800/80"
             @keydown.enter="quickAdd"
           />
           <button
@@ -185,7 +185,7 @@ async function quickAdd() {
             <Camera class="h-4 w-4" aria-hidden="true" />
             {{ t('dashboard.missionScan') }}
           </button>
-          <button type="button" class="btn-secondary bg-white/70" @click="router.push('/transactions')">
+          <button type="button" class="btn-secondary bg-white/70 dark:bg-slate-800/70" @click="router.push('/transactions')">
             {{ t('dashboard.viewAll') }}
           </button>
         </div>
@@ -199,12 +199,9 @@ async function quickAdd() {
         </p>
       </div>
 
-      <div
-        class="pointer-events-none absolute -right-2 bottom-0 flex h-28 w-28 items-end justify-center opacity-90"
-        aria-hidden="true"
-      >
-        <div class="flex h-24 w-24 items-center justify-center rounded-full bg-white/50">
-          <Wallet class="h-12 w-12 text-primary/70" />
+      <div class="mission-card__pocket" aria-hidden="true">
+        <div class="mission-card__disc">
+          <Wallet class="h-10 w-10 text-primary/70" />
         </div>
       </div>
     </section>
@@ -217,8 +214,8 @@ async function quickAdd() {
         @click="router.push('/budget')"
       >
         <Target class="h-5 w-5 text-tier-steady" aria-hidden="true" />
-        <div>
-          <p class="tile-label">{{ t('dashboard.budgetLeft') }}</p>
+        <div class="tile-pastel__body">
+          <p class="tile-label" :title="t('dashboard.budgetLeft')">{{ t('dashboard.budgetLeft') }}</p>
           <p class="stat-value text-ink">
             {{ budgetSummary.totalLimit > 0 ? formatTHB(budgetSummary.remaining) : '—' }}
           </p>
@@ -231,8 +228,8 @@ async function quickAdd() {
         @click="router.push('/transactions')"
       >
         <Sparkles class="h-5 w-5 text-primary" aria-hidden="true" />
-        <div>
-          <p class="tile-label">{{ t('dashboard.score') }}</p>
+        <div class="tile-pastel__body">
+          <p class="tile-label" :title="t('dashboard.score')">{{ t('dashboard.score') }}</p>
           <div class="flex items-baseline gap-2">
             <p class="stat-value text-ink">{{ scoreStore.score.totalScore }}</p>
             <span class="chip text-[10px]" :class="tierColor(scoreStore.score.tier)">
@@ -248,8 +245,8 @@ async function quickAdd() {
         @click="router.push('/transactions')"
       >
         <TrendingDown class="h-5 w-5 text-tier-building" aria-hidden="true" />
-        <div>
-          <p class="tile-label">{{ t('dashboard.expense') }}</p>
+        <div class="tile-pastel__body">
+          <p class="tile-label" :title="t('dashboard.expense')">{{ t('dashboard.expense') }}</p>
           <p class="stat-value text-ink">{{ formatTHB(summary.expense) }}</p>
         </div>
       </button>
@@ -260,8 +257,8 @@ async function quickAdd() {
         @click="router.push('/transactions')"
       >
         <PiggyBank class="h-5 w-5 text-accent-emerald" aria-hidden="true" />
-        <div>
-          <p class="tile-label">{{ t('dashboard.savings') }}</p>
+        <div class="tile-pastel__body">
+          <p class="tile-label" :title="t('dashboard.savings')">{{ t('dashboard.savings') }}</p>
           <p
             class="stat-value"
             :class="summary.savings < 0 ? 'text-tier-risk' : 'text-ink'"

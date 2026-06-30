@@ -86,7 +86,7 @@ async function guest() {
           <div class="absolute inset-0 flex items-center" aria-hidden="true">
             <div class="w-full border-t border-border-subtle"></div>
           </div>
-          <span class="relative bg-surface-card px-3 text-xs font-medium text-ink-muted">หรือ</span>
+          <span class="relative bg-surface-card px-3 text-xs font-medium text-ink-muted">{{ t('common.or') }}</span>
         </div>
 
         <div class="space-y-3">

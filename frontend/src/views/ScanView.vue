@@ -88,7 +88,7 @@ async function confirmSave() {
       <label class="relative z-10 flex min-h-[180px] cursor-pointer flex-col items-center justify-center text-center">
         <Camera class="h-12 w-12 text-primary/80" aria-hidden="true" />
         <span class="mt-3 text-sm font-semibold text-ink">{{ t('scan.pick') }}</span>
-        <span class="meta-label mt-1">แตะเพื่อถ่ายหรือเลือกรูปใบเสร็จ</span>
+        <span class="meta-label mt-1">{{ t('scan.tapHint') }}</span>
         <input
           type="file"
           accept="image/*"
@@ -108,14 +108,14 @@ async function confirmSave() {
     <div v-if="error" class="flex gap-3 rounded-xl bg-amber-50 p-4 text-amber-800">
       <AlertTriangle class="h-5 w-5 shrink-0" aria-hidden="true" />
       <div>
-        <p class="text-sm font-semibold">เกิดข้อผิดพลาดในการประมวลผล</p>
+        <p class="text-sm font-semibold">{{ t('scan.processError') }}</p>
         <p class="mt-0.5 text-sm text-amber-700">{{ error }}</p>
       </div>
     </div>
 
     <div v-if="ocrResult && !processing" class="surface-soft space-y-4">
         <div class="flex items-center justify-between border-b border-border-subtle pb-3">
-          <h3 class="section-title text-sm">ข้อมูลที่ประมวลผลได้</h3>
+          <h3 class="section-title text-sm">{{ t('scan.extractedTitle') }}</h3>
           <span class="chip-positive flex items-center gap-1 text-[11px]">
             <Target class="h-3 w-3" aria-hidden="true" />
             {{ t('scan.confidence') }}: {{ Math.round(ocrResult.confidence * 100) }}%
@@ -124,22 +124,22 @@ async function confirmSave() {
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="field-label">{{ t('transactions.merchant') }}</label>
-            <input v-model="form.merchant" class="input-field" />
+            <label class="field-label" for="scan-merchant">{{ t('transactions.merchant') }}</label>
+            <input id="scan-merchant" v-model="form.merchant" class="input-field" />
           </div>
           <div>
-            <label class="field-label">{{ t('transactions.amount') }} (บาท)</label>
-            <input v-model="form.amount" type="number" class="input-field" />
+            <label class="field-label" for="scan-amount">{{ t('transactions.amount') }} {{ t('common.baht') }}</label>
+            <input id="scan-amount" v-model="form.amount" type="number" class="input-field" />
           </div>
           <div>
-            <label class="field-label">{{ t('transactions.category') }}</label>
-            <select v-model="form.category" class="input-field cursor-pointer bg-white">
+            <label class="field-label" for="scan-category">{{ t('transactions.category') }}</label>
+            <select id="scan-category" v-model="form.category" class="input-field cursor-pointer bg-white">
               <option v-for="c in CATEGORIES.filter((x) => x !== 'Income')" :key="c" :value="c">{{ c }}</option>
             </select>
           </div>
           <div>
-            <label class="field-label">{{ t('transactions.date') }}</label>
-            <input v-model="form.date" type="date" class="input-field cursor-pointer" />
+            <label class="field-label" for="scan-date">{{ t('transactions.date') }}</label>
+            <input id="scan-date" v-model="form.date" type="date" class="input-field cursor-pointer" />
           </div>
         </div>
 

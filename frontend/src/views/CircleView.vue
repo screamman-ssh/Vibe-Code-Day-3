@@ -86,9 +86,9 @@ function getRankBadgeType(rank, hideRank) {
         <h1 class="font-brand text-2xl font-bold tracking-tight text-ink text-balance">
           {{ t('circle.title') }}
         </h1>
-        <p v-if="groupStore.group" class="meta-label mt-1 flex items-center gap-1.5">
+        <p v-if="groupStore.group" class="meta-label mt-1 flex min-w-0 items-center gap-1.5">
           <Users class="h-4 w-4 shrink-0" aria-hidden="true" />
-          {{ groupStore.group.name }}
+          <span class="truncate">{{ groupStore.group.name }}</span>
         </p>
         <p v-else class="meta-label mt-1 flex items-center gap-1.5 text-tier-building">
           <AlertTriangle class="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -97,7 +97,7 @@ function getRankBadgeType(rank, hideRank) {
       </div>
 
       <div v-if="groupStore.group" class="surface-soft flex items-center gap-3">
-        <span class="tile-label">รหัสเชิญ</span>
+        <span class="tile-label">{{ t('circle.inviteCode') }}</span>
         <code class="text-sm font-semibold tracking-wide text-accent-emerald">{{ groupStore.group.inviteCode }}</code>
       </div>
     </header>
@@ -136,7 +136,7 @@ function getRankBadgeType(rank, hideRank) {
             <Trophy class="h-4 w-4 text-tier-building" aria-hidden="true" />
             {{ t('circle.leaderboard') }}
           </h2>
-          <span class="meta-label">{{ groupStore.leaderboard.length }} สมาชิก</span>
+          <span class="meta-label">{{ t('common.membersCount', { count: groupStore.leaderboard.length }) }}</span>
         </div>
 
         <ul class="space-y-3">
@@ -185,7 +185,7 @@ function getRankBadgeType(rank, hideRank) {
         :class="{ 'hidden lg:block': tab !== 'feed' }"
       >
         <div class="flex items-center justify-between mb-2">
-          <h2 class="section-title">กิจกรรมในกลุ่ม</h2>
+          <h2 class="section-title">{{ t('circle.feedTitle') }}</h2>
         </div>
 
         <ul class="space-y-3">

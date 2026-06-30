@@ -107,7 +107,7 @@ async function remove(id) {
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="ค้นหาตามร้านค้า หรือหมวดหมู่..."
+          :placeholder="t('transactions.searchPlaceholder')"
           class="input-field pl-9"
         />
       </div>
@@ -117,16 +117,16 @@ async function remove(id) {
           v-model="filterType"
           class="input-field w-auto min-w-[160px] cursor-pointer bg-white"
         >
-          <option value="all">ทั้งหมด (รายรับ/รายจ่าย)</option>
-          <option value="income">เฉพาะรายรับ</option>
-          <option value="expense">เฉพาะรายจ่าย</option>
+          <option value="all">{{ t('transactions.filterAll') }}</option>
+          <option value="income">{{ t('transactions.filterIncome') }}</option>
+          <option value="expense">{{ t('transactions.filterExpense') }}</option>
         </select>
 
         <select
           v-model="filterCategory"
           class="input-field w-auto min-w-[140px] cursor-pointer bg-white"
         >
-          <option value="all">ทุกหมวดหมู่</option>
+          <option value="all">{{ t('transactions.filterAllCategories') }}</option>
           <option v-for="c in CATEGORIES" :key="c" :value="c">{{ c }}</option>
         </select>
       </div>
@@ -138,8 +138,8 @@ async function remove(id) {
 
     <div v-else-if="!filteredTransactions.length" class="surface-soft p-10 text-center text-ink-muted">
       <ClipboardList class="mx-auto h-10 w-10 mb-3 text-ink-muted" aria-hidden="true" />
-      <p class="font-semibold text-ink">ไม่พบรายการธุรกรรม</p>
-      <p class="meta-label mt-1">ลองเปลี่ยนฟิลเตอร์หรือเพิ่มรายการธุรกรรมใหม่</p>
+      <p class="font-semibold text-ink">{{ t('transactions.emptyFiltered') }}</p>
+      <p class="meta-label mt-1">{{ t('transactions.emptyFilteredHint') }}</p>
     </div>
 
     <div v-else class="space-y-3">
@@ -194,7 +194,7 @@ async function remove(id) {
     >
       <div class="w-full max-w-md rounded-t-lg md:rounded-lg bg-surface-card p-6 border border-border-subtle">
         <div class="flex items-center justify-between mb-5">
-          <h2 class="section-title">{{ editing ? 'แก้ไขธุรกรรม' : t('transactions.add') }}</h2>
+          <h2 class="section-title">{{ editing ? t('transactions.edit') : t('transactions.add') }}</h2>
           <button
             type="button"
             class="nav-item text-ink-muted hover:text-ink h-8 w-8 rounded-lg flex items-center justify-center bg-surface-bg cursor-pointer"
@@ -225,8 +225,9 @@ async function remove(id) {
 
         <div class="space-y-3">
           <div>
-            <label class="field-label">{{ t('transactions.amount') }}</label>
+            <label class="field-label" for="tx-amount">{{ t('transactions.amount') }}</label>
             <input
+              id="tx-amount"
               v-model="form.amount"
               type="number"
               :placeholder="t('transactions.amount')"
@@ -235,8 +236,9 @@ async function remove(id) {
           </div>
 
           <div>
-            <label class="field-label">{{ t('transactions.category') }}</label>
+            <label class="field-label" for="tx-category">{{ t('transactions.category') }}</label>
             <select
+              id="tx-category"
               v-model="form.category"
               class="input-field cursor-pointer bg-white"
             >
@@ -245,8 +247,9 @@ async function remove(id) {
           </div>
 
           <div>
-            <label class="field-label">{{ t('transactions.date') }}</label>
+            <label class="field-label" for="tx-date">{{ t('transactions.date') }}</label>
             <input
+              id="tx-date"
               v-model="form.date"
               type="date"
               class="input-field cursor-pointer"
@@ -254,8 +257,9 @@ async function remove(id) {
           </div>
 
           <div>
-            <label class="field-label">{{ t('transactions.merchant') }} (ถ้ามี)</label>
+            <label class="field-label" for="tx-merchant">{{ t('transactions.merchant') }} {{ t('common.optional') }}</label>
             <input
+              id="tx-merchant"
               v-model="form.merchant"
               :placeholder="t('transactions.merchant')"
               class="input-field"
@@ -263,8 +267,9 @@ async function remove(id) {
           </div>
 
           <div>
-            <label class="field-label">{{ t('transactions.note') }} (ถ้ามี)</label>
+            <label class="field-label" for="tx-note">{{ t('transactions.note') }} {{ t('common.optional') }}</label>
             <input
+              id="tx-note"
               v-model="form.note"
               :placeholder="t('transactions.note')"
               class="input-field"

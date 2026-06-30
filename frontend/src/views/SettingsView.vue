@@ -2,15 +2,17 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { User, Star, Info, Camera, PieChart } from 'lucide-vue-next'
+import { User, Star, Info, Camera, PieChart, Moon, Sun } from 'lucide-vue-next'
 import { useAuthStore } from '../stores/auth'
 import { useUsageStore } from '../stores/usage'
+import { useTheme } from '../composables/useTheme.js'
 import { api } from '../api'
 
 const router = useRouter()
 const { t } = useI18n()
 const auth = useAuthStore()
 const usageStore = useUsageStore()
+const { isDark, toggleDark } = useTheme()
 
 const displayName = ref('')
 const emergencyFund = ref(0)
@@ -67,18 +69,45 @@ async function logout() {
 
     <section class="surface-soft space-y-4">
       <h2 class="section-title flex items-center gap-2">
+        <component :is="isDark ? Moon : Sun" class="h-4 w-4 text-ink-muted" aria-hidden="true" />
+        {{ t('settings.appearance') }}
+      </h2>
+      <button
+        type="button"
+        class="tab-switch w-full"
+        role="switch"
+        :aria-checked="isDark"
+        @click="toggleDark"
+      >
+        <span
+          class="tab-switch-btn flex-1"
+          :class="!isDark ? 'tab-switch-btn--active' : 'tab-switch-btn--inactive'"
+        >
+          {{ t('settings.lightMode') }}
+        </span>
+        <span
+          class="tab-switch-btn flex-1"
+          :class="isDark ? 'tab-switch-btn--active' : 'tab-switch-btn--inactive'"
+        >
+          {{ t('settings.darkMode') }}
+        </span>
+      </button>
+    </section>
+
+    <section class="surface-soft space-y-4">
+      <h2 class="section-title flex items-center gap-2">
         <User class="h-4 w-4 text-ink-muted" aria-hidden="true" />
         {{ t('settings.profile') }}
       </h2>
 
       <div class="space-y-3">
         <div>
-          <label class="field-label">{{ t('settings.displayName') }}</label>
-          <input v-model="displayName" class="input-field" />
+          <label class="field-label" for="settings-display-name">{{ t('settings.displayName') }}</label>
+          <input id="settings-display-name" v-model="displayName" class="input-field" />
         </div>
         <div>
-          <label class="field-label">{{ t('settings.emergencyFund') }}</label>
-          <input v-model.number="emergencyFund" type="number" class="input-field" />
+          <label class="field-label" for="settings-emergency-fund">{{ t('settings.emergencyFund') }}</label>
+          <input id="settings-emergency-fund" v-model.number="emergencyFund" type="number" class="input-field" />
         </div>
         <button type="button" class="btn-primary w-full" @click="saveProfile">
           {{ t('transactions.save') }}
