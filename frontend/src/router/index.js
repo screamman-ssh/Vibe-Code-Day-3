@@ -9,8 +9,9 @@ const routes = [
   { path: '/budget', name: 'budget', component: () => import('../views/BudgetView.vue') },
   { path: '/scan', name: 'scan', component: () => import('../views/ScanView.vue') },
   { path: '/circle', name: 'circle', component: () => import('../views/CircleView.vue') },
-  { path: '/coach', name: 'coach', component: () => import('../views/CoachView.vue') },
-  { path: '/analyze', name: 'analyze', component: () => import('../views/AnalyzeView.vue') },
+  { path: '/chat', name: 'chat', component: () => import('../views/ChatView.vue') },
+  { path: '/coach', redirect: '/chat' },
+  { path: '/analyze', redirect: { path: '/chat', query: { mode: 'report' } } },
   { path: '/settings', name: 'settings', component: () => import('../views/SettingsView.vue') },
 ]
 

@@ -88,11 +88,23 @@ body {
 }
 
 .meta-label {
-  @apply text-xs font-medium text-ink-muted;
+  @apply text-sm font-medium text-ink-muted;
+}
+
+.tile-label {
+  @apply text-sm font-semibold text-ink-muted;
 }
 
 .field-label {
-  @apply block text-xs font-medium text-ink-muted mb-1;
+  @apply block text-sm font-medium text-ink mb-1;
+}
+
+.page-shell {
+  @apply mx-auto max-w-lg space-y-5 pb-2;
+}
+
+.surface-soft {
+  @apply rounded-xl bg-surface-card p-4;
 }
 
 .btn-primary {
@@ -252,6 +264,32 @@ body {
 
 .circle-teaser:hover {
   background: color-mix(in oklch, var(--color-primary) 10%, white);
+}
+
+.chat-shell {
+  @apply mx-auto flex max-w-lg flex-col;
+  min-height: calc(100dvh - 8.5rem);
+}
+
+.chat-messages {
+  @apply flex-1 space-y-3 overflow-y-auto pb-4;
+}
+
+.chat-bubble {
+  @apply max-w-[88%] rounded-xl px-4 py-3 text-sm leading-relaxed;
+}
+
+.chat-bubble--user {
+  @apply ml-auto bg-primary text-white;
+}
+
+.chat-bubble--assistant {
+  background: color-mix(in oklch, var(--color-primary) 8%, white);
+  @apply text-ink;
+}
+
+.chat-input-bar {
+  @apply sticky bottom-0 -mx-1 border-t border-border-subtle bg-surface-bg pt-3;
 }
 
 @media (prefers-reduced-motion: reduce) {

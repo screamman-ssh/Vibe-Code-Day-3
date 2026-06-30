@@ -91,22 +91,17 @@ async function remove(id) {
 </script>
 
 <template>
-  <div class="space-y-6 text-ink select-none">
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="page-title">{{ t('transactions.title') }}</h1>
-        <p class="page-lead">ประวัติการรับจ่ายและการจัดการบันทึกรายวันของคุณ</p>
-      </div>
-      <button
-        type="button"
-        class="btn-primary"
-        @click="openAdd"
-      >
+  <div class="page-shell text-ink">
+    <header class="flex items-center justify-between gap-3">
+      <h1 class="font-brand text-2xl font-bold tracking-tight text-ink text-balance">
+        {{ t('transactions.title') }}
+      </h1>
+      <button type="button" class="btn-primary shrink-0" @click="openAdd">
         + {{ t('transactions.add') }}
       </button>
-    </div>
+    </header>
 
-    <div class="surface-card-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="surface-soft space-y-3">
       <div class="flex-1 max-w-md relative">
         <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-muted pointer-events-none" aria-hidden="true" />
         <input
@@ -141,17 +136,17 @@ async function remove(id) {
       {{ t('common.loading') }}
     </div>
 
-    <div v-else-if="!filteredTransactions.length" class="surface-card p-12 text-center text-ink-muted">
+    <div v-else-if="!filteredTransactions.length" class="surface-soft p-10 text-center text-ink-muted">
       <ClipboardList class="mx-auto h-10 w-10 mb-3 text-ink-muted" aria-hidden="true" />
       <p class="font-semibold text-ink">ไม่พบรายการธุรกรรม</p>
       <p class="meta-label mt-1">ลองเปลี่ยนฟิลเตอร์หรือเพิ่มรายการธุรกรรมใหม่</p>
     </div>
 
-    <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div v-else class="space-y-3">
       <div
         v-for="tx in filteredTransactions"
         :key="tx.id"
-        class="nav-item surface-card-sm flex items-center justify-between cursor-pointer hover:border-accent-emerald/30"
+        class="nav-item surface-soft flex cursor-pointer items-center justify-between"
         @click="openEdit(tx)"
       >
         <div class="min-w-0 flex-1 pr-3">

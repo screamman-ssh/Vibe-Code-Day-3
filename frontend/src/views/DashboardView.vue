@@ -13,6 +13,7 @@ import {
   Target,
   ChevronRight,
   Sparkles,
+  MessageCircle,
 } from 'lucide-vue-next'
 import { useAuthStore } from '../stores/auth'
 import { useScoreStore } from '../stores/score'
@@ -114,7 +115,7 @@ async function quickAdd() {
 </script>
 
 <template>
-  <div v-if="scoreStore.score" class="mx-auto max-w-lg space-y-5 pb-2">
+  <div v-if="scoreStore.score" class="page-shell">
     <header>
       <h1 class="font-brand text-2xl font-bold tracking-tight text-ink text-balance">
         {{ t('dashboard.greeting') }}, {{ auth.user?.displayName }}
@@ -217,7 +218,7 @@ async function quickAdd() {
       >
         <Target class="h-5 w-5 text-tier-steady" aria-hidden="true" />
         <div>
-          <p class="text-xs font-medium text-ink-muted">{{ t('dashboard.budgetLeft') }}</p>
+          <p class="tile-label">{{ t('dashboard.budgetLeft') }}</p>
           <p class="stat-value text-ink">
             {{ budgetSummary.totalLimit > 0 ? formatTHB(budgetSummary.remaining) : '—' }}
           </p>
@@ -231,7 +232,7 @@ async function quickAdd() {
       >
         <Sparkles class="h-5 w-5 text-primary" aria-hidden="true" />
         <div>
-          <p class="text-xs font-medium text-ink-muted">{{ t('dashboard.score') }}</p>
+          <p class="tile-label">{{ t('dashboard.score') }}</p>
           <div class="flex items-baseline gap-2">
             <p class="stat-value text-ink">{{ scoreStore.score.totalScore }}</p>
             <span class="chip text-[10px]" :class="tierColor(scoreStore.score.tier)">
@@ -248,7 +249,7 @@ async function quickAdd() {
       >
         <TrendingDown class="h-5 w-5 text-tier-building" aria-hidden="true" />
         <div>
-          <p class="text-xs font-medium text-ink-muted">{{ t('dashboard.expense') }}</p>
+          <p class="tile-label">{{ t('dashboard.expense') }}</p>
           <p class="stat-value text-ink">{{ formatTHB(summary.expense) }}</p>
         </div>
       </button>
@@ -260,7 +261,7 @@ async function quickAdd() {
       >
         <PiggyBank class="h-5 w-5 text-accent-emerald" aria-hidden="true" />
         <div>
-          <p class="text-xs font-medium text-ink-muted">{{ t('dashboard.savings') }}</p>
+          <p class="tile-label">{{ t('dashboard.savings') }}</p>
           <p
             class="stat-value"
             :class="summary.savings < 0 ? 'text-tier-risk' : 'text-ink'"
@@ -280,6 +281,18 @@ async function quickAdd() {
       <span class="flex items-center gap-2">
         <Users class="h-4 w-4 text-primary" aria-hidden="true" />
         {{ t('dashboard.circleTeaser') }}
+      </span>
+      <ChevronRight class="h-4 w-4 text-ink-muted" aria-hidden="true" />
+    </button>
+
+    <button
+      type="button"
+      class="circle-teaser"
+      @click="router.push('/chat')"
+    >
+      <span class="flex items-center gap-2">
+        <MessageCircle class="h-4 w-4 text-primary" aria-hidden="true" />
+        {{ t('nav.chat') }}
       </span>
       <ChevronRight class="h-4 w-4 text-ink-muted" aria-hidden="true" />
     </button>

@@ -80,25 +80,27 @@ function getRankBadgeType(rank, hideRank) {
 </script>
 
 <template>
-  <div class="space-y-6 text-ink select-none">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  <div class="page-shell text-ink lg:max-w-4xl">
+    <header class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 class="page-title">{{ t('circle.title') }}</h1>
-        <p v-if="groupStore.group" class="page-lead flex items-center gap-1.5">
-          <Users class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+        <h1 class="font-brand text-2xl font-bold tracking-tight text-ink text-balance">
+          {{ t('circle.title') }}
+        </h1>
+        <p v-if="groupStore.group" class="meta-label mt-1 flex items-center gap-1.5">
+          <Users class="h-4 w-4 shrink-0" aria-hidden="true" />
           {{ groupStore.group.name }}
         </p>
-        <p v-else class="page-lead flex items-center gap-1.5 text-tier-building">
-          <AlertTriangle class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+        <p v-else class="meta-label mt-1 flex items-center gap-1.5 text-tier-building">
+          <AlertTriangle class="h-4 w-4 shrink-0" aria-hidden="true" />
           {{ t('circle.noGroup') }}
         </p>
       </div>
 
-      <div v-if="groupStore.group" class="surface-card-sm flex items-center gap-3">
-        <span class="meta-label">รหัสเชิญกลุ่ม</span>
-        <code class="text-sm font-semibold text-accent-emerald tracking-wide">{{ groupStore.group.inviteCode }}</code>
+      <div v-if="groupStore.group" class="surface-soft flex items-center gap-3">
+        <span class="tile-label">รหัสเชิญ</span>
+        <code class="text-sm font-semibold tracking-wide text-accent-emerald">{{ groupStore.group.inviteCode }}</code>
       </div>
-    </div>
+    </header>
 
     <div class="tab-switch lg:hidden">
       <button
@@ -141,7 +143,7 @@ function getRankBadgeType(rank, hideRank) {
           <li
             v-for="member in groupStore.leaderboard"
             :key="member.displayName"
-            class="surface-card-sm flex items-center gap-3.5"
+            class="surface-soft flex items-center gap-3.5"
           >
             <HexBadge
               :value="member.hideRank ? '—' : member.rank"
@@ -187,14 +189,14 @@ function getRankBadgeType(rank, hideRank) {
         </div>
 
         <ul class="space-y-3">
-          <li v-if="!groupStore.feed.length" class="surface-card p-8 text-center text-ink-muted text-sm">
+          <li v-if="!groupStore.feed.length" class="surface-soft p-8 text-center text-sm text-ink-muted">
             <Megaphone class="mx-auto h-8 w-8 mb-2 text-ink-muted" aria-hidden="true" />
             {{ t('circle.emptyFeed') }}
           </li>
           <li
             v-for="event in groupStore.feed"
             :key="event.id"
-            class="surface-card-sm"
+            class="surface-soft"
           >
             <div class="flex items-start gap-3">
               <div class="icon-tile h-9 w-9 text-xs font-semibold text-accent-emerald uppercase">

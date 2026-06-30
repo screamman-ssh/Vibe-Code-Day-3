@@ -228,6 +228,13 @@ export const realApi = {
     return res.response
   },
 
+  async sendChatMessage(_message) {
+    const res = await request('/llm/coach', {
+      method: 'POST',
+    })
+    return res.response
+  },
+
   async reactToFeedEvent(eventId, reaction) {
     const group = await this.getGroup()
     if (!group) return

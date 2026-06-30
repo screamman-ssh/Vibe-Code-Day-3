@@ -349,6 +349,65 @@ export const mockApi = {
     })
     return toPublicScore(score, member?.badges ?? [], user?.loggingStreakDays ?? 0)
   },
+
+  async getCoachTips() {
+    await delay(700)
+    const user = getCurrentUser()
+    if (user?.subscriptionTier !== 'premium') {
+      const err = new Error('Premium subscription required')
+      throw err
+    }
+    return [
+      'สวัสดี! จากข้อมูลล่าสุดของคุณ นี่คือ 3 ข้อแนะนำเด่นในเดือนนี้:',
+      '',
+      '1. บันทึกรายจ่ายทุกวันเพื่อรักษาสตรีค — ส่งผลต่อคะแนนความสม่ำเสมอ',
+      '2. ลดรายจ่ายหมวด Entertainment ลง 10–15% หากใช้เกิน 80% ของงบ',
+      '3. ตั้งเป้าออมฉุกเฉินเพิ่ม 2,000 บาทในเดือนนี้',
+      '',
+      'ถามได้เลย เช่น "งบอาหารเหลือเท่าไหร่" หรือกดขอรายงานวิเคราะห์ด้านล่าง',
+    ].join('\n')
+  },
+
+  async getAiAnalysisReport() {
+    await delay(1000)
+    const user = getCurrentUser()
+    if (user?.subscriptionTier !== 'premium') {
+      throw new Error('Premium subscription required')
+    }
+    return [
+      '# สรุปการเงินเดือนนี้',
+      '',
+      '## การใช้จ่าย',
+      '- อาหาร ~42% ของรายจ่าย',
+      '- ค่าเดินทาง ~18%',
+      '',
+      '## แนวโน้ม',
+      '- อัตราการออมเฉลี่ย 8% ของรายรับ',
+      '',
+      '## คำแนะนำ',
+      '- ตั้งเพดาน Entertainment ที่ 3,000 บาท',
+      '- โอนออมอัตโนมัติหลังรับรายได้',
+    ].join('\n')
+  },
+
+  async sendChatMessage(message) {
+    await delay(550)
+    const user = getCurrentUser()
+    if (user?.subscriptionTier !== 'premium') {
+      throw new Error('Premium subscription required')
+    }
+    const m = message.toLowerCase()
+    if (m.includes('งบ') || m.includes('budget')) {
+      return 'งบหมวดอาหารใช้ไปประมาณ 78% แล้ว — ลองวางแผนมื้อกลางวันล่วงหน้า และหลีกเลี่ยงสั่งเดลิเวอรีบ่อยในสัปดาห์นี้'
+    }
+    if (m.includes('ออม') || m.includes('save') || m.includes('เก็บ')) {
+      return 'เป้าหมายออมที่ดีคือ 10% ของรายรับ — คุณอยู่ที่ประมาณ 8% ในเดือนนี้ เหลืออีกนิดเดียว! ลองตั้งการโอนอัตโนมัติหลังรับเงิน'
+    }
+    if (m.includes('หนี้') || m.includes('debt')) {
+      return 'จัดลำดับชำระหนี้ดอกเบี้ยสูงก่อน แล้วค่อยสร้างกองทุนฉุกเฉิน — ถ้าต้องการแผนละเอียด กดขอรายงานวิเคราะห์ด้านล่าง'
+    }
+    return 'จากพฤติกรรมล่าสุด แนะนำให้บันทึกรายจ่ายทุกวันและลดรายจ่ายฟุ่มเฟือยหมวดบันเทิง ถามเรื่องงบ ออม หรือหนี้ได้เลย'
+  },
 }
 
 export function getMockState() {

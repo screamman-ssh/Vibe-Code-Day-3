@@ -31,10 +31,7 @@ const { mobileTabs } = useAppNav()
           :stroke-width="isNavActive(route.path, tab.path) ? 2.25 : 2"
           aria-hidden="true"
         />
-        <span
-          class="text-[10px] font-bold leading-none mt-0.5 max-w-[4.5rem] truncate"
-          :class="isNavActive(route.path, tab.path) ? 'block' : 'sr-only'"
-        >
+        <span class="text-[11px] font-semibold leading-tight mt-0.5 max-w-[4rem] truncate text-center">
           {{ tab.label }}
         </span>
       </button>

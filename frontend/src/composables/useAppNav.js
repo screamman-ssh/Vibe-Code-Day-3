@@ -1,9 +1,9 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Home, List, PieChart, Camera, Users, Settings } from 'lucide-vue-next'
+import { Home, List, PieChart, Camera, Users, MessageCircle, Settings } from 'lucide-vue-next'
 
-const SIDEBAR_TAB_NAMES = ['dashboard', 'transactions', 'budget', 'scan', 'circle', 'settings']
-const MOBILE_TAB_NAMES = ['dashboard', 'transactions', 'scan', 'circle', 'settings']
+const SIDEBAR_TAB_NAMES = ['dashboard', 'transactions', 'budget', 'scan', 'circle', 'chat', 'settings']
+const MOBILE_TAB_NAMES = ['dashboard', 'transactions', 'chat', 'circle', 'settings']
 
 export function useAppNav() {
   const { t } = useI18n()
@@ -14,6 +14,7 @@ export function useAppNav() {
     budget: { name: 'budget', path: '/budget', label: t('budget.title'), icon: PieChart },
     scan: { name: 'scan', path: '/scan', label: t('nav.scan'), icon: Camera },
     circle: { name: 'circle', path: '/circle', label: t('nav.circle'), icon: Users },
+    chat: { name: 'chat', path: '/chat', label: t('nav.chat'), icon: MessageCircle },
     settings: {
       name: 'settings',
       path: '/settings',
