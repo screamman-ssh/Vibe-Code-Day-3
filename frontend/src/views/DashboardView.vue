@@ -5,25 +5,21 @@ import { useI18n } from 'vue-i18n'
 import {
   Camera,
   Users,
-  BarChart3,
-  Banknote,
-  TrendingDown,
+  Check,
+  Flame,
+  Wallet,
   PiggyBank,
+  TrendingDown,
   Target,
-  Hand,
-  MessageCircle,
-  LineChart,
-  X,
+  ChevronRight,
+  Sparkles,
 } from 'lucide-vue-next'
 import { useAuthStore } from '../stores/auth'
 import { useScoreStore } from '../stores/score'
 import { useTransactionStore } from '../stores/transactions'
 import { useBudgetStore } from '../stores/budget'
-import ScoreCard from '../components/score/ScoreCard.vue'
-import HexBadge from '../components/score/HexBadge.vue'
 import { formatTHB } from '../composables/useFormat.js'
-import { getCategoryIcon } from '../composables/useCategoryIcon.js'
-import { CATEGORIES } from '../api/types.js'
+import { tierColor } from '../composables/useFormat.js'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -32,464 +28,264 @@ const scoreStore = useScoreStore()
 const txStore = useTransactionStore()
 const budgetStore = useBudgetStore()
 
-const showBreakdown = ref(false)
 const quickAmount = ref('')
-const quickCategory = ref('Food')
+const quickSaving = ref(false)
+const quickSaved = ref(false)
 
-const showSnapshotCard = ref(true)
-const showTipsCard = ref(true)
-const showSocialImpactCard = ref(true)
+const thaiDays = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา']
+const currentDayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1
 
 onMounted(async () => {
   await Promise.all([
     scoreStore.fetch(),
     txStore.fetchAll(),
-    budgetStore.fetch()
+    budgetStore.fetch(),
   ])
 })
 
 const month = computed(() => new Date().toISOString().slice(0, 7))
+const today = computed(() => new Date().toISOString().slice(0, 10))
 
-const summary = computed(() => {
-  const txs = txStore.items.filter((t) => t.date.startsWith(month.value))
-  const income = txs.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
-  const expense = txs.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
-  return { income, expense, savings: income - expense }
+const streak = computed(() => auth.user?.loggingStreakDays ?? 0)
+
+const streakDays = computed(() => {
+  return thaiDays.map((label, idx) => {
+    const diff = currentDayIndex - idx
+    let done = false
+    if (diff >= 0 && diff < streak.value) {
+      done = true
+    } else if (diff < 0 && streak.value >= 7) {
+      done = true
+    }
+    return {
+      label,
+      done,
+      isToday: idx === currentDayIndex,
+    }
+  })
 })
 
-const recentTransactions = computed(() => {
-  return [...txStore.items]
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 4)
+const loggedToday = computed(() =>
+  txStore.items.some((item) => item.date === today.value),
+)
+
+const summary = computed(() => {
+  const txs = txStore.items.filter((item) => item.date.startsWith(month.value))
+  const income = txs.filter((item) => item.type === 'income').reduce((s, item) => s + item.amount, 0)
+  const expense = txs.filter((item) => item.type === 'expense').reduce((s, item) => s + item.amount, 0)
+  return { income, expense, savings: income - expense }
 })
 
 const budgetSummary = computed(() => {
   const totalLimit = budgetStore.categories.reduce((sum, c) => sum + c.limitAmount, 0)
   const totalSpent = budgetStore.categories.reduce((sum, c) => sum + c.spentAmount, 0)
+  const remaining = Math.max(0, totalLimit - totalSpent)
   const percent = totalLimit > 0 ? Math.min(100, Math.round((totalSpent / totalLimit) * 100)) : 0
-  return { totalLimit, totalSpent, percent }
+  return { totalLimit, totalSpent, remaining, percent }
+})
+
+const missionTitle = computed(() => {
+  if (loggedToday.value) return t('dashboard.missionDone')
+  return t('dashboard.missionLog')
 })
 
 async function quickAdd() {
   const amt = Number(quickAmount.value)
   if (!amt || amt <= 0) return
-  await txStore.create({
-    type: 'expense',
-    amount: amt,
-    category: quickCategory.value,
-    date: new Date().toISOString().slice(0, 10),
-  })
-  quickAmount.value = ''
-  await Promise.all([
-    scoreStore.fetch(),
-    budgetStore.fetch()
-  ])
+  quickSaving.value = true
+  quickSaved.value = false
+  try {
+    await txStore.create({
+      type: 'expense',
+      amount: amt,
+      category: 'Food',
+      date: today.value,
+    })
+    quickAmount.value = ''
+    quickSaved.value = true
+    await Promise.all([scoreStore.fetch(), budgetStore.fetch()])
+    setTimeout(() => {
+      quickSaved.value = false
+    }, 2500)
+  } finally {
+    quickSaving.value = false
+  }
 }
 </script>
 
 <template>
-  <div v-if="scoreStore.score" class="space-y-6 text-ink select-none">
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-      <div>
-        <h1 class="page-title">
-          {{ t('dashboard.greeting') }}, {{ auth.user?.displayName }}
-        </h1>
-        <p class="page-lead">ยินดีต้อนรับกลับมา! มาดูเป้าหมายและความท้าทายในวันนี้กัน</p>
+  <div v-if="scoreStore.score" class="mx-auto max-w-lg space-y-5 pb-2">
+    <header>
+      <h1 class="font-brand text-2xl font-bold tracking-tight text-ink text-balance">
+        {{ t('dashboard.greeting') }}, {{ auth.user?.displayName }}
+      </h1>
+    </header>
+
+    <!-- Streak row -->
+    <section class="streak-module" aria-label="สตรีคบันทึกรายวัน">
+      <div class="mb-3 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <Flame class="h-4 w-4 text-streak-flame" aria-hidden="true" />
+          <span class="text-sm font-semibold text-ink">{{ t('dashboard.streak') }}</span>
+        </div>
+        <span class="text-sm font-semibold text-ink-muted tabular-nums">
+          {{ streak }} {{ t('dashboard.days') }}
+        </span>
       </div>
-      <div class="hidden sm:flex items-center gap-2">
-        <button
-          type="button"
-          class="btn-secondary"
-          @click="router.push('/scan')"
+      <div class="flex items-center justify-between gap-1">
+        <div
+          v-for="(day, idx) in streakDays"
+          :key="idx"
+          class="streak-day"
+          :class="{
+            'streak-day--done': day.done,
+            'streak-day--today': day.isToday && !day.done,
+            'streak-day--pending': !day.done && !day.isToday,
+          }"
+          :aria-label="day.label"
         >
-          <Camera class="h-4 w-4" aria-hidden="true" />
-          สแกนใบเสร็จ
-        </button>
-        <button
-          type="button"
-          class="btn-primary"
-          @click="router.push('/circle')"
-        >
-          <Users class="h-4 w-4" aria-hidden="true" />
-          กลุ่มเซอร์เคิล
-        </button>
+          <Check v-if="day.done" class="h-3.5 w-3.5" aria-hidden="true" />
+          <span v-else>{{ day.label }}</span>
+        </div>
       </div>
-    </div>
+    </section>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+    <!-- Today's mission -->
+    <section class="mission-card" aria-labelledby="mission-heading">
+      <div class="relative z-10 max-w-[70%]">
+        <p id="mission-heading" class="meta-label mb-1">{{ t('dashboard.missionLabel') }}</p>
+        <h2 class="font-brand text-xl font-bold leading-snug text-ink text-balance">
+          {{ missionTitle }}
+        </h2>
 
-      <div class="lg:col-span-2 space-y-6">
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <ScoreCard
-            :score="scoreStore.score.totalScore"
-            :tier="scoreStore.score.tier"
-            :tier-th="scoreStore.score.tierTh"
-            :streak="auth.user?.loggingStreakDays ?? 0"
+        <div v-if="!loggedToday" class="mt-4 space-y-2">
+          <label class="sr-only" for="quick-amount">{{ t('transactions.amount') }}</label>
+          <input
+            id="quick-amount"
+            v-model="quickAmount"
+            type="number"
+            inputmode="decimal"
+            placeholder="฿ 0"
+            class="input-field bg-white/80"
+            @keydown.enter="quickAdd"
           />
-
-          <div v-if="showSnapshotCard" class="surface-card relative flex flex-col justify-between">
-            <button
-              type="button"
-              class="dismiss-btn"
-              @click="showSnapshotCard = false"
-            >
-              <X class="h-4 w-4" aria-hidden="true" />
-            </button>
-
-            <div>
-              <div class="flex items-center gap-2 mb-4">
-                <BarChart3 class="h-4 w-4 text-ink-muted" aria-hidden="true" />
-                <span class="meta-label">สรุปผลงาน 7 วันล่าสุด</span>
-              </div>
-
-              <div class="space-y-3.5">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-3">
-                    <HexBadge value="16" type="gold" size="sm" />
-                    <div>
-                      <p class="text-sm font-semibold text-ink">รายการรับจ่าย</p>
-                      <p class="meta-label">บันทึกสะสม</p>
-                    </div>
-                  </div>
-                  <span class="chip-positive text-[11px]">↗ 8%</span>
-                </div>
-
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-3">
-                    <HexBadge value="95" type="blue" size="sm" />
-                    <div>
-                      <p class="text-sm font-semibold text-ink">ทำตามงบประมาณ</p>
-                      <p class="meta-label">จากเป้าหมายที่ตั้ง</p>
-                    </div>
-                  </div>
-                  <span class="chip-negative text-[11px]">↘ -5%</span>
-                </div>
-
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-3">
-                    <HexBadge :value="auth.user?.loggingStreakDays ?? 1" type="orange" size="sm" />
-                    <div>
-                      <p class="text-sm font-semibold text-ink">สตรีคบันทึกผล</p>
-                      <p class="meta-label">ความสม่ำเสมอ</p>
-                    </div>
-                  </div>
-                  <span class="chip-positive text-[11px]">↗ 10%</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <button
+            type="button"
+            class="btn-primary w-full"
+            :disabled="quickSaving || !quickAmount"
+            @click="quickAdd"
+          >
+            {{ quickSaving ? t('common.loading') : t('transactions.save') }}
+          </button>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div class="surface-card-sm flex items-center gap-4">
-            <div class="icon-tile icon-tile--income">
-              <Banknote class="h-5 w-5" aria-hidden="true" />
-            </div>
-            <div class="min-w-0">
-              <p class="meta-label">{{ t('dashboard.income') }}</p>
-              <p class="stat-value text-accent-emerald truncate">{{ formatTHB(summary.income) }}</p>
-            </div>
-          </div>
-
-          <div class="surface-card-sm flex items-center gap-4">
-            <div class="icon-tile icon-tile--expense">
-              <TrendingDown class="h-5 w-5" aria-hidden="true" />
-            </div>
-            <div class="min-w-0">
-              <p class="meta-label">{{ t('dashboard.expense') }}</p>
-              <p class="stat-value text-tier-risk truncate">{{ formatTHB(summary.expense) }}</p>
-            </div>
-          </div>
-
-          <div class="surface-card-sm flex items-center gap-4">
-            <div class="icon-tile icon-tile--savings">
-              <PiggyBank class="h-5 w-5" aria-hidden="true" />
-            </div>
-            <div class="min-w-0">
-              <p class="meta-label">{{ t('dashboard.savings') }}</p>
-              <p class="stat-value truncate" :class="summary.savings < 0 ? 'text-tier-risk' : 'text-tier-steady'">
-                {{ formatTHB(summary.savings) }}
-              </p>
-            </div>
-          </div>
+        <div v-else class="mt-4 flex flex-wrap gap-2">
+          <button type="button" class="btn-primary" @click="router.push('/scan')">
+            <Camera class="h-4 w-4" aria-hidden="true" />
+            {{ t('dashboard.missionScan') }}
+          </button>
+          <button type="button" class="btn-secondary bg-white/70" @click="router.push('/transactions')">
+            {{ t('dashboard.viewAll') }}
+          </button>
         </div>
 
-        <div class="surface-card space-y-4">
-          <div class="flex items-center justify-between">
-            <h3 class="section-title flex items-center gap-2">
-              <Target class="h-4 w-4 text-accent-emerald" aria-hidden="true" />
-              รายละเอียดคะแนนสุขภาพการเงิน
-            </h3>
-            <button
-              type="button"
-              class="link-quiet"
-              @click="showBreakdown = !showBreakdown"
-            >
-              {{ showBreakdown ? 'ซ่อนรายละเอียด' : t('dashboard.breakdown') }}
-            </button>
-          </div>
-
-          <div v-if="showBreakdown" class="pt-4 border-t border-border-subtle grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div
-              v-for="dim in scoreStore.score.dimensions"
-              :key="dim.key"
-              class="bg-surface-bg rounded-lg border border-border-subtle p-4"
-            >
-              <div class="flex justify-between text-xs text-ink-muted font-medium">
-                <span>{{ dim.label }}</span>
-                <span class="text-accent-emerald font-semibold">{{ dim.subscore }}/100</span>
-              </div>
-              <div class="mt-2.5 h-2 overflow-hidden rounded-full bg-slate-100">
-                <div
-                  class="h-full rounded-full bg-accent-emerald transition-all duration-500"
-                  :style="{ width: `${dim.subscore}%` }"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="surface-card">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="section-title">รายการธุรกรรมล่าสุด</h3>
-            <button
-              type="button"
-              class="link-quiet flex items-center gap-1"
-              @click="router.push('/transactions')"
-            >
-              ดูทั้งหมด →
-            </button>
-          </div>
-
-          <div v-if="!recentTransactions.length" class="text-center py-6 text-ink-muted text-sm">
-            ยังไม่มีรายการธุรกรรมบันทึกไว้ในเดือนนี้
-          </div>
-          <ul v-else class="divide-y divide-border-subtle">
-            <li
-              v-for="tx in recentTransactions"
-              :key="tx.id"
-              class="flex items-center justify-between py-3.5 first:pt-0 last:pb-0"
-            >
-              <div class="flex items-center gap-3">
-                <span class="icon-tile">
-                  <component :is="getCategoryIcon(tx.category)" class="h-5 w-5" aria-hidden="true" />
-                </span>
-                <div>
-                  <p class="text-sm font-semibold text-ink">{{ tx.merchant || tx.category }}</p>
-                  <p class="meta-label mt-0.5">{{ tx.date }} · {{ tx.category }}</p>
-                </div>
-              </div>
-              <p
-                class="text-sm font-semibold tabular-nums"
-                :class="tx.type === 'income' ? 'text-accent-emerald' : 'text-tier-risk'"
-              >
-                {{ tx.type === 'income' ? '+' : '-' }}{{ formatTHB(tx.amount) }}
-              </p>
-            </li>
-          </ul>
-        </div>
-
+        <p
+          v-if="quickSaved"
+          class="mt-2 text-xs font-semibold text-accent-emerald"
+          role="status"
+        >
+          {{ t('dashboard.saved') }}
+        </p>
       </div>
 
-      <div class="space-y-6">
-
-        <div v-if="showSocialImpactCard" class="surface-card relative flex flex-col justify-between">
-          <button
-            type="button"
-            class="dismiss-btn"
-            @click="showSocialImpactCard = false"
-          >
-            <X class="h-4 w-4" aria-hidden="true" />
-          </button>
-
-          <div>
-            <div class="flex items-center gap-2 mb-4">
-              <Users class="h-4 w-4 text-ink-muted" aria-hidden="true" />
-              <span class="meta-label">สถิติในกลุ่มเซอร์เคิล (60 วัน)</span>
-            </div>
-
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="border-b border-border-subtle text-xs text-ink-muted font-medium">
-                  <th class="text-left pb-2">กลุ่มเปรียบเทียบ</th>
-                  <th class="text-right pb-2">แอ็กชันที่ฉลอง</th>
-                  <th class="text-right pb-2">คำวิจารณ์</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-border-subtle font-medium">
-                <tr>
-                  <td class="py-2.5 text-ink-muted">ค่าเฉลี่ยเพื่อน</td>
-                  <td class="py-2.5 text-right text-ink">185</td>
-                  <td class="py-2.5 text-right text-ink">113</td>
-                </tr>
-                <tr>
-                  <td class="py-2.5 text-ink-muted">ท็อป 5% ในกลุ่ม</td>
-                  <td class="py-2.5 text-right text-ink">239</td>
-                  <td class="py-2.5 text-right text-ink">268</td>
-                </tr>
-                <tr class="text-accent-emerald">
-                  <td class="py-2.5 font-semibold">ตัวคุณเอง</td>
-                  <td class="py-2.5 text-right font-semibold">200</td>
-                  <td class="py-2.5 text-right font-semibold">197</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+      <div
+        class="pointer-events-none absolute -right-2 bottom-0 flex h-28 w-28 items-end justify-center opacity-90"
+        aria-hidden="true"
+      >
+        <div class="flex h-24 w-24 items-center justify-center rounded-full bg-white/50">
+          <Wallet class="h-12 w-12 text-primary/70" />
         </div>
-
-        <div v-if="showTipsCard" class="surface-card relative flex flex-col justify-between">
-          <button
-            type="button"
-            class="dismiss-btn"
-            @click="showTipsCard = false"
-          >
-            <X class="h-4 w-4" aria-hidden="true" />
-          </button>
-
-          <div>
-            <div class="flex items-center gap-2 mb-3">
-              <Hand class="h-4 w-4 text-ink-muted" aria-hidden="true" />
-              <span class="meta-label">แนะแนวทางการเงิน</span>
-            </div>
-
-            <div class="flex items-center gap-2 mb-4">
-              <div class="flex -space-x-2 select-none">
-                <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 text-tier-steady text-xs font-semibold border-2 border-white">N</span>
-                <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-amber-100 text-tier-building text-xs font-semibold border-2 border-white">B</span>
-                <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-emerald-100 text-accent-emerald text-xs font-semibold border-2 border-white">K</span>
-              </div>
-              <p class="text-sm font-semibold text-ink leading-snug">มีเคล็ดลับและคำแนะนำทางการเงินรอคุณอยู่!</p>
-            </div>
-
-            <div class="space-y-2">
-              <button
-                type="button"
-                class="btn-primary w-full"
-                @click="router.push('/coach')"
-              >
-                <MessageCircle class="h-4 w-4" aria-hidden="true" />
-                ดูคำแนะนำ AI
-              </button>
-              <button
-                type="button"
-                class="btn-secondary w-full border-blue-100 bg-blue-50 text-tier-steady hover:bg-blue-100"
-                @click="router.push('/analyze')"
-              >
-                <LineChart class="h-4 w-4" aria-hidden="true" />
-                ดูรายงานวิเคราะห์การเงิน
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="surface-card">
-          <h3 class="section-title mb-3">{{ t('dashboard.quickAdd') }}</h3>
-          <div class="space-y-3">
-            <div>
-              <label class="field-label">จำนวนเงิน (บาท)</label>
-              <input
-                v-model="quickAmount"
-                type="number"
-                placeholder="฿ 0.00"
-                class="input-field"
-              />
-            </div>
-            <div>
-              <label class="field-label">หมวดหมู่</label>
-              <select
-                v-model="quickCategory"
-                class="input-field bg-white"
-              >
-                <option v-for="c in CATEGORIES.filter((c) => c !== 'Income')" :key="c" :value="c">{{ c }}</option>
-              </select>
-            </div>
-            <button
-              type="button"
-              class="btn-primary w-full"
-              @click="quickAdd"
-            >
-              {{ t('transactions.save') }}
-            </button>
-          </div>
-        </div>
-
-        <div class="surface-card">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="section-title">งบประมาณเดือนนี้</h3>
-            <button
-              type="button"
-              class="link-quiet"
-              @click="router.push('/budget')"
-            >
-              จัดงบ →
-            </button>
-          </div>
-
-          <div v-if="budgetSummary.totalLimit === 0" class="text-center py-5 bg-surface-bg border border-dashed border-border-subtle rounded-lg">
-            <p class="text-sm text-ink-muted font-medium">ยังไม่ได้ตั้งวงเงินงบประมาณ</p>
-            <button
-              type="button"
-              class="link-quiet mt-2.5"
-              @click="router.push('/budget')"
-            >
-              ตั้งงบประมาณเลย
-            </button>
-          </div>
-          <div v-else class="space-y-4">
-            <div>
-              <div class="flex justify-between text-xs text-ink-muted font-medium mb-1.5">
-                <span>ใช้ไปแล้ว {{ budgetSummary.percent }}%</span>
-                <span>{{ formatTHB(budgetSummary.totalSpent) }} / {{ formatTHB(budgetSummary.totalLimit) }}</span>
-              </div>
-              <div class="h-2.5 overflow-hidden rounded-full bg-surface-bg">
-                <div
-                  class="h-full rounded-full transition-all duration-500"
-                  :class="budgetSummary.percent > 100 ? 'bg-tier-risk' : 'bg-accent-emerald'"
-                  :style="{ width: `${budgetSummary.percent}%` }"
-                />
-              </div>
-            </div>
-
-            <div class="space-y-2.5 border-t border-border-subtle pt-3">
-              <div
-                v-for="cat in budgetStore.categories.slice(0, 3)"
-                :key="cat.category"
-                class="flex items-center justify-between text-sm font-medium"
-              >
-                <span class="text-ink-muted">{{ cat.category }}</span>
-                <span class="font-semibold tabular-nums" :class="cat.spentAmount > cat.limitAmount ? 'text-tier-risk' : 'text-ink'">
-                  {{ formatTHB(cat.spentAmount) }} / {{ formatTHB(cat.limitAmount) }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3 sm:hidden">
-          <button
-            type="button"
-            class="nav-item surface-card-sm flex flex-col items-center justify-center text-center cursor-pointer"
-            @click="router.push('/scan')"
-          >
-            <Camera class="h-6 w-6 mb-1.5 text-ink-muted" aria-hidden="true" />
-            <span class="text-sm font-semibold text-ink">สแกนใบเสร็จ</span>
-          </button>
-          <button
-            type="button"
-            class="nav-item surface-card-sm flex flex-col items-center justify-center text-center cursor-pointer"
-            @click="router.push('/circle')"
-          >
-            <Users class="h-6 w-6 mb-1.5 text-ink-muted" aria-hidden="true" />
-            <span class="text-sm font-semibold text-ink">กลุ่มเซอร์เคิล</span>
-          </button>
-        </div>
-
       </div>
+    </section>
 
-    </div>
+    <!-- 2×2 habit tiles -->
+    <section class="grid grid-cols-2 gap-3" aria-label="ภาพรวมการเงิน">
+      <button
+        type="button"
+        class="tile-pastel tile-pastel--sky"
+        @click="router.push('/budget')"
+      >
+        <Target class="h-5 w-5 text-tier-steady" aria-hidden="true" />
+        <div>
+          <p class="text-xs font-medium text-ink-muted">{{ t('dashboard.budgetLeft') }}</p>
+          <p class="stat-value text-ink">
+            {{ budgetSummary.totalLimit > 0 ? formatTHB(budgetSummary.remaining) : '—' }}
+          </p>
+        </div>
+      </button>
+
+      <button
+        type="button"
+        class="tile-pastel tile-pastel--teal"
+        @click="router.push('/transactions')"
+      >
+        <Sparkles class="h-5 w-5 text-primary" aria-hidden="true" />
+        <div>
+          <p class="text-xs font-medium text-ink-muted">{{ t('dashboard.score') }}</p>
+          <div class="flex items-baseline gap-2">
+            <p class="stat-value text-ink">{{ scoreStore.score.totalScore }}</p>
+            <span class="chip text-[10px]" :class="tierColor(scoreStore.score.tier)">
+              {{ scoreStore.score.tierTh }}
+            </span>
+          </div>
+        </div>
+      </button>
+
+      <button
+        type="button"
+        class="tile-pastel tile-pastel--amber"
+        @click="router.push('/transactions')"
+      >
+        <TrendingDown class="h-5 w-5 text-tier-building" aria-hidden="true" />
+        <div>
+          <p class="text-xs font-medium text-ink-muted">{{ t('dashboard.expense') }}</p>
+          <p class="stat-value text-ink">{{ formatTHB(summary.expense) }}</p>
+        </div>
+      </button>
+
+      <button
+        type="button"
+        class="tile-pastel tile-pastel--mint"
+        @click="router.push('/transactions')"
+      >
+        <PiggyBank class="h-5 w-5 text-accent-emerald" aria-hidden="true" />
+        <div>
+          <p class="text-xs font-medium text-ink-muted">{{ t('dashboard.savings') }}</p>
+          <p
+            class="stat-value"
+            :class="summary.savings < 0 ? 'text-tier-risk' : 'text-ink'"
+          >
+            {{ formatTHB(summary.savings) }}
+          </p>
+        </div>
+      </button>
+    </section>
+
+    <!-- Circle teaser -->
+    <button
+      type="button"
+      class="circle-teaser"
+      @click="router.push('/circle')"
+    >
+      <span class="flex items-center gap-2">
+        <Users class="h-4 w-4 text-primary" aria-hidden="true" />
+        {{ t('dashboard.circleTeaser') }}
+      </span>
+      <ChevronRight class="h-4 w-4 text-ink-muted" aria-hidden="true" />
+    </button>
   </div>
+
   <div v-else class="flex flex-col items-center justify-center py-20">
-    <p class="text-ink-muted font-medium">{{ t('common.loading') }}</p>
+    <p class="font-medium text-ink-muted">{{ t('common.loading') }}</p>
   </div>
 </template>
