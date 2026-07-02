@@ -1,45 +1,63 @@
-@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&family=Sarabun:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&family=Sarabun:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap');
 @import 'tailwindcss';
 
 @theme {
-  --color-primary: #0f766e;
-  --color-primary-light: #14b8a6;
-  --color-accent-emerald: #10b981;
-  --color-accent-emerald-hover: #059669;
-  --color-surface-bg: #f8fafc;
-  --color-surface-card: #ffffff;
-  --color-ink: #1e293b;
-  --color-ink-muted: #64748b;
-  --color-border-subtle: #f1f5f9;
-  --color-streak-flame: #f97316;
-  --color-tier-risk: #ef4444;
-  --color-tier-building: #f59e0b;
-  --color-tier-steady: #3b82f6;
-  --color-tier-thriving: #22c55e;
+  /* Duolingo Brand Palette */
+  --color-primary: #58cc02;               /* Duo Green */
+  --color-primary-light: #d7ffb8;         /* Duo Green Light */
+  --color-accent-emerald: #58cc02;        /* Brand Primary */
+  --color-accent-emerald-hover: #62e002;  /* Slightly lighter for hover */
+  --color-surface-bg: #ffffff;            /* Snow White background */
+  --color-surface-card: #ffffff;          /* Snow White cards */
+  --color-ink: #3c3c3c;                   /* Almost Black */
+  --color-ink-muted: #777777;             /* Graphite */
+  --color-border-subtle: #e5e5e5;         /* Cloud Gray */
+  --color-streak-flame: #ffc700;          /* Sunshine Yellow */
+  
+  /* Financial status mappings to Duolingo Palette */
+  --color-tier-risk: #cc348d;             /* Bubblegum Pink */
+  --color-tier-building: #ffc700;         /* Sunshine Yellow */
+  --color-tier-steady: #1cb0f6;           /* Sky Blue */
+  --color-tier-thriving: #58cc02;         /* Duo Green */
+
+  /* Named brand tokens */
+  --color-sky-blue: #1cb0f6;
+  --color-duo-green-light: #d7ffb8;
+  --color-sunshine-yellow: #ffc700;
+  --color-grape-soda: #a570ff;
+  --color-bubblegum-pink: #cc348d;
+  --color-snow-white: #ffffff;
+  --color-cloud-gray: #e5e5e5;
+  --color-silver: #afafaf;
+  --color-graphite: #777777;
+  --color-charcoal: #4b4b4b;
+  --color-almost-black: #3c3c3c;
 }
 
 .dark {
-  --color-surface-bg: #0f172a;
-  --color-surface-card: #1e293b;
+  --color-surface-bg: #131f24;            /* Dark slate */
+  --color-surface-card: #202f36;          /* Darker slate card */
   --color-ink: #f1f5f9;
-  --color-ink-muted: #94a3b8;
-  --color-border-subtle: #334155;
+  --color-ink-muted: #afafaf;
+  --color-border-subtle: #3c4d57;
 }
 
 body {
-  @apply bg-surface-bg text-ink antialiased;
-  font-family: 'Sarabun', 'Noto Sans Thai', system-ui, sans-serif;
+  @apply bg-surface-bg text-ink text-[17px] antialiased;
+  font-family: 'Nunito Sans', 'Sarabun', system-ui, sans-serif;
+  letter-spacing: 0.053em;                /* Signature Din-Round style */
 }
 
 #app {
   @apply min-h-screen;
 }
 
-.font-brand {
-  font-family: 'Fredoka', 'Sarabun', 'Noto Sans Thai', system-ui, sans-serif;
+.font-brand, .font-feather {
+  font-family: 'Fredoka', 'Sarabun', system-ui, sans-serif;
+  font-weight: 700;
 }
 
-/* Shell interaction — ease-out, no bounce */
+/* Shell interaction */
 .nav-item {
   transition:
     background-color 150ms cubic-bezier(0.25, 1, 0.5, 1),
@@ -52,12 +70,12 @@ body {
 }
 
 .nav-item:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--color-accent-emerald) 40%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--color-primary) 40%, transparent);
   outline-offset: 2px;
 }
 
 .nav-float {
-  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.08);
+  box-shadow: 0 4px 12px rgba(88, 204, 2, 0.08);
 }
 
 .nav-float .nav-item--active {
@@ -74,36 +92,37 @@ body {
   }
 }
 
-/* Quiet UI vocabulary */
+/* UI Structure */
 .surface-card {
-  @apply bg-surface-card border border-border-subtle rounded-lg p-6;
+  @apply bg-surface-card border-2 border-border-subtle rounded-xl p-6;
 }
 
 .surface-card-sm {
-  @apply bg-surface-card border border-border-subtle rounded-lg p-4;
+  @apply bg-surface-card border-2 border-border-subtle rounded-xl p-4;
 }
 
 .page-title {
-  @apply text-xl font-bold text-ink tracking-tight text-balance;
+  @apply text-2xl font-black text-ink tracking-tight text-balance;
+  font-family: 'Fredoka', 'Sarabun', system-ui, sans-serif;
 }
 
 .page-lead {
-  @apply text-sm text-ink-muted mt-1;
+  @apply text-base text-ink-muted mt-1 font-semibold;
 }
 
 .section-title {
-  @apply text-base font-semibold text-ink;
+  @apply text-lg font-bold text-ink;
 }
 
 .meta-label {
-  @apply text-sm font-medium text-ink-muted;
+  @apply text-base font-semibold text-ink-muted;
   min-width: 0;
   overflow-wrap: anywhere;
   text-wrap: pretty;
 }
 
 .tile-label {
-  @apply text-sm font-semibold leading-snug text-ink-muted;
+  @apply text-base font-bold leading-snug text-ink-muted;
   min-width: 0;
   overflow-wrap: anywhere;
   text-wrap: balance;
@@ -114,7 +133,7 @@ body {
 }
 
 .field-label {
-  @apply block text-sm font-medium text-ink mb-1;
+  @apply block text-base font-bold text-ink mb-1.5;
   text-wrap: pretty;
   overflow-wrap: anywhere;
 }
@@ -128,44 +147,59 @@ body {
 }
 
 .surface-soft {
-  @apply rounded-xl bg-surface-card p-4;
+  @apply rounded-xl bg-surface-card p-4 border-2 border-border-subtle;
 }
 
+/* Duolingo tactile 3D buttons */
 .btn-primary {
-  @apply inline-flex items-center justify-center gap-2 min-h-11 px-4 bg-accent-emerald text-white rounded-lg text-sm font-semibold cursor-pointer;
-  transition:
-    background-color 150ms cubic-bezier(0.25, 1, 0.5, 1),
-    color 150ms cubic-bezier(0.25, 1, 0.5, 1),
-    box-shadow 150ms cubic-bezier(0.25, 1, 0.5, 1);
+  @apply inline-flex items-center justify-center gap-2 min-h-12 px-5 bg-primary text-white rounded-xl text-base font-bold cursor-pointer border-none;
+  box-shadow: 0 4px 0 #3f8f01;
+  transition: transform 100ms ease, box-shadow 100ms ease;
+  position: relative;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: var(--color-accent-emerald-hover);
+  background-color: #62e002;
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 0px 0 #3f8f01;
 }
 
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .btn-secondary {
-  @apply inline-flex items-center justify-center gap-2 min-h-11 px-4 bg-surface-card text-ink border border-border-subtle rounded-lg text-sm font-semibold cursor-pointer;
-  transition:
-    background-color 150ms cubic-bezier(0.25, 1, 0.5, 1),
-    color 150ms cubic-bezier(0.25, 1, 0.5, 1),
-    box-shadow 150ms cubic-bezier(0.25, 1, 0.5, 1);
+  @apply inline-flex items-center justify-center gap-2 min-h-12 px-5 bg-white text-sky-blue border-2 border-cloud-gray rounded-xl text-base font-bold cursor-pointer;
+  box-shadow: 0 4px 0 var(--color-cloud-gray);
+  transition: transform 100ms ease, box-shadow 100ms ease;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  @apply bg-surface-bg;
+  background-color: #fafafa;
+}
+
+.btn-secondary:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 0px 0 var(--color-cloud-gray);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .tab-switch {
-  @apply flex gap-1 bg-surface-bg p-1 rounded-lg border border-border-subtle;
+  @apply flex gap-1 bg-surface-bg p-1 rounded-xl border-2 border-cloud-gray;
 }
 
 .tab-switch-btn {
-  @apply flex-1 rounded-md py-2 text-xs font-semibold cursor-pointer;
+  @apply flex-1 rounded-lg py-2 text-xs font-bold cursor-pointer;
   transition:
     background-color 150ms cubic-bezier(0.25, 1, 0.5, 1),
     color 150ms cubic-bezier(0.25, 1, 0.5, 1),
@@ -173,7 +207,8 @@ body {
 }
 
 .tab-switch-btn--active {
-  @apply bg-accent-emerald text-white;
+  @apply bg-primary text-white;
+  box-shadow: 0 2px 0 #3f8f01;
 }
 
 .tab-switch-btn--inactive {
@@ -181,39 +216,40 @@ body {
 }
 
 .icon-tile {
-  @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-bg text-ink-muted;
+  @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-bg text-ink-muted border border-border-subtle;
 }
 
 .icon-tile--income {
-  @apply text-accent-emerald bg-emerald-50;
+  @apply text-primary bg-duo-green-light border-primary/20;
 }
 
 .icon-tile--expense {
-  @apply text-tier-risk bg-red-50;
+  @apply text-tier-risk bg-bubblegum-pink/10 border-tier-risk/20;
 }
 
 .icon-tile--savings {
-  @apply text-tier-steady bg-blue-50;
+  @apply text-tier-steady bg-sky-blue/10 border-tier-steady/20;
 }
 
 .input-field {
-  @apply w-full min-h-11 rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-accent-emerald focus:ring-2 focus:ring-accent-emerald/25;
+  @apply w-full min-h-12 rounded-xl border-2 border-cloud-gray px-4 text-base outline-none focus:border-sky-blue focus:ring-0 bg-white text-almost-black;
+  transition: border-color 150ms ease;
 }
 
 .chip {
-  @apply text-xs font-medium px-2 py-0.5 rounded-full border;
+  @apply text-sm font-bold px-2.5 py-1 rounded-full border-2;
 }
 
 .chip-positive {
-  @apply text-xs font-medium px-2 py-0.5 rounded-full border text-accent-emerald bg-emerald-50 border-emerald-100;
+  @apply text-sm font-bold px-2.5 py-1 rounded-full border-2 text-primary bg-duo-green-light border-primary/20;
 }
 
 .chip-negative {
-  @apply text-xs font-medium px-2 py-0.5 rounded-full border text-tier-risk bg-red-50 border-red-100;
+  @apply text-sm font-bold px-2.5 py-1 rounded-full border-2 text-tier-risk bg-bubblegum-pink/10 border-tier-risk/20;
 }
 
 .dismiss-btn {
-  @apply absolute top-4 right-4 text-ink-muted hover:text-ink h-7 w-7 rounded-lg flex items-center justify-center bg-surface-bg cursor-pointer;
+  @apply absolute top-4 right-4 text-ink-muted hover:text-ink h-7 w-7 rounded-xl flex items-center justify-center bg-surface-bg cursor-pointer border-2 border-border-subtle;
   transition:
     background-color 150ms cubic-bezier(0.25, 1, 0.5, 1),
     color 150ms cubic-bezier(0.25, 1, 0.5, 1),
@@ -221,20 +257,20 @@ body {
 }
 
 .link-quiet {
-  @apply text-xs font-medium text-accent-emerald hover:text-accent-emerald-hover cursor-pointer;
+  @apply text-sm font-bold text-sky-blue hover:underline cursor-pointer;
 }
 
 .stat-value {
-  @apply text-base font-semibold tabular-nums;
+  @apply text-lg font-bold tabular-nums;
 }
 
-/* Distilled dashboard — pastel tiles (MoneyCircle teal/emerald family) */
+/* Gamified Modules */
 .streak-module {
-  @apply rounded-xl bg-surface-card p-4;
+  @apply rounded-xl bg-surface-card p-4 border-2 border-border-subtle;
 }
 
 .streak-day {
-  @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold;
+  @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[10px] font-bold;
   transition: background-color 150ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
@@ -251,7 +287,7 @@ body {
 }
 
 .mission-card {
-  @apply relative overflow-hidden rounded-xl p-5;
+  @apply relative overflow-hidden rounded-xl p-5 border-2 border-border-subtle;
   background: color-mix(in oklch, var(--color-primary) 9%, white);
   min-height: 11rem;
 }
@@ -267,13 +303,13 @@ body {
 }
 
 .mission-card__disc {
-  @apply flex items-center justify-center rounded-full bg-white/50 dark:bg-slate-700/50;
+  @apply flex items-center justify-center rounded-full bg-white/70 dark:bg-slate-700/50 border-2 border-white/90;
   width: 4.5rem;
   height: 4.5rem;
 }
 
 .tile-pastel {
-  @apply flex min-h-[7.75rem] flex-col justify-between rounded-xl p-4 text-left cursor-pointer;
+  @apply flex min-h-[7.75rem] flex-col justify-between rounded-xl p-4 text-left cursor-pointer border-2;
   transition: transform 150ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
@@ -283,23 +319,28 @@ body {
 
 .tile-pastel--sky {
   background: color-mix(in oklch, var(--color-tier-steady) 13%, white);
+  border-color: color-mix(in oklch, var(--color-tier-steady) 25%, white);
 }
 
 .tile-pastel--teal {
   background: color-mix(in oklch, var(--color-primary) 11%, white);
+  border-color: color-mix(in oklch, var(--color-primary) 25%, white);
 }
 
 .tile-pastel--amber {
   background: color-mix(in oklch, var(--color-tier-building) 15%, white);
+  border-color: color-mix(in oklch, var(--color-tier-building) 30%, white);
 }
 
 .tile-pastel--mint {
   background: color-mix(in oklch, var(--color-accent-emerald) 12%, white);
+  border-color: color-mix(in oklch, var(--color-accent-emerald) 25%, white);
 }
 
 .circle-teaser {
-  @apply flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-semibold text-ink cursor-pointer;
+  @apply flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-bold text-ink cursor-pointer border-2;
   background: color-mix(in oklch, var(--color-primary) 6%, white);
+  border-color: color-mix(in oklch, var(--color-primary) 18%, white);
   transition: background-color 150ms cubic-bezier(0.25, 1, 0.5, 1);
 }
 
@@ -317,20 +358,22 @@ body {
 }
 
 .chat-bubble {
-  @apply max-w-[88%] rounded-xl px-4 py-3 text-sm leading-relaxed;
+  @apply max-w-[88%] rounded-xl px-4 py-3 text-base leading-relaxed border-2;
 }
 
 .chat-bubble--user {
-  @apply ml-auto bg-primary text-white;
+  @apply ml-auto bg-primary text-white border-primary;
+  box-shadow: 0 3px 0 #3f8f01;
 }
 
 .chat-bubble--assistant {
   background: color-mix(in oklch, var(--color-primary) 8%, white);
+  border-color: color-mix(in oklch, var(--color-primary) 18%, white);
   @apply text-ink;
 }
 
 .chat-input-bar {
-  @apply sticky bottom-0 -mx-1 border-t border-border-subtle bg-surface-bg pt-3;
+  @apply sticky bottom-0 -mx-1 border-t-2 border-border-subtle bg-surface-bg pt-3;
 }
 
 .dark .streak-day--pending {
@@ -339,22 +382,27 @@ body {
 
 .dark .mission-card {
   background: color-mix(in oklch, var(--color-primary) 16%, var(--color-surface-card));
+  border-color: var(--color-border-subtle);
 }
 
 .dark .tile-pastel--sky {
   background: color-mix(in oklch, var(--color-tier-steady) 20%, var(--color-surface-card));
+  border-color: color-mix(in oklch, var(--color-tier-steady) 30%, var(--color-surface-card));
 }
 
 .dark .tile-pastel--teal {
   background: color-mix(in oklch, var(--color-primary) 18%, var(--color-surface-card));
+  border-color: color-mix(in oklch, var(--color-primary) 30%, var(--color-surface-card));
 }
 
 .dark .tile-pastel--amber {
   background: color-mix(in oklch, var(--color-tier-building) 22%, var(--color-surface-card));
+  border-color: color-mix(in oklch, var(--color-tier-building) 35%, var(--color-surface-card));
 }
 
 .dark .tile-pastel--mint {
   background: color-mix(in oklch, var(--color-accent-emerald) 18%, var(--color-surface-card));
+  border-color: color-mix(in oklch, var(--color-accent-emerald) 30%, var(--color-surface-card));
 }
 
 .dark .tile-pastel .tile-label {
@@ -363,6 +411,7 @@ body {
 
 .dark .circle-teaser {
   background: color-mix(in oklch, var(--color-primary) 12%, var(--color-surface-card));
+  border-color: color-mix(in oklch, var(--color-primary) 22%, var(--color-surface-card));
 }
 
 .dark .circle-teaser:hover {
@@ -371,10 +420,11 @@ body {
 
 .dark .chat-bubble--assistant {
   background: color-mix(in oklch, var(--color-primary) 14%, var(--color-surface-card));
+  border-color: color-mix(in oklch, var(--color-primary) 24%, var(--color-surface-card));
 }
 
 .dark .input-field {
-  @apply border-slate-600 bg-slate-800/80 text-ink;
+  @apply border-border-subtle bg-slate-800/80 text-ink;
 }
 
 .dark ::-webkit-scrollbar-thumb {
@@ -415,16 +465,16 @@ body {
 
 /* Chat markdown rendering */
 .chat-markdown {
-  @apply text-[0.8125rem] leading-relaxed text-ink;
+  @apply text-base leading-relaxed text-ink;
 }
 
 .chat-markdown :is(h1, h2, h3) {
   @apply font-bold text-ink mt-2 mb-1 first:mt-0;
 }
 
-.chat-markdown h1 { @apply text-sm; }
-.chat-markdown h2 { @apply text-xs; }
-.chat-markdown h3 { @apply text-xs; }
+.chat-markdown h1 { @apply text-base; }
+.chat-markdown h2 { @apply text-sm; }
+.chat-markdown h3 { @apply text-sm; }
 
 .chat-markdown p {
   @apply mb-1.5 last:mb-0;
@@ -455,22 +505,22 @@ body {
 }
 
 .chat-markdown blockquote {
-  @apply my-1.5 border-l-2 border-accent-emerald/40 pl-2 text-ink-muted italic;
+  @apply my-1.5 border-l-2 border-primary/40 pl-2 text-ink-muted italic;
 }
 
 .chat-markdown a {
-  @apply text-accent-emerald underline underline-offset-2;
+  @apply text-sky-blue underline underline-offset-2;
 }
 
 .chat-markdown--streaming::after {
   content: '▋';
-  @apply ml-0.5 inline-block animate-pulse text-accent-emerald;
+  @apply ml-0.5 inline-block animate-pulse text-primary;
 }
 
 .tool-status-chip {
-  @apply inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/5 px-2 py-0.5 text-[10px] font-medium text-primary;
+  @apply inline-flex items-center gap-1 rounded-full border-2 border-primary/20 bg-primary/5 px-2 py-0.5 text-[10px] font-bold text-primary;
 }
 
 .tool-trace-footer {
-  @apply mt-1.5 border-t border-border-subtle pt-1.5 text-[10px] text-ink-muted;
+  @apply mt-1.5 border-t-2 border-border-subtle pt-1.5 text-[10px] text-ink-muted;
 }

@@ -72,7 +72,7 @@ const formatEventText = (e) => {
               @click="handleCopyInvite"
               class="p-1 hover:bg-slate-100 rounded text-ink-muted hover:text-ink cursor-pointer"
             >
-              <Check v-if="copied" class="w-3.5 h-3.5 text-accent-emerald" />
+              <Check v-if="copied" class="w-3.5 h-3.5 text-primary" />
               <Copy v-else class="w-3.5 h-3.5" />
             </button>
           </span>
@@ -114,8 +114,8 @@ const formatEventText = (e) => {
         <div 
           v-for="(member, index) in groupStore.leaderboard" 
           :key="member.displayName"
-          class="surface-card-sm flex items-center justify-between transition-colors border"
-          :class="member.displayName === currentUser.displayName ? 'border-accent-emerald/40 bg-emerald-50/10' : 'border-border-subtle'"
+          class="surface-card-sm flex items-center justify-between transition-colors border-2"
+          :class="member.displayName === currentUser.displayName ? 'border-primary/40 bg-duo-green-light/20' : 'border-border-subtle'"
         >
           <!-- Left: Rank + Avatar + Name -->
           <div class="flex items-center gap-3">
@@ -132,7 +132,7 @@ const formatEventText = (e) => {
                 {{ member.displayName }}
                 <span 
                   v-if="member.displayName === currentUser.displayName"
-                  class="text-[9px] font-black bg-accent-emerald/10 text-accent-emerald px-1.5 py-0.5 rounded-full"
+                  class="text-[9px] font-black bg-primary/10 text-primary px-1.5 py-0.5 rounded-full"
                 >
                   คุณ
                 </span>

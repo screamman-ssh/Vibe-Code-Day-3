@@ -190,9 +190,9 @@ function go(path) {
   align-items: center;
   gap: 0.125rem;
   padding: 0.625rem 0.375rem;
-  border-radius: 0.75rem;
+  border-radius: 12px;
   background: var(--color-surface-card);
-  border: 1px solid var(--color-border-subtle);
+  border: 2px solid var(--color-border-subtle);
 }
 
 .hub-page__stat-label {
@@ -242,21 +242,21 @@ function go(path) {
   flex-direction: column;
   text-align: left;
   padding: 1rem;
-  border-radius: 1rem;
-  border: 1px solid var(--color-border-subtle);
+  border-radius: 12px;
+  border: 2px solid var(--color-border-subtle);
   background: var(--color-surface-card);
   cursor: pointer;
-  transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+  transition: transform 150ms ease, border-color 150ms ease;
   min-height: 9rem;
 }
 
 .hub-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--color-primary) 30%, var(--color-border-subtle));
 }
 
 .hub-card:active {
-  transform: scale(0.99);
+  transform: translateY(1px);
 }
 
 .hub-card__top {

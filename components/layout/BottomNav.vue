@@ -14,11 +14,11 @@ const router = useRouter()
 const hubPaths = ['/hub', '/budget', '/debts', '/settings']
 
 const navItems = [
-  { path: '/', label: 'แดชบอร์ด', icon: LayoutDashboard },
-  { path: '/tracker', label: 'บันทึกเงิน', icon: Receipt },
-  { path: '/chat', label: 'AI โค้ช', icon: Sparkles },
-  { path: '/hub', label: 'เครื่องมือ', icon: LayoutGrid },
-  { path: '/circle', label: 'กลุ่ม', icon: Users },
+  { path: '/', labelKey: 'nav.dashboard', icon: LayoutDashboard },
+  { path: '/tracker', labelKey: 'nav.tracker', icon: Receipt },
+  { path: '/chat', labelKey: 'nav.chat', icon: Sparkles },
+  { path: '/hub', labelKey: 'nav.hub', icon: LayoutGrid },
+  { path: '/circle', labelKey: 'nav.circle', icon: Users },
 ]
 
 function isActive(path) {
@@ -47,7 +47,7 @@ function navigate(path) {
         <component :is="item.icon" class="w-5 h-5" :stroke-width="isActive(item.path) ? 2.5 : 2" />
       </div>
       <span class="text-[10px] font-semibold font-brand leading-none">
-        {{ item.label }}
+        {{ $t(item.labelKey) }}
       </span>
       <div 
         v-if="isActive(item.path)"

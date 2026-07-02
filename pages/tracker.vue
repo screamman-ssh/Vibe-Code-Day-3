@@ -371,14 +371,14 @@ function handleUpgrade() {
       <div class="flex gap-2">
         <button 
           @click="openScanModal"
-          class="btn-secondary gap-1.5 px-4 py-2 min-h-0 text-xs rounded-full border-accent-emerald text-accent-emerald hover:bg-emerald-50/50 cursor-pointer"
+          class="btn-secondary gap-1.5 px-4 py-2 min-h-0 text-xs cursor-pointer"
         >
           <Camera class="w-4 h-4" />
           <span>สแกนใบเสร็จ (AI OCR)</span>
         </button>
         <button 
           @click="openAddModal"
-          class="btn-primary gap-1 px-4 py-2 min-h-0 text-xs rounded-full cursor-pointer"
+          class="btn-primary gap-1 px-4 py-2 min-h-0 text-xs cursor-pointer"
         >
           <Plus class="w-4 h-4" />
           <span>จดบันทึก</span>
@@ -386,26 +386,26 @@ function handleUpgrade() {
       </div>
     </div>
 
-    <!-- 1. Money Summary Panel (MOVED TO TOP OF CALENDAR) -->
+    <!-- 1. Money Summary Panel -->
     <div class="grid grid-cols-3 gap-2.5">
       <!-- Income card -->
-      <div class="surface-card-sm flex flex-col justify-between p-3.5 border border-border-subtle bg-white">
+      <div class="surface-card-sm flex flex-col justify-between p-3.5 border-2 border-border-subtle bg-white">
         <div class="flex items-center justify-between">
           <span class="text-[9px] font-bold text-ink-muted uppercase">รายรับเดือนนี้</span>
-          <div class="w-6 h-6 rounded-full bg-emerald-50 text-accent-emerald flex items-center justify-center">
+          <div class="w-6 h-6 rounded-full bg-duo-green-light/40 text-primary flex items-center justify-center">
             <ArrowUpRight class="w-3.5 h-3.5" />
           </div>
         </div>
-        <span class="stat-value text-accent-emerald text-xs font-black mt-3 truncate">
+        <span class="stat-value text-primary text-xs font-black mt-3 truncate">
           {{ formatCurrency(totalIncomeInMonth) }}
         </span>
       </div>
 
       <!-- Expense card -->
-      <div class="surface-card-sm flex flex-col justify-between p-3.5 border border-border-subtle bg-white">
+      <div class="surface-card-sm flex flex-col justify-between p-3.5 border-2 border-border-subtle bg-white">
         <div class="flex items-center justify-between">
           <span class="text-[9px] font-bold text-ink-muted uppercase">รายจ่ายเดือนนี้</span>
-          <div class="w-6 h-6 rounded-full bg-red-50 text-tier-risk flex items-center justify-center">
+          <div class="w-6 h-6 rounded-full bg-bubblegum-pink/10 text-tier-risk flex items-center justify-center">
             <ArrowDownRight class="w-3.5 h-3.5" />
           </div>
         </div>
@@ -416,21 +416,21 @@ function handleUpgrade() {
 
       <!-- Net Balance card -->
       <div 
-        class="surface-card-sm flex flex-col justify-between p-3.5 border"
-        :class="netBalanceInMonth >= 0 ? 'bg-emerald-50/10 border-emerald-100' : 'bg-red-50/10 border-red-100'"
+        class="surface-card-sm flex flex-col justify-between p-3.5 border-2"
+        :class="netBalanceInMonth >= 0 ? 'bg-duo-green-light/10 border-primary/20' : 'bg-bubblegum-pink/5 border-tier-risk/10'"
       >
         <div class="flex items-center justify-between">
           <span class="text-[9px] font-bold text-ink-muted uppercase">คงเหลือ</span>
           <div 
             class="w-6 h-6 rounded-full flex items-center justify-center"
-            :class="netBalanceInMonth >= 0 ? 'bg-emerald-50 text-accent-emerald' : 'bg-red-50 text-tier-risk'"
+            :class="netBalanceInMonth >= 0 ? 'bg-duo-green-light/40 text-primary' : 'bg-bubblegum-pink/10 text-tier-risk'"
           >
             <Coins class="w-3.5 h-3.5" />
           </div>
         </div>
         <span 
           class="stat-value text-xs font-black mt-3 truncate"
-          :class="netBalanceInMonth >= 0 ? 'text-accent-emerald' : 'text-tier-risk'"
+          :class="netBalanceInMonth >= 0 ? 'text-primary' : 'text-tier-risk'"
         >
           {{ formatCurrency(netBalanceInMonth) }}
         </span>
@@ -478,7 +478,7 @@ function handleUpgrade() {
             class="aspect-square flex flex-col justify-between p-1 rounded-lg border text-center transition cursor-pointer select-none text-[11px] font-black relative"
             :class="[
               !cell.isCurrentMonth ? 'text-ink-muted/40 border-transparent bg-slate-50/20' : 'text-ink border-border-subtle bg-white hover:bg-slate-50',
-              selectedDate === cell.dateString ? 'ring-2 ring-accent-emerald border-accent-emerald text-accent-emerald scale-[1.03]' : ''
+              selectedDate === cell.dateString ? 'ring-2 ring-primary border-primary text-primary scale-[1.03]' : ''
             ]"
           >
             <span class="leading-none text-left select-none">{{ cell.dayNumber }}</span>
@@ -491,7 +491,7 @@ function handleUpgrade() {
               >
                 <div 
                   v-if="dailySummaries[cell.dateString].income > 0" 
-                  class="w-1.5 h-1.5 rounded-full bg-accent-emerald"
+                  class="w-1.5 h-1.5 rounded-full bg-primary"
                 />
                 <div 
                   v-if="dailySummaries[cell.dateString].expense > 0" 
@@ -541,7 +541,7 @@ function handleUpgrade() {
               <CalendarIcon class="w-3.5 h-3.5" />
               {{ tx.date }}
               <span v-if="tx.note" class="before:content-['·'] before:mx-1 truncate max-w-[120px]">{{ tx.note }}</span>
-              <span v-if="tx.source === 'ocr'" class="chip bg-amber-50 text-amber-600 border-amber-100 text-[8px] font-black px-1.5 py-0.5 leading-none">AI OCR</span>
+              <span v-if="tx.source === 'ocr'" class="chip bg-sunshine-yellow/10 text-tier-building border-tier-building/20 text-[8px] font-black px-1.5 py-0.5 leading-none">AI OCR</span>
             </span>
           </div>
         </div>
@@ -549,7 +549,7 @@ function handleUpgrade() {
         <div class="flex items-center gap-2">
           <span 
             class="text-sm font-bold"
-            :class="tx.type === 'income' ? 'text-accent-emerald' : 'text-ink'"
+            :class="tx.type === 'income' ? 'text-primary' : 'text-ink'"
           >
             {{ tx.type === 'income' ? '+' : '-' }}{{ formatCurrency(tx.amount) }}
           </span>
@@ -577,11 +577,11 @@ function handleUpgrade() {
       v-if="showDailyModal" 
       class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
     >
-      <div class="w-full max-w-md bg-white rounded-2xl p-6 border border-border-subtle shadow-xl space-y-4 relative overflow-y-auto max-h-[90vh]">
+      <div class="w-full max-w-md bg-white rounded-xl p-6 border-2 border-border-subtle space-y-4 relative overflow-y-auto max-h-[90vh]">
         <!-- Close Button -->
         <button 
           @click="showDailyModal = false; selectedDate = null"
-          class="absolute top-4 right-4 text-ink-muted hover:text-ink cursor-pointer bg-slate-100 hover:bg-slate-200 w-8 h-8 rounded-full flex items-center justify-center"
+          class="absolute top-4 right-4 text-ink-muted hover:text-ink cursor-pointer bg-slate-100 hover:bg-slate-200 w-8 h-8 rounded-full flex items-center justify-center border-2 border-border-subtle"
         >
           <X class="w-5 h-5" />
         </button>
@@ -592,10 +592,10 @@ function handleUpgrade() {
         </h3>
 
         <!-- Daily Aggregate Widget -->
-        <div class="grid grid-cols-2 gap-3 bg-slate-50 border border-border-subtle p-3 rounded-xl text-xs font-black">
+        <div class="grid grid-cols-2 gap-3 bg-slate-50 border-2 border-border-subtle p-3 rounded-xl text-xs font-black">
           <div class="flex justify-between items-center">
             <span class="text-ink-muted">รายรับวันนี้:</span>
-            <span class="text-accent-emerald">{{ formatCurrency(dailyTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0)) }}</span>
+            <span class="text-primary">{{ formatCurrency(dailyTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0)) }}</span>
           </div>
           <div class="flex justify-between items-center">
             <span class="text-ink-muted">รายจ่ายวันนี้:</span>
@@ -605,24 +605,24 @@ function handleUpgrade() {
 
         <!-- Daily Items Scroll area -->
         <div class="space-y-2.5 max-h-60 overflow-y-auto pr-1">
-          <div v-if="dailyTransactions.length === 0" class="text-center py-8 text-ink-muted text-xs">
+          <div v-if="dailyTransactions.length === 0" class="text-center py-8 text-ink-muted text-xs font-bold">
             ไม่มีธุรกรรมบันทึกในวันนี้
           </div>
 
           <div 
             v-for="tx in dailyTransactions" 
             :key="tx.id"
-            class="p-3 border border-border-subtle bg-slate-50/50 rounded-xl flex items-center justify-between hover:bg-slate-50 transition relative group"
+            class="p-3 border-2 border-border-subtle bg-slate-50/50 rounded-xl flex items-center justify-between hover:bg-slate-50 transition relative group"
           >
             <div class="flex items-center gap-3">
               <div 
                 class="w-8 h-8 rounded-full flex items-center justify-center text-xs shrink-0"
-                :class="tx.type === 'income' ? 'bg-emerald-50 text-accent-emerald' : 'bg-red-50 text-tier-risk'"
+                :class="tx.type === 'income' ? 'bg-duo-green-light/40 text-primary' : 'bg-bubblegum-pink/10 text-tier-risk'"
               >
                 <ArrowUpRight v-if="tx.type === 'income'" class="w-3.5 h-3.5" />
                 <ArrowDownRight v-else class="w-3.5 h-3.5" />
               </div>
-              <div class="flex flex-col min-w-0">
+              <div class="flex flex-col min-w-0 font-bold">
                 <span class="text-xs font-bold text-ink leading-tight">{{ formatCategoryThai(tx.category) }}</span>
                 <span v-if="tx.note" class="text-[9px] text-ink-muted mt-0.5 max-w-[150px] truncate">{{ tx.note }}</span>
               </div>
@@ -631,7 +631,7 @@ function handleUpgrade() {
             <div class="flex items-center gap-2">
               <span 
                 class="text-xs font-bold"
-                :class="tx.type === 'income' ? 'text-accent-emerald' : 'text-ink'"
+                :class="tx.type === 'income' ? 'text-primary' : 'text-ink'"
               >
                 {{ tx.type === 'income' ? '+' : '-' }}{{ formatCurrency(tx.amount) }}
               </span>
@@ -669,7 +669,7 @@ function handleUpgrade() {
       v-if="showAddModal" 
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
     >
-      <div class="w-full max-w-md bg-white rounded-2xl p-6 border border-border-subtle shadow-xl space-y-4 relative">
+      <div class="w-full max-w-md bg-white rounded-xl p-6 border-2 border-border-subtle space-y-4 relative">
         <button 
           @click="showAddModal = false"
           class="absolute top-4 right-4 text-ink-muted hover:text-ink cursor-pointer"
@@ -687,14 +687,14 @@ function handleUpgrade() {
             <button 
               @click="type = 'expense'"
               class="tab-switch-btn"
-              :class="type === 'expense' ? 'tab-switch-btn--active bg-red-500 text-white' : 'tab-switch-btn--inactive'"
+              :class="type === 'expense' ? 'tab-switch-btn--active bg-tier-risk text-white' : 'tab-switch-btn--inactive'"
             >
               รายจ่าย
             </button>
             <button 
               @click="type = 'income'"
               class="tab-switch-btn"
-              :class="type === 'income' ? 'tab-switch-btn--active bg-accent-emerald text-white' : 'tab-switch-btn--inactive'"
+              :class="type === 'income' ? 'tab-switch-btn--active' : 'tab-switch-btn--inactive'"
             >
               รายรับ
             </button>
@@ -707,7 +707,7 @@ function handleUpgrade() {
               v-model="amount"
               type="number" 
               placeholder="0.00" 
-              class="input-field bg-slate-50 border border-slate-200"
+              class="input-field"
             />
           </div>
 
@@ -716,7 +716,7 @@ function handleUpgrade() {
             <label class="field-label font-bold text-ink">หมวดหมู่</label>
             <select 
               v-model="category"
-              class="input-field bg-slate-50 border border-slate-200"
+              class="input-field"
             >
               <option 
                 v-for="cat in categories" 
@@ -728,8 +728,6 @@ function handleUpgrade() {
             </select>
           </div>
 
-          <!-- Category placeholder spacer (merchant deleted) -->
-
           <!-- Note -->
           <div class="space-y-1">
             <label class="field-label font-bold text-ink">บันทึกช่วยจำ (ไม่บังคับ)</label>
@@ -737,7 +735,7 @@ function handleUpgrade() {
               v-model="note"
               type="text" 
               placeholder="ข้อความเพิ่มเติม..." 
-              class="input-field bg-slate-50 border border-slate-200"
+              class="input-field"
             />
           </div>
 
@@ -747,7 +745,7 @@ function handleUpgrade() {
             <input 
               v-model="date"
               type="date" 
-              class="input-field bg-slate-50 border border-slate-200"
+              class="input-field"
             />
           </div>
         </div>
@@ -766,33 +764,33 @@ function handleUpgrade() {
       v-if="showScanModal" 
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
     >
-      <div class="w-full max-w-md bg-white rounded-2xl p-6 border border-border-subtle shadow-xl space-y-4 relative overflow-y-auto max-h-[90vh]">
+      <div class="w-full max-w-md bg-white rounded-xl p-6 border-2 border-border-subtle space-y-4 relative overflow-y-auto max-h-[90vh]">
         <button 
           @click="showScanModal = false"
-          class="absolute top-4 right-4 text-ink-muted hover:text-ink cursor-pointer bg-slate-100 hover:bg-slate-200 w-8 h-8 rounded-full flex items-center justify-center"
+          class="absolute top-4 right-4 text-ink-muted hover:text-ink cursor-pointer bg-slate-100 hover:bg-slate-200 w-8 h-8 rounded-full flex items-center justify-center border-2 border-border-subtle"
         >
           <X class="w-5 h-5" />
         </button>
 
         <h3 class="text-base font-bold text-ink flex items-center gap-1.5">
-          <Camera class="w-5 h-5 text-accent-emerald" />
+          <Camera class="w-5 h-5 text-primary" />
           <span>สแกนใบเสร็จด้วย AI OCR</span>
         </h3>
 
         <!-- Daily Quota Counter -->
-        <div class="flex justify-between items-center bg-slate-50 border border-border-subtle p-3 rounded-xl text-xs">
+        <div class="flex justify-between items-center bg-slate-50 border-2 border-border-subtle p-3 rounded-xl text-xs">
           <span class="font-bold text-ink">โควตาสแกนวันนี้: {{ usageStore.ocrUsedToday }} / {{ usageStore.ocrLimit }} ครั้ง</span>
-          <span v-if="isPremium" class="text-[9px] font-black bg-emerald-50 text-accent-emerald border border-emerald-100 px-2 py-0.5 rounded-full">พรีเมียม</span>
-          <span v-else class="text-[9px] font-black bg-amber-500/10 text-amber-600 border border-amber-500/20 px-2 py-0.5 rounded-full">แผนฟรี</span>
+          <span v-if="isPremium" class="text-[9px] font-black bg-duo-green-light/40 text-primary border border-primary/20 px-2 py-0.5 rounded-full">พรีเมียม</span>
+          <span v-else class="text-[9px] font-black bg-sunshine-yellow/10 text-tier-building border border-tier-building/20 px-2 py-0.5 rounded-full">แผนฟรี</span>
         </div>
 
         <!-- File Camera Select Box -->
         <div 
           v-if="!previewImage && !isOcrLoading"
           @click="triggerCamera"
-          class="border-2 border-dashed border-slate-200 hover:border-accent-emerald rounded-xl p-8 text-center flex flex-col items-center justify-center gap-3 bg-slate-50/50 cursor-pointer transition"
+          class="border-2 border-dashed border-cloud-gray hover:border-primary rounded-xl p-8 text-center flex flex-col items-center justify-center gap-3 bg-slate-50/50 cursor-pointer transition"
         >
-          <div class="w-12 h-12 rounded-full bg-accent-emerald/10 flex items-center justify-center text-accent-emerald">
+          <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
             <Camera class="w-6 h-6" />
           </div>
           <div class="space-y-1">
@@ -822,7 +820,7 @@ function handleUpgrade() {
         </div>
 
         <!-- Image Preview -->
-        <div v-if="previewImage && !isOcrLoading" class="relative rounded-xl overflow-hidden border border-border-subtle bg-slate-100 max-h-40 flex items-center justify-center">
+        <div v-if="previewImage && !isOcrLoading" class="relative rounded-xl overflow-hidden border-2 border-border-subtle bg-slate-100 max-h-40 flex items-center justify-center">
           <img :src="previewImage" class="object-cover max-h-40 w-full" />
           <button 
             @click="previewImage = null; showOcrResultForm = false"
@@ -834,22 +832,20 @@ function handleUpgrade() {
 
         <!-- Extracted Form details -->
         <div v-if="showOcrResultForm" class="space-y-3 pt-2">
-          <div class="flex items-center gap-1.5 text-xs font-black text-accent-emerald">
+          <div class="flex items-center gap-1.5 text-xs font-black text-primary">
             <CheckCircle class="w-4 h-4 fill-emerald-50" />
             <span>AI สกัดยอดสำเร็จ! ตรวจสอบความถูกต้อง</span>
           </div>
 
           <div class="space-y-2 text-xs">
-            <!-- Merchant placeholder spacer (ocrMerchant deleted) -->
-
             <div class="grid grid-cols-2 gap-3">
               <div class="space-y-1">
                 <label class="field-label font-bold text-ink text-[11px]">ยอดเงินรวม (THB)</label>
-                <input v-model="ocrAmount" type="number" class="input-field py-2 min-h-10 bg-slate-50 border border-slate-200" />
+                <input v-model="ocrAmount" type="number" class="input-field py-2 min-h-10" />
               </div>
               <div class="space-y-1">
                 <label class="field-label font-bold text-ink text-[11px]">หมวดหมู่</label>
-                <select v-model="ocrCategory" class="input-field py-2 min-h-10 bg-slate-50 border border-slate-200">
+                <select v-model="ocrCategory" class="input-field py-2 min-h-10">
                   <option v-for="cat in categories" :key="cat" :value="cat">{{ formatCategoryThai(cat) }}</option>
                 </select>
               </div>
@@ -857,12 +853,12 @@ function handleUpgrade() {
 
             <div class="space-y-1">
               <label class="field-label font-bold text-ink text-[11px]">วันที่ใบเสร็จ</label>
-              <input v-model="ocrDate" type="date" class="input-field py-2 min-h-10 bg-slate-50 border border-slate-200" />
+              <input v-model="ocrDate" type="date" class="input-field py-2 min-h-10" />
             </div>
             
             <div class="space-y-1">
               <label class="field-label font-bold text-ink text-[11px]">บันทึกเพิ่มเติม</label>
-              <input v-model="ocrNote" type="text" class="input-field py-2 min-h-10 bg-slate-50 border border-slate-200" />
+              <input v-model="ocrNote" type="text" class="input-field py-2 min-h-10" />
             </div>
           </div>
 

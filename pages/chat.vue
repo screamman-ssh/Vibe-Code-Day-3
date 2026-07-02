@@ -353,8 +353,8 @@ onMounted(() => scrollToBottom())
   justify-content: center;
   width: 2.25rem;
   height: 2.25rem;
-  border-radius: 0.625rem;
-  border: 1px solid var(--color-border-subtle);
+  border-radius: 12px;
+  border: 2px solid var(--color-border-subtle);
   background: var(--color-surface-card);
   color: var(--color-ink-muted);
   cursor: pointer;
@@ -386,19 +386,19 @@ onMounted(() => scrollToBottom())
 .chat-page__avatar--brand {
   background: color-mix(in oklch, var(--color-primary) 12%, white);
   color: var(--color-primary);
-  border: 1px solid color-mix(in oklch, var(--color-primary) 20%, transparent);
+  border: 2px solid color-mix(in oklch, var(--color-primary) 20%, transparent);
 }
 
 .chat-page__avatar--assistant {
   background: color-mix(in oklch, var(--color-primary) 10%, white);
   color: var(--color-primary);
-  border: 1px solid color-mix(in oklch, var(--color-primary) 18%, transparent);
+  border: 2px solid color-mix(in oklch, var(--color-primary) 18%, transparent);
 }
 
 .chat-page__avatar--user {
   background: var(--color-surface-bg);
   color: var(--color-ink-muted);
-  border: 1px solid var(--color-border-subtle);
+  border: 2px solid var(--color-border-subtle);
 }
 
 .chat-page__messages {
@@ -433,25 +433,24 @@ onMounted(() => scrollToBottom())
 .chat-page__bubble {
   max-width: min(88%, 28rem);
   padding: 0.625rem 0.875rem;
-  border-radius: 1rem;
+  border-radius: 12px;
   font-size: 0.8125rem;
   line-height: 1.55;
   word-break: break-word;
 }
 
 .chat-page__bubble--user {
-  background: var(--color-accent-emerald);
+  background: var(--color-primary);
   color: white;
-  border-bottom-right-radius: 0.25rem;
+  border-bottom-right-radius: 4px;
   white-space: pre-line;
 }
 
 .chat-page__bubble--assistant {
   background: var(--color-surface-card);
   color: var(--color-ink);
-  border: 1px solid var(--color-border-subtle);
-  border-bottom-left-radius: 0.25rem;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  border: 2px solid var(--color-border-subtle);
+  border-bottom-left-radius: 4px;
 }
 
 .chat-page__bubble--typing {
@@ -463,14 +462,14 @@ onMounted(() => scrollToBottom())
   flex-shrink: 0;
   padding: 0.5rem 0.25rem;
   padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid var(--color-border-subtle);
+  border-top: 2px solid var(--color-border-subtle);
   background: var(--color-surface-bg);
   z-index: 20;
 }
 
 @media (max-width: 767px) {
   .chat-page__footer {
-    box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.06);
+    border-top: 2px solid var(--color-border-subtle);
   }
 }
 
@@ -508,7 +507,7 @@ onMounted(() => scrollToBottom())
   font-size: 0.6875rem;
   font-weight: 600;
   white-space: nowrap;
-  border: 1px solid color-mix(in oklch, var(--color-primary) 25%, var(--color-border-subtle));
+  border: 2px solid color-mix(in oklch, var(--color-primary) 25%, var(--color-border-subtle));
   background: var(--color-surface-card);
   color: var(--color-primary);
   cursor: pointer;
@@ -544,18 +543,17 @@ onMounted(() => scrollToBottom())
   flex: 1;
   min-height: 2.75rem;
   padding: 0.5rem 0.875rem;
-  border-radius: 0.875rem;
-  border: 1px solid var(--color-border-subtle);
+  border-radius: 12px;
+  border: 2px solid var(--color-border-subtle);
   background: var(--color-surface-card);
   font-size: 0.8125rem;
   color: var(--color-ink);
   outline: none;
-  transition: border-color 150ms, box-shadow 150ms;
+  transition: border-color 150ms;
 }
 
 .chat-page__input:focus {
-  border-color: var(--color-accent-emerald);
-  box-shadow: 0 0 0 3px color-mix(in oklch, var(--color-accent-emerald) 20%, transparent);
+  border-color: var(--color-primary);
 }
 
 .chat-page__input:disabled {
@@ -568,17 +566,17 @@ onMounted(() => scrollToBottom())
   justify-content: center;
   width: 2.75rem;
   height: 2.75rem;
-  border-radius: 0.875rem;
-  background: var(--color-accent-emerald);
+  border-radius: 12px;
+  background: var(--color-primary);
   color: white;
   border: none;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 150ms, opacity 150ms;
+  transition: opacity 150ms;
 }
 
 .chat-page__send:hover:not(:disabled) {
-  background: var(--color-accent-emerald-hover);
+  opacity: 0.9;
 }
 
 .chat-page__send:disabled {

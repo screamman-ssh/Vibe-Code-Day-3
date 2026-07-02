@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from '#imports'
 import { useAuthStore } from '~/stores/auth'
+import { useI18n } from 'vue-i18n'
 import BottomNav from './BottomNav.vue'
 import {
   LayoutDashboard,
@@ -25,20 +26,21 @@ defineProps({
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const { t } = useI18n()
 
 const user = computed(() => authStore.user || { displayName: 'ผู้ใช้', avatarUrl: '', subscriptionTier: 'free' })
 const activePath = computed(() => route.path)
 const isChatPage = computed(() => route.path === '/chat')
 
 const navItems = [
-  { path: '/', label: 'แดชบอร์ด (Dashboard)', icon: LayoutDashboard },
-  { path: '/hub', label: 'ศูนย์แอป (App Hub)', icon: LayoutGrid },
-  { path: '/tracker', label: 'บันทึกเงิน (Money Tracker)', icon: Receipt },
-  { path: '/budget', label: 'งบประมาณ (Budget)', icon: PiggyBank },
-  { path: '/debts', label: 'จัดการหนี้สิน (Debts)', icon: Wallet },
-  { path: '/chat', label: 'AI โค้ชการเงิน (AI Coach)', icon: Sparkles },
-  { path: '/circle', label: 'กลุ่มเพื่อน (Circle)', icon: Users },
-  { path: '/settings', label: 'ตั้งค่าระบบ (Settings)', icon: Settings },
+  { path: '/', labelKey: 'nav.dashboard', icon: LayoutDashboard },
+  { path: '/hub', labelKey: 'nav.hub', icon: LayoutGrid },
+  { path: '/tracker', labelKey: 'nav.tracker', icon: Receipt },
+  { path: '/budget', labelKey: 'nav.budget', icon: PiggyBank },
+  { path: '/debts', labelKey: 'nav.debts', icon: Wallet },
+  { path: '/chat', labelKey: 'nav.chat', icon: Sparkles },
+  { path: '/circle', labelKey: 'nav.circle', icon: Users },
+  { path: '/settings', labelKey: 'nav.settings', icon: Settings },
 ]
 
 function navigate(path) {
@@ -46,7 +48,7 @@ function navigate(path) {
 }
 
 function handleLogout() {
-  if (confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) {
+  if (confirm(t('shell.logoutConfirm'))) {
     authStore.logout()
     router.push('/login')
   }
@@ -82,7 +84,7 @@ function handleLogout() {
               : 'text-ink-muted hover:text-ink hover:bg-surface-bg'"
           >
             <component :is="item.icon" class="w-4 h-4 shrink-0" :stroke-width="activePath === item.path ? 2.5 : 2" />
-            <span class="font-brand">{{ item.label }}</span>
+            <span class="font-brand">{{ $t(item.labelKey) }}</span>
           </button>
         </nav>
       </div>
@@ -100,7 +102,7 @@ function handleLogout() {
               <Sparkles v-if="user.subscriptionTier === 'premium'" class="w-3 h-3 text-amber-500 fill-amber-500 shrink-0" />
             </span>
             <span class="text-[9px] text-ink-muted uppercase leading-none mt-1">
-              {{ user.subscriptionTier === 'premium' ? 'Premium Member' : 'Free Account' }}
+              {{ user.subscriptionTier === 'premium' ? $t('shell.premiumMember') : $t('shell.freeAccount') }}
             </span>
           </div>
         </div>
@@ -110,7 +112,7 @@ function handleLogout() {
           class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-tier-risk hover:bg-red-50 transition cursor-pointer text-left focus:outline-none"
         >
           <LogOut class="w-4 h-4 shrink-0" />
-          <span class="font-brand">ออกจากระบบ (Logout)</span>
+          <span class="font-brand">{{ $t('nav.logout') }}</span>
         </button>
       </div>
     </aside>

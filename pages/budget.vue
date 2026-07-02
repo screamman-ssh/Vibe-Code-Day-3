@@ -118,7 +118,7 @@ function handleDeleteCategory(categoryName) {
       </div>
       <button 
         @click="openAddModal"
-        class="btn-primary gap-1 px-4 py-2 min-h-0 text-xs rounded-full cursor-pointer"
+        class="btn-primary gap-1 px-4 py-2 min-h-0 text-xs cursor-pointer"
       >
         <Plus class="w-4 h-4" />
         <span>เพิ่มหมวดหมู่</span>
@@ -158,7 +158,7 @@ function handleDeleteCategory(categoryName) {
         <div 
           v-for="c in budgetStore.categories" 
           :key="c.category"
-          class="surface-card-sm flex flex-col justify-between min-h-[8.5rem] relative group border border-border-subtle hover:bg-slate-50/50 transition p-4 rounded-xl bg-white"
+          class="surface-card-sm flex flex-col justify-between min-h-[8.5rem] relative group border-2 border-border-subtle hover:bg-slate-50/50 transition p-4 rounded-xl bg-white"
         >
           <!-- Info block -->
           <div class="space-y-1.5">
@@ -176,7 +176,7 @@ function handleDeleteCategory(categoryName) {
                 </span>
                 <span 
                   v-else-if="c.limitAmount > 0 && (c.spentAmount / c.limitAmount) >= 0.85" 
-                  class="chip bg-amber-50 text-tier-building border-amber-100 text-[8px] font-black px-1.5 py-0.5 leading-none"
+                  class="chip bg-sunshine-yellow/10 text-tier-building border-tier-building/20 text-[8px] font-black px-1.5 py-0.5 leading-none"
                 >
                   ใกล้เต็ม
                 </span>
@@ -221,9 +221,9 @@ function handleDeleteCategory(categoryName) {
         <!-- Add Category Dotted Card -->
         <div 
           @click="openAddModal"
-          class="border-2 border-dashed border-slate-200 hover:border-accent-emerald bg-slate-50/20 hover:bg-slate-50/50 transition cursor-pointer rounded-xl min-h-[8.5rem] flex flex-col items-center justify-center gap-2 p-4 text-center select-none"
+          class="border-2 border-dashed border-cloud-gray hover:border-primary bg-slate-50/20 hover:bg-slate-50/50 transition cursor-pointer rounded-xl min-h-[8.5rem] flex flex-col items-center justify-center gap-2 p-4 text-center select-none"
         >
-          <div class="w-8 h-8 rounded-full bg-accent-emerald/10 text-accent-emerald flex items-center justify-center">
+          <div class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">
             <Plus class="w-4 h-4" />
           </div>
           <span class="text-xs font-bold text-ink">เพิ่มหมวดหมู่ใหม่</span>
@@ -237,7 +237,7 @@ function handleDeleteCategory(categoryName) {
       v-if="showAddModal" 
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
     >
-      <div class="w-full max-w-sm bg-white rounded-2xl p-6 border border-border-subtle shadow-xl space-y-4 relative">
+      <div class="w-full max-w-sm bg-white rounded-xl p-6 border-2 border-border-subtle space-y-4 relative">
         <button 
           @click="showAddModal = false"
           class="absolute top-4 right-4 text-ink-muted hover:text-ink cursor-pointer"
@@ -256,7 +256,7 @@ function handleDeleteCategory(categoryName) {
               v-model="newCategoryName"
               type="text" 
               placeholder="เช่น การกุศล, ช้อปปิ้ง..." 
-              class="input-field bg-slate-50 border border-slate-200"
+              class="input-field"
             />
           </div>
 
@@ -266,7 +266,7 @@ function handleDeleteCategory(categoryName) {
               v-model="newLimit"
               type="number" 
               placeholder="0.00" 
-              class="input-field bg-slate-50 border border-slate-200"
+              class="input-field"
             />
           </div>
         </div>
@@ -286,7 +286,7 @@ function handleDeleteCategory(categoryName) {
       v-if="showEditModal" 
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
     >
-      <div class="w-full max-w-sm bg-white rounded-2xl p-6 border border-border-subtle shadow-xl space-y-4 relative">
+      <div class="w-full max-w-sm bg-white rounded-xl p-6 border-2 border-border-subtle space-y-4 relative">
         <button 
           @click="showEditModal = false"
           class="absolute top-4 right-4 text-ink-muted hover:text-ink cursor-pointer"
@@ -304,7 +304,7 @@ function handleDeleteCategory(categoryName) {
             <input 
               v-model="editingCategoryName"
               type="text" 
-              class="input-field bg-slate-50 border border-slate-200"
+              class="input-field"
             />
           </div>
 
@@ -313,7 +313,7 @@ function handleDeleteCategory(categoryName) {
             <input 
               v-model="editingLimit"
               type="number" 
-              class="input-field bg-slate-50 border border-slate-200"
+              class="input-field"
               @keyup.enter="handleSaveEdit"
             />
           </div>

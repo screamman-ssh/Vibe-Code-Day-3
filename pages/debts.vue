@@ -389,7 +389,7 @@ async function triggerAiAnalysis() {
       </div>
       <button 
         @click="openAddModal"
-        class="btn-primary gap-1 px-4 py-2 min-h-0 text-xs rounded-full cursor-pointer"
+        class="btn-primary gap-1 px-4 py-2 min-h-0 text-xs cursor-pointer"
       >
         <Plus class="w-4 h-4" />
         <span>เพิ่มหนี้</span>
@@ -700,9 +700,9 @@ async function triggerAiAnalysis() {
         </div>
 
         <!-- Time and Interest Savings Highlight Alert Card -->
-        <div class="surface-card col-span-1 md:col-span-2 bg-emerald-50 border border-emerald-100 flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-accent-emerald/10 text-accent-emerald flex items-center justify-center shrink-0">
-            <Sparkles class="w-5 h-5 fill-accent-emerald" />
+        <div class="surface-card col-span-1 md:col-span-2 bg-duo-green-light/30 border-2 border-primary/20 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <Sparkles class="w-5 h-5 fill-primary" />
           </div>
           <div class="flex-1 space-y-1">
             <h4 class="text-xs font-bold text-ink">คุณประหยัดเงินและเวลาได้มหาศาล!</h4>
@@ -823,7 +823,7 @@ async function triggerAiAnalysis() {
       v-if="showAddModal" 
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
     >
-      <div class="w-full max-w-sm bg-white rounded-2xl p-6 border border-border-subtle shadow-xl space-y-4 relative">
+      <div class="w-full max-w-sm bg-white rounded-xl p-6 border-2 border-border-subtle space-y-4 relative">
         <button 
           @click="showAddModal = false"
           class="absolute top-4 right-4 text-ink-muted hover:text-ink cursor-pointer"
@@ -840,7 +840,7 @@ async function triggerAiAnalysis() {
               v-model="name"
               type="text" 
               placeholder="เช่น บัตรเครดิตธนาคาร..." 
-              class="input-field bg-slate-50 border border-slate-200"
+              class="input-field"
             />
           </div>
 
@@ -851,7 +851,7 @@ async function triggerAiAnalysis() {
                 v-model="originalAmount"
                 type="number" 
                 placeholder="เช่น 50000" 
-                class="input-field bg-slate-50 border border-slate-200"
+                class="input-field"
               />
             </div>
             <div class="space-y-1">
@@ -860,7 +860,7 @@ async function triggerAiAnalysis() {
                 v-model="balance"
                 type="number" 
                 placeholder="เช่น 35000" 
-                class="input-field bg-slate-50 border border-slate-200"
+                class="input-field"
               />
             </div>
           </div>
@@ -872,14 +872,14 @@ async function triggerAiAnalysis() {
                 v-model="apr"
                 type="number" 
                 placeholder="16" 
-                class="input-field bg-slate-50 border border-slate-200"
+                class="input-field"
               />
             </div>
             <div class="space-y-1">
               <label class="field-label font-bold text-ink">วันจ่ายของเดือน</label>
               <select 
                 v-model="dueDay"
-                class="input-field bg-slate-50 border border-slate-200 text-xs py-1"
+                class="input-field text-xs py-1"
               >
                 <option v-for="d in 28" :key="d" :value="d">วันที่ {{ d }}</option>
               </select>
@@ -892,7 +892,7 @@ async function triggerAiAnalysis() {
               v-model="minimumPayment"
               type="number" 
               placeholder="ประเมิน 5% อัตโนมัติ..." 
-              class="input-field bg-slate-50 border border-slate-200"
+              class="input-field"
             />
           </div>
         </div>
@@ -911,7 +911,7 @@ async function triggerAiAnalysis() {
       v-if="showEditModal" 
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
     >
-      <div class="w-full max-w-sm bg-white rounded-2xl p-6 border border-border-subtle shadow-xl space-y-4 relative">
+      <div class="w-full max-w-sm bg-white rounded-xl p-6 border-2 border-border-subtle space-y-4 relative">
         <button 
           @click="showEditModal = false"
           class="absolute top-4 right-4 text-ink-muted hover:text-ink cursor-pointer"
@@ -927,7 +927,7 @@ async function triggerAiAnalysis() {
             <input 
               v-model="name"
               type="text" 
-              class="input-field bg-slate-50 border border-slate-200"
+              class="input-field"
             />
           </div>
 
@@ -937,7 +937,7 @@ async function triggerAiAnalysis() {
               <input 
                 v-model="originalAmount"
                 type="number" 
-                class="input-field bg-slate-50 border border-slate-200"
+                class="input-field"
               />
             </div>
             <div class="space-y-1">
@@ -945,7 +945,7 @@ async function triggerAiAnalysis() {
               <input 
                 v-model="balance"
                 type="number" 
-                class="input-field bg-slate-50 border border-slate-200"
+                class="input-field"
               />
             </div>
           </div>
@@ -956,14 +956,14 @@ async function triggerAiAnalysis() {
               <input 
                 v-model="apr"
                 type="number" 
-                class="input-field bg-slate-50 border border-slate-200"
+                class="input-field"
               />
             </div>
             <div class="space-y-1">
               <label class="field-label font-bold text-ink">วันจ่ายของเดือน</label>
               <select 
                 v-model="dueDay"
-                class="input-field bg-slate-50 border border-slate-200 text-xs py-1"
+                class="input-field text-xs py-1"
               >
                 <option v-for="d in 28" :key="d" :value="d">วันที่ {{ d }}</option>
               </select>
@@ -975,7 +975,7 @@ async function triggerAiAnalysis() {
             <input 
               v-model="minimumPayment"
               type="number" 
-              class="input-field bg-slate-50 border border-slate-200"
+              class="input-field"
             />
           </div>
         </div>
@@ -994,7 +994,7 @@ async function triggerAiAnalysis() {
       v-if="showPayModal" 
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
     >
-      <div class="w-full max-w-xs bg-white rounded-2xl p-6 border border-border-subtle shadow-xl space-y-4 relative">
+      <div class="w-full max-w-xs bg-white rounded-xl p-6 border-2 border-border-subtle space-y-4 relative">
         <button 
           @click="showPayModal = false"
           class="absolute top-4 right-4 text-ink-muted hover:text-ink cursor-pointer"
@@ -1011,7 +1011,7 @@ async function triggerAiAnalysis() {
           <input 
             v-model="paymentAmount"
             type="number" 
-            class="input-field bg-slate-50 border border-slate-200"
+            class="input-field"
           />
         </div>
 

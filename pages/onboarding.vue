@@ -49,13 +49,13 @@ function handleOnboardingComplete() {
 
 <template>
   <div class="min-h-screen bg-surface-bg flex items-center justify-center p-4">
-    <div class="w-full max-w-md bg-white rounded-2xl p-6 border border-border-subtle shadow-md space-y-6">
+    <div class="w-full max-w-md bg-white rounded-xl p-6 border-2 border-border-subtle space-y-6">
       
       <!-- STEP 1: Privacy Explainer -->
       <div v-if="step === 1" class="space-y-5">
         <div class="text-center space-y-1">
-          <ShieldCheck class="w-12 h-12 text-accent-emerald mx-auto" />
-          <h2 class="text-xl font-bold text-ink">ข้อตกลงเรื่องความเป็นส่วนตัว</h2>
+          <ShieldCheck class="w-12 h-12 text-primary mx-auto" />
+          <h2 class="text-xl font-bold text-ink">{{ $t('settings.personalInfo') }}</h2>
           <p class="text-xs text-ink-muted leading-relaxed">
             MoneyCircle ออกแบบมาเพื่อกระตุ้นนิสัยทางการเงินที่ดี โดยไม่เน้นการแข่งขันด้วยจำนวนทรัพย์สิน
           </p>
@@ -63,12 +63,12 @@ function handleOnboardingComplete() {
 
         <div class="space-y-3">
           <!-- What friends SEE -->
-          <div class="p-3.5 bg-emerald-50/50 border border-emerald-100 rounded-xl space-y-2">
-            <div class="flex items-center gap-2 text-xs font-extrabold text-accent-emerald uppercase tracking-wider">
+          <div class="p-3.5 bg-duo-green-light/40 border-2 border-primary/20 rounded-xl space-y-2">
+            <div class="flex items-center gap-2 text-xs font-black text-primary uppercase tracking-wider">
               <Eye class="w-4 h-4" />
               <span>สิ่งที่คุณและเพื่อนจะมองเห็นร่วมกัน</span>
             </div>
-            <ul class="text-xs text-ink space-y-1 pl-6 list-disc leading-relaxed">
+            <ul class="text-xs text-ink space-y-1 pl-6 list-disc leading-relaxed font-bold">
               <li>คะแนนสุขภาพทางการเงิน (0-100)</li>
               <li>ระดับระดับระดับสีเขียว (เช่น มั่นคง, รุ่งเรือง)</li>
               <li>เหรียญรางวัลเกียรติยศ (Badges)</li>
@@ -77,12 +77,12 @@ function handleOnboardingComplete() {
           </div>
 
           <!-- What friends DO NOT SEE -->
-          <div class="p-3.5 bg-red-50/50 border border-red-100 rounded-xl space-y-2">
-            <div class="flex items-center gap-2 text-xs font-extrabold text-tier-risk uppercase tracking-wider">
+          <div class="p-3.5 bg-bubblegum-pink/10 border-2 border-tier-risk/20 rounded-xl space-y-2">
+            <div class="flex items-center gap-2 text-xs font-black text-tier-risk uppercase tracking-wider">
               <EyeOff class="w-4 h-4" />
               <span>สิ่งที่จะถูกซ่อนเป็นความลับตลอดไป</span>
             </div>
-            <ul class="text-xs text-ink space-y-1 pl-6 list-disc leading-relaxed">
+            <ul class="text-xs text-ink space-y-1 pl-6 list-disc leading-relaxed font-bold">
               <li>จำนวนเงินในบัญชีหรือหนี้สินทั้งหมด</li>
               <li>จำนวนเงินในแต่ละรายการที่คุณบันทึก</li>
               <li>ชื่อร้านค้า แบรนด์สินค้า หรือรายละเอียดส่วนตัว</li>
@@ -136,7 +136,7 @@ function handleOnboardingComplete() {
               v-model="groupName"
               type="text" 
               placeholder="เช่น แก๊งออมเงินกู้โลก..." 
-              class="input-field bg-slate-50 border border-slate-200"
+              class="input-field"
             />
           </div>
 
@@ -146,7 +146,7 @@ function handleOnboardingComplete() {
               v-model="inviteCode"
               type="text" 
               placeholder="กรอกรหัสเชิญ 6 ตัวอักษร เช่น DEMO01..." 
-              class="input-field bg-slate-50 border border-slate-200 uppercase"
+              class="input-field uppercase"
               maxlength="6"
             />
           </div>

@@ -7,7 +7,7 @@ export const useScoreStore = defineStore('score', () => {
     tier: 'Steady',
     tierTh: 'มั่นคง',
     streakDays: 8,
-    daysActive: [true, true, true, false, true, true, true, true], // Past 7 days + today
+    daysActive: [true, true, true, false, false, false, false], // Past 7 days (Mon-Sun)
     dimensions: [
       { name: 'budgetAdherence', score: 80, weight: 25, label: 'การคุมงบประมาณ', valueText: 'อยู่ในเกณฑ์ดี คุมส่วนใหญ่ได้ดี' },
       { name: 'savingsRate', score: 70, weight: 20, label: 'อัตราการออมเงิน', valueText: 'อัตราออมเงินเดือนนี้ 8.5%' },

@@ -25,8 +25,8 @@ function handleGuestLogin() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-primary to-emerald-950 flex items-center justify-center p-4">
-    <div class="w-full max-w-md bg-white rounded-2xl p-8 shadow-xl space-y-6">
+  <div class="min-h-screen bg-surface-bg flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white border-2 border-border-subtle rounded-xl p-8 space-y-6">
       
       <!-- Brand Header -->
       <div class="text-center space-y-2">
@@ -44,7 +44,7 @@ function handleGuestLogin() {
         <div class="grid grid-cols-2 gap-3">
           <button 
             @click="handlePersonaLogin('nune')"
-            class="flex items-center justify-center gap-2 p-3 border border-border-subtle rounded-xl text-sm font-semibold hover:bg-slate-50 transition cursor-pointer text-ink"
+            class="btn-secondary flex items-center justify-center gap-2 p-3 text-sm font-bold text-ink"
           >
             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=nune" class="w-6 h-6 rounded-full" />
             <span>Nune (Free)</span>
@@ -52,7 +52,7 @@ function handleGuestLogin() {
           
           <button 
             @click="handlePersonaLogin('boss')"
-            class="flex items-center justify-center gap-2 p-3 border border-border-subtle rounded-xl text-sm font-semibold hover:bg-slate-50 transition cursor-pointer text-ink"
+            class="btn-secondary flex items-center justify-center gap-2 p-3 text-sm font-bold text-ink"
           >
             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=boss" class="w-6 h-6 rounded-full" />
             <span>Boss (Premium)</span>
@@ -76,7 +76,7 @@ function handleGuestLogin() {
               v-model="guestName"
               type="text" 
               placeholder="กรอกชื่อของคุณ..." 
-              class="input-field pl-10 bg-slate-50 border border-slate-200"
+              class="input-field pl-10"
               @keyup.enter="handleGuestLogin"
             />
           </div>

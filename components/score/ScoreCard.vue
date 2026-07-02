@@ -2,6 +2,8 @@
 import { computed } from 'vue'
 import { Flame } from 'lucide-vue-next'
 
+import { useI18n } from 'vue-i18n'
+
 const props = defineProps({
   score: {
     type: Number,
@@ -24,6 +26,9 @@ const props = defineProps({
     default: () => [false, false, false, false, false, false, false], // Past 7 days status
   }
 })
+
+// i18n
+const { locale } = useI18n()
 
 // Tier styles mapping
 const tierColorClass = computed(() => {
@@ -80,15 +85,24 @@ const dashoffset = computed(() => {
   return offset
 })
 
-// Day indicators labels (Thai)
-const daysLabels = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา']
+// Day indicators labels
+const daysLabels = computed(() => {
+  return locale.value === 'en'
+    ? ['M', 'T', 'W', 'Th', 'F', 'Sa', 'Su']
+    : ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา']
+})
 </script>
 
 <template>
-  <div class="surface-card flex flex-col items-center justify-center relative select-none">
+  <div class="surface-card flex flex-col items-center justify-center relative select-none bg-white border-2 border-border-subtle rounded-xl p-5">
     
+    <!-- Score Card Header Title -->
+    <span class="text-xs font-extrabold text-ink-muted uppercase tracking-wider text-center">
+      {{ $t('score.healthTitle') }}
+    </span>
+
     <!-- Score Gauge -->
-    <div class="relative w-48 h-40 flex items-center justify-center mt-2">
+    <div class="relative w-48 h-36 flex items-center justify-center mt-1">
       <svg viewBox="0 0 120 120" class="w-full h-full transform -rotate-[210deg] filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
         <!-- Background Track -->
         <circle
@@ -118,12 +132,11 @@ const daysLabels = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา']
       </svg>
 
       <!-- Center text -->
-      <div class="absolute inset-0 flex flex-col items-center justify-center pt-4">
-        <span class="text-xs font-semibold text-ink-muted leading-none">คะแนนสุขภาพเงิน</span>
-        <span class="text-5xl font-black font-brand text-ink tracking-tight mt-1 leading-none">
+      <div class="absolute inset-0 flex flex-col items-center justify-center pt-6">
+        <span class="text-5xl font-brand font-black text-ink tracking-tight leading-none">
           {{ score }}
         </span>
-        <span class="text-[10px] font-bold text-ink-muted mt-1 leading-none uppercase">/ 100</span>
+        <span class="text-[10px] font-bold text-ink-muted mt-1.5 leading-none uppercase">/ 100</span>
       </div>
     </div>
 
@@ -132,7 +145,7 @@ const daysLabels = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา']
       class="chip flex items-center justify-center px-4 py-1.5 rounded-full border text-xs font-extrabold -mt-2 mb-4 leading-none"
       :class="[tierColorClass.bg, tierColorClass.text, tierColorClass.border]"
     >
-      {{ tierTh }} · {{ tier }}
+      {{ locale === 'en' ? tier : tierTh }}
     </div>
 
     <!-- Streak indicator bar -->
@@ -140,9 +153,9 @@ const daysLabels = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา']
       <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-1.5 text-xs font-bold text-ink">
           <Flame class="w-4 h-4 text-streak-flame fill-streak-flame animate-pulse" />
-          <span>บันทึกต่อเนื่อง {{ streakDays }} วัน</span>
+          <span>{{ $t('score.streakDays', { days: streakDays }) }}</span>
         </div>
-        <span class="text-[10px] font-bold text-accent-emerald bg-accent-emerald/10 px-2 py-0.5 rounded-full">วินัยรายสัปดาห์</span>
+        <span class="text-[10px] font-bold text-accent-emerald bg-accent-emerald/10 px-2 py-0.5 rounded-full">{{ $t('score.weeklyDiscipline') }}</span>
       </div>
       
       <!-- Past 7 Days Log Status -->
