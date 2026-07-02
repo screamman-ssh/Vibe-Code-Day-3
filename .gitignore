@@ -1,9 +1,58 @@
+# Dependencies
+node_modules/
+
+# Nuxt / Nitro build output
+.nuxt/
+.output/
+dist/
+.data/
+.nitro/
+.cache/
+
+# Cloudflare / Wrangler
+.dev.vars
+.wrangler/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+!.dev.vars.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# TypeScript
+*.tsbuildinfo
+
+# Generated / local tooling
+graphify-out/
+
+# Local planning docs (not for repo)
 /.impeccable
 /ARCHITECTURE.md
 /DESIGN.md
 /prd.md
 /PRODUCT.md
 /TASK.md
-node_modules/
-.dev.vars
-.wrangler/

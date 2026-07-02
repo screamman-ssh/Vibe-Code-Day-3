@@ -1,2 +1,0 @@
-# Local secrets for `wrangler pages dev` (not committed)
-JWT_SECRET=dev_secret_key_1234567890_change_me_please
