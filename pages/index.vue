@@ -131,7 +131,7 @@ function navigateToScore() {
       <div class="flex items-center gap-3">
         <img 
           :src="user.avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg'" 
-          class="w-12 h-12 rounded-full border-2 border-border-subtle bg-white" 
+          class="w-12 h-12 rounded-full border-2 border-border-subtle bg-surface-card" 
         />
         <div class="flex flex-col">
           <span class="text-xs font-bold text-ink-muted leading-none">{{ $t('dashboard.welcome') }},</span>
@@ -192,7 +192,7 @@ function navigateToScore() {
         </div>
 
         <!-- Daily Quests Panel -->
-        <div class="surface-card p-5 space-y-4 border-2 border-border-subtle rounded-xl bg-white">
+        <div class="surface-card p-5 space-y-4 border-2 border-border-subtle rounded-xl bg-surface-card">
           <div class="flex justify-between items-center">
             <h3 class="text-sm font-brand font-black text-ink flex items-center gap-1.5">
               <Award class="w-5 h-5 text-primary" />
@@ -305,7 +305,7 @@ function navigateToScore() {
             </div>
 
             <!-- Payoff Progress -->
-            <div class="space-y-1.5 bg-white/60 p-2.5 rounded-xl border-2 border-amber-200/50">
+            <div class="space-y-1.5 bg-surface-card/60 p-2.5 rounded-xl border-2 border-amber-200/50">
               <div class="flex justify-between items-center text-[10px] font-bold">
                 <span class="text-tier-building">เป้าหมายชำระคืนคืบหน้า</span>
                 <span class="text-ink">เคลียร์หนี้แล้ว {{ debtPayoffPercent }}%</span>
@@ -342,7 +342,7 @@ function navigateToScore() {
         </div>
 
         <!-- Recent Activity Feed -->
-        <div class="surface-card p-4 border-2 border-border-subtle rounded-xl bg-white space-y-3.5">
+        <div class="surface-card p-4 border-2 border-border-subtle rounded-xl bg-surface-card space-y-3.5">
           <div class="flex justify-between items-center border-b-2 border-border-subtle pb-2">
             <h4 class="text-xs font-black text-ink uppercase tracking-wider flex items-center gap-1.5">
               <Calendar class="w-4.5 h-4.5 text-primary" />

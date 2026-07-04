@@ -389,7 +389,7 @@ function handleUpgrade() {
     <!-- 1. Money Summary Panel -->
     <div class="grid grid-cols-3 gap-2.5">
       <!-- Income card -->
-      <div class="surface-card-sm flex flex-col justify-between p-3.5 border-2 border-border-subtle bg-white">
+      <div class="surface-card-sm flex flex-col justify-between p-3.5 border-2 border-border-subtle bg-surface-card">
         <div class="flex items-center justify-between">
           <span class="text-[9px] font-bold text-ink-muted uppercase">รายรับเดือนนี้</span>
           <div class="w-6 h-6 rounded-full bg-duo-green-light/40 text-primary flex items-center justify-center">
@@ -402,7 +402,7 @@ function handleUpgrade() {
       </div>
 
       <!-- Expense card -->
-      <div class="surface-card-sm flex flex-col justify-between p-3.5 border-2 border-border-subtle bg-white">
+      <div class="surface-card-sm flex flex-col justify-between p-3.5 border-2 border-border-subtle bg-surface-card">
         <div class="flex items-center justify-between">
           <span class="text-[9px] font-bold text-ink-muted uppercase">รายจ่ายเดือนนี้</span>
           <div class="w-6 h-6 rounded-full bg-bubblegum-pink/10 text-tier-risk flex items-center justify-center">
@@ -477,7 +477,7 @@ function handleUpgrade() {
             @click="handleDayClick(cell)"
             class="aspect-square flex flex-col justify-between p-1 rounded-lg border text-center transition cursor-pointer select-none text-[11px] font-black relative"
             :class="[
-              !cell.isCurrentMonth ? 'text-ink-muted/40 border-transparent bg-slate-50/20' : 'text-ink border-border-subtle bg-white hover:bg-slate-50',
+              !cell.isCurrentMonth ? 'text-ink-muted/40 border-transparent bg-slate-50/20' : 'text-ink border-border-subtle bg-surface-card hover:bg-slate-50',
               selectedDate === cell.dateString ? 'ring-2 ring-primary border-primary text-primary scale-[1.03]' : ''
             ]"
           >
@@ -577,7 +577,7 @@ function handleUpgrade() {
       v-if="showDailyModal" 
       class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
     >
-      <div class="w-full max-w-md bg-white rounded-xl p-6 border-2 border-border-subtle space-y-4 relative overflow-y-auto max-h-[90vh]">
+      <div class="w-full max-w-md bg-surface-card rounded-xl p-6 border-2 border-border-subtle space-y-4 relative overflow-y-auto max-h-[90vh]">
         <!-- Close Button -->
         <button 
           @click="showDailyModal = false; selectedDate = null"
@@ -669,7 +669,7 @@ function handleUpgrade() {
       v-if="showAddModal" 
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
     >
-      <div class="w-full max-w-md bg-white rounded-xl p-6 border-2 border-border-subtle space-y-4 relative">
+      <div class="w-full max-w-md bg-surface-card rounded-xl p-6 border-2 border-border-subtle space-y-4 relative">
         <button 
           @click="showAddModal = false"
           class="absolute top-4 right-4 text-ink-muted hover:text-ink cursor-pointer"
@@ -764,7 +764,7 @@ function handleUpgrade() {
       v-if="showScanModal" 
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
     >
-      <div class="w-full max-w-md bg-white rounded-xl p-6 border-2 border-border-subtle space-y-4 relative overflow-y-auto max-h-[90vh]">
+      <div class="w-full max-w-md bg-surface-card rounded-xl p-6 border-2 border-border-subtle space-y-4 relative overflow-y-auto max-h-[90vh]">
         <button 
           @click="showScanModal = false"
           class="absolute top-4 right-4 text-ink-muted hover:text-ink cursor-pointer bg-slate-100 hover:bg-slate-200 w-8 h-8 rounded-full flex items-center justify-center border-2 border-border-subtle"
@@ -877,7 +877,7 @@ function handleUpgrade() {
       v-if="showUpgradeModal"
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
     >
-      <div class="w-full max-w-sm bg-white rounded-2xl p-6 border border-border-subtle shadow-xl space-y-4 text-center relative">
+      <div class="w-full max-w-sm bg-surface-card rounded-2xl p-6 border border-border-subtle shadow-xl space-y-4 text-center relative">
         <button 
           @click="showUpgradeModal = false"
           class="absolute top-4 right-4 text-ink-muted hover:text-ink cursor-pointer"

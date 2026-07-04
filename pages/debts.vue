@@ -434,7 +434,7 @@ async function triggerAiAnalysis() {
       <!-- Summary metrics widget -->
       <div class="grid grid-cols-2 gap-3">
         <!-- Remaining Owed -->
-        <div class="surface-card p-4 flex items-center gap-3 bg-white border border-border-subtle">
+        <div class="surface-card p-4 flex items-center gap-3 bg-surface-card border border-border-subtle">
           <div class="w-10 h-10 rounded-full bg-red-50 text-tier-risk flex items-center justify-center shrink-0">
             <Wallet class="w-5 h-5" />
           </div>
@@ -447,7 +447,7 @@ async function triggerAiAnalysis() {
         </div>
 
         <!-- Total Original Debt borrowed -->
-        <div class="surface-card p-4 flex items-center gap-3 bg-white border border-border-subtle">
+        <div class="surface-card p-4 flex items-center gap-3 bg-surface-card border border-border-subtle">
           <div class="w-10 h-10 rounded-full bg-slate-50 text-ink-muted flex items-center justify-center shrink-0">
             <DollarSign class="w-5 h-5" />
           </div>
@@ -471,7 +471,7 @@ async function triggerAiAnalysis() {
         <div 
           v-for="d in debts" 
           :key="d.id"
-          class="surface-card p-4 space-y-4 hover:bg-slate-50/50 transition relative group bg-white border border-border-subtle"
+          class="surface-card p-4 space-y-4 hover:bg-slate-50/50 transition relative group bg-surface-card border border-border-subtle"
         >
           <!-- Card Header details -->
           <div class="flex items-start justify-between">
@@ -603,7 +603,7 @@ async function triggerAiAnalysis() {
       <!-- Comparison Metrics Cards and Graphs grid wrapper -->
       <div v-if="simulationResults" class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <!-- Strategy A: Minimum Payment -->
-        <div class="surface-card p-4 space-y-3 bg-white border border-slate-100">
+        <div class="surface-card p-4 space-y-3 bg-surface-card border border-slate-100">
           <div class="flex items-center justify-between border-b border-border-subtle pb-2">
             <span class="text-xs font-bold text-ink">แผน A: จ่ายเฉพาะขั้นต่ำ</span>
             <span class="chip bg-slate-100 text-ink-muted text-[8px] font-black">มาตรฐาน</span>
@@ -623,7 +623,7 @@ async function triggerAiAnalysis() {
         </div>
 
         <!-- Strategy B: Minimum + Extra Pay -->
-        <div class="surface-card p-4 space-y-3 bg-white border border-accent-emerald/20 bg-emerald-50/5">
+        <div class="surface-card p-4 space-y-3 bg-surface-card border border-accent-emerald/20 bg-emerald-50/5">
           <div class="flex items-center justify-between border-b border-border-subtle pb-2">
             <span class="text-xs font-bold text-accent-emerald">แผน B: จ่ายขั้นต่ำ + โปะพิเศษ</span>
             <span class="chip bg-emerald-50 text-accent-emerald border-emerald-100 text-[8px] font-black">ประหยัดสูงสุด</span>
@@ -641,7 +641,7 @@ async function triggerAiAnalysis() {
         </div>
 
         <!-- Linear Trend Graph Card -->
-        <div v-if="graphData" class="surface-card col-span-1 md:col-span-2 p-4 space-y-4 bg-white border border-slate-100">
+        <div v-if="graphData" class="surface-card col-span-1 md:col-span-2 p-4 space-y-4 bg-surface-card border border-slate-100">
           <h4 class="text-xs font-bold text-ink flex items-center gap-1.5 border-b border-border-subtle pb-2">
             <Sliders class="w-4 h-4 text-primary" />
             <span>กราฟวิเคราะห์แนวโน้มการชำระหนี้สะสม (Payoff Trend Line Chart)</span>
@@ -757,7 +757,7 @@ async function triggerAiAnalysis() {
       <!-- Calculator Results Box -->
       <div class="grid grid-cols-3 gap-2.5">
         <!-- Monthly payment card -->
-        <div class="surface-card-sm flex flex-col justify-between p-3.5 border border-border-subtle bg-white">
+        <div class="surface-card-sm flex flex-col justify-between p-3.5 border border-border-subtle bg-surface-card">
           <span class="text-[9px] font-bold text-ink-muted uppercase">ยอดผ่อนต่อเดือน</span>
           <span class="stat-value text-accent-emerald text-sm font-black mt-3 truncate">
             {{ formatCurrency(calculatorResults.pmt) }}
@@ -765,7 +765,7 @@ async function triggerAiAnalysis() {
         </div>
 
         <!-- Total interest paid card -->
-        <div class="surface-card-sm flex flex-col justify-between p-3.5 border border-border-subtle bg-white">
+        <div class="surface-card-sm flex flex-col justify-between p-3.5 border border-border-subtle bg-surface-card">
           <span class="text-[9px] font-bold text-ink-muted uppercase">ดอกเบี้ยจ่ายรวม</span>
           <span class="stat-value text-tier-risk text-sm font-black mt-3 truncate">
             {{ formatCurrency(calculatorResults.totalInterest) }}
@@ -773,7 +773,7 @@ async function triggerAiAnalysis() {
         </div>
 
         <!-- Total payment card -->
-        <div class="surface-card-sm flex flex-col justify-between p-3.5 border border-border-subtle bg-white">
+        <div class="surface-card-sm flex flex-col justify-between p-3.5 border border-border-subtle bg-surface-card">
           <span class="text-[9px] font-bold text-ink-muted uppercase">ยอดจ่ายคืนรวม</span>
           <span class="stat-value text-ink text-sm font-black mt-3 truncate">
             {{ formatCurrency(calculatorResults.totalPayment) }}
@@ -812,7 +812,7 @@ async function triggerAiAnalysis() {
       <!-- AI Response Markdown panel -->
       <div
         v-if="aiAnalysisResult"
-        class="surface-card p-5 bg-white border border-border-subtle"
+        class="surface-card p-5 bg-surface-card border border-border-subtle"
       >
         <ChatMessageMarkdown :content="aiAnalysisResult" />
       </div>
@@ -823,7 +823,7 @@ async function triggerAiAnalysis() {
       v-if="showAddModal" 
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
     >
-      <div class="w-full max-w-sm bg-white rounded-xl p-6 border-2 border-border-subtle space-y-4 relative">
+      <div class="w-full max-w-sm bg-surface-card rounded-xl p-6 border-2 border-border-subtle space-y-4 relative">
         <button 
           @click="showAddModal = false"
           class="absolute top-4 right-4 text-ink-muted hover:text-ink cursor-pointer"
@@ -911,7 +911,7 @@ async function triggerAiAnalysis() {
       v-if="showEditModal" 
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
     >
-      <div class="w-full max-w-sm bg-white rounded-xl p-6 border-2 border-border-subtle space-y-4 relative">
+      <div class="w-full max-w-sm bg-surface-card rounded-xl p-6 border-2 border-border-subtle space-y-4 relative">
         <button 
           @click="showEditModal = false"
           class="absolute top-4 right-4 text-ink-muted hover:text-ink cursor-pointer"
@@ -994,7 +994,7 @@ async function triggerAiAnalysis() {
       v-if="showPayModal" 
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
     >
-      <div class="w-full max-w-xs bg-white rounded-xl p-6 border-2 border-border-subtle space-y-4 relative">
+      <div class="w-full max-w-xs bg-surface-card rounded-xl p-6 border-2 border-border-subtle space-y-4 relative">
         <button 
           @click="showPayModal = false"
           class="absolute top-4 right-4 text-ink-muted hover:text-ink cursor-pointer"

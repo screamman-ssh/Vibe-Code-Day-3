@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { Flame } from 'lucide-vue-next'
 
 import { useI18n } from 'vue-i18n'
@@ -91,10 +91,23 @@ const daysLabels = computed(() => {
     ? ['M', 'T', 'W', 'Th', 'F', 'Sa', 'Su']
     : ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา']
 })
+
+// Gauge track color adapts to theme
+const isDark = ref(false)
+onMounted(() => {
+  if (typeof window !== 'undefined') {
+    isDark.value = document.documentElement.classList.contains('dark')
+    const observer = new MutationObserver(() => {
+      isDark.value = document.documentElement.classList.contains('dark')
+    })
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+  }
+})
+const trackColor = computed(() => isDark.value ? '#1e3340' : '#f1f5f9')
 </script>
 
 <template>
-  <div class="surface-card flex flex-col items-center justify-center relative select-none bg-white border-2 border-border-subtle rounded-xl p-5">
+  <div class="surface-card flex flex-col items-center justify-center relative select-none bg-surface-card border-2 border-border-subtle rounded-xl p-5">
     
     <!-- Score Card Header Title -->
     <span class="text-xs font-extrabold text-ink-muted uppercase tracking-wider text-center">
@@ -110,7 +123,7 @@ const daysLabels = computed(() => {
           cy="60"
           :r="radius"
           fill="none"
-          stroke="#f1f5f9"
+          :stroke="trackColor"
           stroke-linecap="round"
           :stroke-width="strokeWidth"
           :stroke-dasharray="circumference"

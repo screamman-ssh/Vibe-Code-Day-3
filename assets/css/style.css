@@ -7,11 +7,11 @@
   --color-primary-light: #d7ffb8;         /* Duo Green Light */
   --color-accent-emerald: #58cc02;        /* Brand Primary */
   --color-accent-emerald-hover: #62e002;  /* Slightly lighter for hover */
-  --color-surface-bg: #ffffff;            /* Snow White background */
-  --color-surface-card: #ffffff;          /* Snow White cards */
-  --color-ink: #3c3c3c;                   /* Almost Black */
-  --color-ink-muted: #777777;             /* Graphite */
-  --color-border-subtle: #e5e5e5;         /* Cloud Gray */
+  --color-surface-bg: #ffffff;            /* Snow — primary background */
+  --color-surface-card: #ffffff;          /* Snow — card surfaces */
+  --color-ink: #4b4b4b;                   /* Eel — primary text */
+  --color-ink-muted: #777777;             /* Wolf — secondary text */
+  --color-border-subtle: #e5e5e5;         /* Swan — card borders */
   --color-streak-flame: #ffc700;          /* Sunshine Yellow */
   
   /* Financial status mappings to Duolingo Palette */
@@ -35,11 +35,12 @@
 }
 
 .dark {
-  --color-surface-bg: #131f24;            /* Dark slate */
-  --color-surface-card: #202f36;          /* Darker slate card */
-  --color-ink: #f1f5f9;
-  --color-ink-muted: #afafaf;
-  --color-border-subtle: #3c4d57;
+  --color-surface-bg: #131f24;            /* Deep teal-slate background */
+  --color-surface-card: #1a2c35;          /* Elevated card surface */
+  --color-ink: #e8ecf0;                   /* High-contrast but not pure white */
+  --color-ink-muted: #8a9ba7;             /* Muted text, still readable */
+  --color-border-subtle: #2a3f4a;         /* Subtle but visible edges */
+  --color-cloud-gray: #2a3f4a;            /* Override for btn-secondary border */
 }
 
 body {
@@ -174,13 +175,13 @@ body {
 }
 
 .btn-secondary {
-  @apply inline-flex items-center justify-center gap-2 min-h-12 px-5 bg-white text-sky-blue border-2 border-cloud-gray rounded-xl text-base font-bold cursor-pointer;
+  @apply inline-flex items-center justify-center gap-2 min-h-12 px-5 bg-surface-card text-sky-blue border-2 border-cloud-gray rounded-xl text-base font-bold cursor-pointer;
   box-shadow: 0 4px 0 var(--color-cloud-gray);
   transition: transform 100ms ease, box-shadow 100ms ease;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background-color: #fafafa;
+  background-color: color-mix(in srgb, var(--color-surface-card) 92%, var(--color-ink));
 }
 
 .btn-secondary:active:not(:disabled) {
@@ -232,7 +233,7 @@ body {
 }
 
 .input-field {
-  @apply w-full min-h-12 rounded-xl border-2 border-cloud-gray px-4 text-base outline-none focus:border-sky-blue focus:ring-0 bg-white text-almost-black;
+  @apply w-full min-h-12 rounded-xl border-2 border-border-subtle px-4 text-base outline-none focus:border-sky-blue focus:ring-0 bg-surface-card text-ink;
   transition: border-color 150ms ease;
 }
 
@@ -423,16 +424,12 @@ body {
   border-color: color-mix(in oklch, var(--color-primary) 24%, var(--color-surface-card));
 }
 
-.dark .input-field {
-  @apply border-border-subtle bg-slate-800/80 text-ink;
-}
-
 .dark ::-webkit-scrollbar-thumb {
-  background: #475569;
+  background: #3a5060;
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
+  background: #4a6575;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -496,8 +493,16 @@ body {
   @apply rounded bg-slate-100 px-1 py-0.5 text-[10px] font-mono;
 }
 
+.dark .chat-markdown code {
+  @apply bg-slate-800/60;
+}
+
 .chat-markdown pre {
   @apply my-2 overflow-x-auto rounded-lg bg-slate-100 p-2 text-[10px];
+}
+
+.dark .chat-markdown pre {
+  @apply bg-slate-800/60;
 }
 
 .chat-markdown pre code {

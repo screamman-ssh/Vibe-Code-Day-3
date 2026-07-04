@@ -49,7 +49,7 @@ function handleOnboardingComplete() {
 
 <template>
   <div class="min-h-screen bg-surface-bg flex items-center justify-center p-4">
-    <div class="w-full max-w-md bg-white rounded-xl p-6 border-2 border-border-subtle space-y-6">
+    <div class="w-full max-w-md bg-surface-card rounded-xl p-6 border-2 border-border-subtle space-y-6">
       
       <!-- STEP 1: Privacy Explainer -->
       <div v-if="step === 1" class="space-y-5">

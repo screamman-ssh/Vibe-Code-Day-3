@@ -8,13 +8,19 @@ import {
   LogOut, 
   CheckCircle, 
   ShieldCheck, 
-  Globe
+  Globe,
+  Sun,
+  Moon,
+  Monitor
 } from 'lucide-vue-next'
+import { useTheme } from '~/composables/useTheme'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const usageStore = useUsageStore()
 const { locale, t } = useI18n()
+
+const { theme, setTheme } = useTheme()
 
 const user = computed(() => authStore.user || { displayName: '', subscriptionTier: 'free', emergencyFundAmount: 0 })
 
@@ -95,11 +101,39 @@ function handleLogout() {
         <select 
           v-model="currentLocale" 
           @change="handleLanguageChange"
-          class="input-field bg-slate-50 border border-slate-200"
+          class="input-field"
         >
           <option value="th">{{ $t('settings.langTh') }}</option>
           <option value="en">{{ $t('settings.langEn') }}</option>
         </select>
+      </div>
+    </div>
+
+    <!-- Theme Selector Card -->
+    <div class="surface-card space-y-4">
+      <h3 class="text-xs font-extrabold text-ink-muted uppercase tracking-wider flex items-center gap-2">
+        <Moon class="w-4 h-4 text-primary" />
+        <span>{{ $t('settings.themeSelect') }}</span>
+      </h3>
+      
+      <div class="flex gap-1.5 p-1 bg-surface-bg rounded-xl border-2 border-border-subtle">
+        <button 
+          v-for="mode in ['light', 'dark', 'system']" 
+          :key="mode"
+          @click="setTheme(mode)"
+          class="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-bold cursor-pointer focus:outline-none"
+          :class="theme === mode 
+            ? 'bg-primary text-white' 
+            : 'text-ink-muted hover:text-ink hover:bg-surface-card transition-colors'"
+          :style="theme === mode ? 'box-shadow: 0 2px 0 #3f8f01' : ''"
+        >
+          <Sun v-if="mode === 'light'" class="w-4 h-4 shrink-0" />
+          <Moon v-else-if="mode === 'dark'" class="w-4 h-4 shrink-0" />
+          <Monitor v-else class="w-4 h-4 shrink-0" />
+          <span class="font-brand">
+            {{ mode === 'light' ? $t('settings.themeLight') : mode === 'dark' ? $t('settings.themeDark') : $t('settings.themeSystem') }}
+          </span>
+        </button>
       </div>
     </div>
 
@@ -110,7 +144,7 @@ function handleLogout() {
       <div class="flex items-center justify-center py-2">
         <img 
           :src="avatarUrl || 'https://api.dicebear.com/7.x/avataaars/svg'" 
-          class="w-16 h-16 rounded-full border border-border-subtle bg-slate-50" 
+          class="w-16 h-16 rounded-full border border-border-subtle bg-surface-bg" 
         />
       </div>
 
@@ -121,7 +155,7 @@ function handleLogout() {
           <input 
             v-model="displayName"
             type="text" 
-            class="input-field bg-slate-50 border border-slate-200"
+            class="input-field"
           />
         </div>
 
@@ -131,7 +165,7 @@ function handleLogout() {
           <input 
             v-model="avatarUrl"
             type="text" 
-            class="input-field bg-slate-50 border border-slate-200"
+            class="input-field"
           />
         </div>
 
@@ -142,7 +176,7 @@ function handleLogout() {
             v-model="emergencyFundAmount"
             type="number" 
             placeholder="0"
-            class="input-field bg-slate-50 border border-slate-200"
+            class="input-field"
           />
           <span class="text-[10px] text-ink-muted leading-relaxed block mt-1">
             {{ $t('settings.emergencyFundHint') }}
@@ -169,7 +203,7 @@ function handleLogout() {
     <div class="surface-card space-y-4">
       <h3 class="text-xs font-extrabold text-ink-muted uppercase tracking-wider">{{ $t('settings.membership') }}</h3>
 
-      <div class="flex justify-between items-center bg-slate-50 border border-border-subtle p-3.5 rounded-xl text-xs">
+      <div class="flex justify-between items-center bg-surface-bg border border-border-subtle p-3.5 rounded-xl text-xs">
         <div class="flex flex-col gap-1">
           <span class="text-[10px] text-ink-muted leading-none">{{ $t('settings.currentPackage') }}</span>
           <span class="text-sm font-bold text-ink mt-1 flex items-center gap-1.5">
@@ -187,7 +221,7 @@ function handleLogout() {
         </button>
         <span 
           v-else
-          class="chip bg-emerald-50 text-accent-emerald border-emerald-100 font-bold text-[9px]"
+          class="chip bg-emerald-50 dark:bg-emerald-950/30 text-accent-emerald border-emerald-100 dark:border-emerald-900/30 font-bold text-[9px]"
         >
           {{ $t('settings.lifetimeActive') }}
         </span>
@@ -201,7 +235,7 @@ function handleLogout() {
     </div>
 
     <!-- Legal disclaimer notice -->
-    <div class="surface-card-sm bg-slate-50 border border-border-subtle flex items-start gap-2 text-[10px] leading-relaxed text-ink-muted">
+    <div class="surface-card-sm bg-surface-bg border border-border-subtle flex items-start gap-2 text-[10px] leading-relaxed text-ink-muted">
       <ShieldCheck class="w-4 h-4 text-primary shrink-0 mt-0.5" />
       <div>
         {{ $t('settings.disclaimer') }}
@@ -211,7 +245,7 @@ function handleLogout() {
     <!-- Log out action -->
     <button 
       @click="handleLogout"
-      class="btn-secondary w-full justify-center gap-2 text-xs py-2 min-h-10 text-tier-risk hover:bg-red-50 hover:text-tier-risk cursor-pointer"
+      class="btn-secondary w-full justify-center gap-2 text-xs py-2 min-h-10 text-tier-risk hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-tier-risk cursor-pointer"
     >
       <LogOut class="w-4 h-4" />
       <span>{{ $t('settings.logoutBtn') }}</span>

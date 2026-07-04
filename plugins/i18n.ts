@@ -77,7 +77,11 @@ export default defineNuxtPlugin((nuxtApp) => {
           langSelect: 'System Language',
           langTh: 'ไทย (Thai)',
           langEn: 'English (English)',
-          enterDisplayName: 'Please enter display name'
+          enterDisplayName: 'Please enter display name',
+          themeSelect: 'Theme / Appearance',
+          themeLight: 'Light Mode',
+          themeDark: 'Dark Mode',
+          themeSystem: 'System Default'
         }
       },
       th: {
@@ -144,7 +148,11 @@ export default defineNuxtPlugin((nuxtApp) => {
           langSelect: 'ภาษาของระบบ (Language)',
           langTh: 'ไทย (Thai)',
           langEn: 'English (English)',
-          enterDisplayName: 'กรุณากรอกชื่อแสดงผล'
+          enterDisplayName: 'กรุณากรอกชื่อแสดงผล',
+          themeSelect: 'ธีม / รูปลักษณ์',
+          themeLight: 'โหมดสว่าง',
+          themeDark: 'โหมดมืด',
+          themeSystem: 'ตามระบบ'
         }
       }
     }

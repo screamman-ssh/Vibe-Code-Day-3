@@ -26,7 +26,7 @@ function handleGuestLogin() {
 
 <template>
   <div class="min-h-screen bg-surface-bg flex items-center justify-center p-4">
-    <div class="w-full max-w-md bg-white border-2 border-border-subtle rounded-xl p-8 space-y-6">
+    <div class="w-full max-w-md bg-surface-card border-2 border-border-subtle rounded-xl p-8 space-y-6">
       
       <!-- Brand Header -->
       <div class="text-center space-y-2">

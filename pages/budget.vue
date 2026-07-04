@@ -158,7 +158,7 @@ function handleDeleteCategory(categoryName) {
         <div 
           v-for="c in budgetStore.categories" 
           :key="c.category"
-          class="surface-card-sm flex flex-col justify-between min-h-[8.5rem] relative group border-2 border-border-subtle hover:bg-slate-50/50 transition p-4 rounded-xl bg-white"
+          class="surface-card-sm flex flex-col justify-between min-h-[8.5rem] relative group border-2 border-border-subtle hover:bg-slate-50/50 transition p-4 rounded-xl bg-surface-card"
         >
           <!-- Info block -->
           <div class="space-y-1.5">
@@ -237,7 +237,7 @@ function handleDeleteCategory(categoryName) {
       v-if="showAddModal" 
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
     >
-      <div class="w-full max-w-sm bg-white rounded-xl p-6 border-2 border-border-subtle space-y-4 relative">
+      <div class="w-full max-w-sm bg-surface-card rounded-xl p-6 border-2 border-border-subtle space-y-4 relative">
         <button 
           @click="showAddModal = false"
           class="absolute top-4 right-4 text-ink-muted hover:text-ink cursor-pointer"
@@ -286,7 +286,7 @@ function handleDeleteCategory(categoryName) {
       v-if="showEditModal" 
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
     >
-      <div class="w-full max-w-sm bg-white rounded-xl p-6 border-2 border-border-subtle space-y-4 relative">
+      <div class="w-full max-w-sm bg-surface-card rounded-xl p-6 border-2 border-border-subtle space-y-4 relative">
         <button 
           @click="showEditModal = false"
           class="absolute top-4 right-4 text-ink-muted hover:text-ink cursor-pointer"
