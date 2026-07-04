@@ -7,7 +7,9 @@ export default defineNuxtConfig({
     preset: 'cloudflare_pages',
   },
   runtimeConfig: {
-    aiApiKey: '', // server-only config, will map to NUXT_AI_API_KEY env var
+    public: {
+      aiApiKey: '', // public config, will map to NUXT_PUBLIC_AI_API_KEY env var
+    }
   },
   ssr: false,
   experimental: {

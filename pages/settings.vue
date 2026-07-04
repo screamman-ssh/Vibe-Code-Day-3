@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter, useAuthStore, useUsageStore } from '#imports'
 import { useI18n } from 'vue-i18n'
 import { 
@@ -8,7 +8,6 @@ import {
   LogOut, 
   CheckCircle, 
   ShieldCheck, 
-  KeyRound,
   Globe
 } from 'lucide-vue-next'
 
@@ -22,17 +21,10 @@ const user = computed(() => authStore.user || { displayName: '', subscriptionTie
 const displayName = ref(user.value.displayName)
 const avatarUrl = ref(user.value.avatarUrl)
 const emergencyFundAmount = ref(user.value.emergencyFundAmount)
-const apiKey = ref('')
 const currentLocale = ref(locale.value)
 
 const error = ref('')
 const success = ref('')
-
-onMounted(() => {
-  if (typeof window !== 'undefined') {
-    apiKey.value = localStorage.getItem('openai_api_key') || ''
-  }
-})
 
 const isPremium = computed(() => usageStore.tier === 'premium')
 
@@ -58,7 +50,6 @@ function handleSave() {
   authStore.user.emergencyFundAmount = parseFloat(emergencyFundAmount.value || 0)
 
   if (typeof window !== 'undefined') {
-    localStorage.setItem('openai_api_key', apiKey.value.trim())
     localStorage.setItem('user', JSON.stringify(authStore.user)) // Sync to local storage
   }
 
@@ -173,26 +164,6 @@ function handleLogout() {
       </button>
     </div>
 
-    <!-- AI Settings Card -->
-    <div class="surface-card space-y-4">
-      <h3 class="text-xs font-extrabold text-ink-muted uppercase tracking-wider flex items-center gap-2">
-        <KeyRound class="w-4 h-4 text-primary" />
-        <span>{{ $t('settings.aiSettings') }}</span>
-      </h3>
-      
-      <div class="space-y-1">
-        <label class="field-label font-bold text-ink">{{ $t('settings.apiKey') }}</label>
-        <input 
-          v-model="apiKey"
-          type="password"
-          placeholder="Bearer API Key (ตัวอย่าง: sk-proj-...)"
-          class="input-field bg-slate-50 border border-slate-200"
-        />
-        <span class="text-[10px] text-ink-muted leading-relaxed block mt-1">
-          {{ $t('settings.apiKeyHint') }}
-        </span>
-      </div>
-    </div>
 
     <!-- Membership Details -->
     <div class="surface-card space-y-4">
