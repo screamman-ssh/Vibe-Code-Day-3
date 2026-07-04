@@ -3,6 +3,9 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineNuxtConfig({
   compatibilityDate: '2026-07-02',
+  nitro: {
+    preset: 'cloudflare_pages',
+  },
   runtimeConfig: {
     public: {
       aiApiKey: '' // fallback blank
