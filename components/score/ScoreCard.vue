@@ -149,7 +149,7 @@ const trackColor = computed(() => isDark.value ? '#1e3340' : '#f1f5f9')
         <span class="text-5xl font-brand font-black text-ink tracking-tight leading-none">
           {{ score }}
         </span>
-        <span class="text-[10px] font-bold text-ink-muted mt-1.5 leading-none uppercase">/ 100</span>
+        <span class="text-caption font-bold text-ink-muted mt-1.5 leading-none uppercase">/ 100</span>
       </div>
     </div>
 
@@ -168,7 +168,7 @@ const trackColor = computed(() => isDark.value ? '#1e3340' : '#f1f5f9')
           <Flame class="w-4 h-4 text-streak-flame fill-streak-flame animate-pulse" />
           <span>{{ $t('score.streakDays', { days: streakDays }) }}</span>
         </div>
-        <span class="text-[10px] font-bold text-accent-emerald bg-accent-emerald/10 px-2 py-0.5 rounded-full">{{ $t('score.weeklyDiscipline') }}</span>
+        <span class="text-caption font-bold text-accent-emerald bg-accent-emerald/10 px-2 py-0.5 rounded-full">{{ $t('score.weeklyDiscipline') }}</span>
       </div>
       
       <!-- Past 7 Days Log Status -->
@@ -179,7 +179,7 @@ const trackColor = computed(() => isDark.value ? '#1e3340' : '#f1f5f9')
           class="flex flex-col items-center gap-1 flex-1"
         >
           <div 
-            class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black transition-all duration-300"
+            class="w-7 h-7 rounded-full flex items-center justify-center text-caption font-black transition-all duration-300"
             :class="[
               active 
                 ? 'bg-streak-flame text-white scale-105 shadow-sm' 

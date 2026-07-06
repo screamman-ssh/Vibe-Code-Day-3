@@ -335,14 +335,14 @@ onMounted(() => scrollToBottom())
 }
 
 .chat-page__title {
-  font-size: 1.125rem;
+  font-size: var(--text-lg);
   font-weight: 700;
   line-height: 1.25;
   color: var(--color-ink);
 }
 
 .chat-page__meta {
-  font-size: 0.625rem;
+  font-size: var(--text-caption);
   color: var(--color-ink-muted);
   margin-top: 0.125rem;
 }
@@ -434,7 +434,7 @@ onMounted(() => scrollToBottom())
   max-width: min(88%, 28rem);
   padding: 0.625rem 0.875rem;
   border-radius: 12px;
-  font-size: 0.8125rem;
+  font-size: var(--text-label);
   line-height: 1.55;
   word-break: break-word;
 }
@@ -455,7 +455,7 @@ onMounted(() => scrollToBottom())
 
 .chat-page__bubble--typing {
   color: var(--color-ink-muted);
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
 }
 
 .chat-page__footer {
@@ -481,7 +481,7 @@ onMounted(() => scrollToBottom())
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  font-size: 0.625rem;
+  font-size: var(--text-caption);
   font-weight: 600;
   color: var(--color-ink-muted);
   margin-bottom: 0.375rem;
@@ -504,7 +504,7 @@ onMounted(() => scrollToBottom())
   flex-shrink: 0;
   padding: 0.375rem 0.75rem;
   border-radius: 9999px;
-  font-size: 0.6875rem;
+  font-size: var(--text-label);
   font-weight: 600;
   white-space: nowrap;
   border: 2px solid color-mix(in oklch, var(--color-primary) 25%, var(--color-border-subtle));
@@ -546,7 +546,7 @@ onMounted(() => scrollToBottom())
   border-radius: 12px;
   border: 2px solid var(--color-border-subtle);
   background: var(--color-surface-card);
-  font-size: 0.8125rem;
+  font-size: var(--text-label);
   color: var(--color-ink);
   outline: none;
   transition: border-color 150ms;

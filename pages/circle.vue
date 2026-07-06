@@ -65,7 +65,7 @@ const formatEventText = (e) => {
 
       <div class="flex items-center justify-between border-t border-border-subtle pt-3 text-xs">
         <div class="flex flex-col">
-          <span class="text-[10px] text-ink-muted leading-none">รหัสเข้าร่วมกลุ่ม</span>
+          <span class="text-caption text-ink-muted leading-none">รหัสเข้าร่วมกลุ่ม</span>
           <span class="text-sm font-brand font-black text-ink mt-1 flex items-center gap-2 select-all">
             {{ group.inviteCode }}
             <button 
@@ -78,7 +78,7 @@ const formatEventText = (e) => {
           </span>
         </div>
         <div class="flex flex-col text-right">
-          <span class="text-[10px] text-ink-muted leading-none">สมาชิกทั้งหมด</span>
+          <span class="text-caption text-ink-muted leading-none">สมาชิกทั้งหมด</span>
           <span class="text-sm font-bold text-ink mt-1">{{ group.membersCount }} / {{ group.maxMembers }} คน</span>
         </div>
       </div>
@@ -132,12 +132,12 @@ const formatEventText = (e) => {
                 {{ member.displayName }}
                 <span 
                   v-if="member.displayName === currentUser.displayName"
-                  class="text-[9px] font-black bg-primary/10 text-primary px-1.5 py-0.5 rounded-full"
+                  class="text-micro font-black bg-primary/10 text-primary px-1.5 py-0.5 rounded-full"
                 >
                   คุณ
                 </span>
               </span>
-              <span class="text-[10px] text-ink-muted mt-1 leading-none">
+              <span class="text-caption text-ink-muted mt-1 leading-none">
                 {{ member.tierTh }} · บันทึก {{ member.streakDays }} วันติด
               </span>
             </div>
@@ -152,7 +152,7 @@ const formatEventText = (e) => {
             
             <div class="flex flex-col text-right">
               <span class="text-base font-brand font-black text-ink leading-none">{{ member.score }}</span>
-              <span class="text-[9px] text-ink-muted mt-1 leading-none uppercase">คะแนน</span>
+              <span class="text-micro text-ink-muted mt-1 leading-none uppercase">คะแนน</span>
             </div>
           </div>
         </div>
@@ -173,7 +173,7 @@ const formatEventText = (e) => {
           <div class="flex items-center gap-2">
             <img :src="`https://api.dicebear.com/7.x/avataaars/svg?seed=${e.displayName}`" class="w-6 h-6 rounded-full bg-slate-100" />
             <span class="text-xs font-bold text-ink">{{ e.displayName }}</span>
-            <span class="text-[9px] text-ink-muted ml-auto">เมื่อกี้นี้</span>
+            <span class="text-micro text-ink-muted ml-auto">เมื่อกี้นี้</span>
           </div>
 
           <!-- Event content -->
@@ -188,7 +188,7 @@ const formatEventText = (e) => {
               v-for="(count, emoji) in e.reactions"
               :key="emoji"
               @click="handleReact(e.id, emoji)"
-              class="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-bg border border-border-subtle hover:bg-slate-100 transition text-[10px] font-bold text-ink cursor-pointer"
+              class="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-bg border border-border-subtle hover:bg-slate-100 transition text-caption font-bold text-ink cursor-pointer"
             >
               <span>{{ emoji }}</span>
               <span>{{ count }}</span>

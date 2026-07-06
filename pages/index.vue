@@ -185,7 +185,7 @@ function navigateToScore() {
             <div class="w-2.5 h-2.5 rounded-full bg-primary animate-ping" />
             <span class="text-xs font-black">{{ $t('dashboard.circleActivity', { name: groupStore.currentGroup.name }) }}</span>
           </div>
-          <div class="flex items-center gap-1 text-[11px] text-primary uppercase font-extrabold tracking-wider">
+          <div class="flex items-center gap-1 text-label text-primary uppercase font-extrabold tracking-wider">
             <span>{{ $t('dashboard.viewRank') }}</span>
             <ArrowRight class="w-3 h-3" />
           </div>
@@ -224,7 +224,7 @@ function navigateToScore() {
               </div>
               <span 
                 v-if="quest.completed" 
-                class="text-[9px] font-black uppercase tracking-wider bg-primary/10 px-2 py-0.5 rounded-full"
+                class="text-micro font-black uppercase tracking-wider bg-primary/10 px-2 py-0.5 rounded-full"
               >
                 เสร็จสิ้น
               </span>
@@ -246,11 +246,11 @@ function navigateToScore() {
             </div>
             <div class="space-y-2.5 mt-5">
               <div class="flex justify-between items-center border-b border-sky-100 pb-1.5">
-                <span class="text-[10px] font-bold text-ink-muted leading-none">{{ $t('dashboard.income') }}</span>
+                <span class="text-caption font-bold text-ink-muted leading-none">{{ $t('dashboard.income') }}</span>
                 <span class="text-sm font-brand font-black text-primary leading-none">{{ formatCurrency(monthlyIncome) }}</span>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-[10px] font-bold text-ink-muted leading-none">{{ $t('dashboard.expense') }}</span>
+                <span class="text-caption font-bold text-ink-muted leading-none">{{ $t('dashboard.expense') }}</span>
                 <span class="text-sm font-brand font-black text-tier-risk leading-none">{{ formatCurrency(monthlyExpense) }}</span>
               </div>
             </div>
@@ -267,7 +267,7 @@ function navigateToScore() {
             </div>
             <div class="space-y-2 mt-5">
               <div class="flex flex-col">
-                <span class="text-[10px] font-bold text-ink-muted leading-none">{{ $t('dashboard.spent') }}</span>
+                <span class="text-caption font-bold text-ink-muted leading-none">{{ $t('dashboard.spent') }}</span>
                 <span class="text-sm font-brand font-black text-ink mt-1.5">{{ formatCurrency(totalBudgetSpent) }}</span>
               </div>
               <div class="w-full bg-slate-200/50 rounded-full h-2 mt-1.5 overflow-hidden">
@@ -276,7 +276,7 @@ function navigateToScore() {
                   :style="{ width: `${Math.min((totalBudgetSpent / (totalBudgetLimit || 1)) * 100, 100)}%` }"
                 />
               </div>
-              <span class="text-[9px] font-bold text-ink-muted block mt-1">{{ $t('dashboard.outOf', { total: formatCurrency(totalBudgetLimit) }) }}</span>
+              <span class="text-micro font-bold text-ink-muted block mt-1">{{ $t('dashboard.outOf', { total: formatCurrency(totalBudgetLimit) }) }}</span>
             </div>
           </div>
 
@@ -293,11 +293,11 @@ function navigateToScore() {
                 </div>
                 <div class="flex flex-col">
                   <span class="text-xs font-black text-tier-building uppercase tracking-wider">{{ $t('dashboard.debts') }}</span>
-                  <span class="text-[10px] font-bold text-ink-muted mt-0.5">{{ $t('dashboard.debtsDesc') }}</span>
+                  <span class="text-caption font-bold text-ink-muted mt-0.5">{{ $t('dashboard.debtsDesc') }}</span>
                 </div>
               </div>
               <div class="flex flex-col text-right justify-center">
-                <span class="text-[9px] font-bold text-ink-muted leading-none">{{ $t('dashboard.totalDebt') }}</span>
+                <span class="text-micro font-bold text-ink-muted leading-none">{{ $t('dashboard.totalDebt') }}</span>
                 <span class="text-sm font-brand font-black text-ink mt-1.5 leading-none">
                   {{ formatCurrency(debtsStore.totalBalance) }}
                 </span>
@@ -306,7 +306,7 @@ function navigateToScore() {
 
             <!-- Payoff Progress -->
             <div class="space-y-1.5 bg-surface-card/60 p-2.5 rounded-xl border-2 border-amber-200/50">
-              <div class="flex justify-between items-center text-[10px] font-bold">
+              <div class="flex justify-between items-center text-caption font-bold">
                 <span class="text-tier-building">เป้าหมายชำระคืนคืบหน้า</span>
                 <span class="text-ink">เคลียร์หนี้แล้ว {{ debtPayoffPercent }}%</span>
               </div>
@@ -331,10 +331,10 @@ function navigateToScore() {
               </div>
               <div class="flex flex-col">
                 <span class="text-xs font-black text-primary uppercase tracking-wider">ปลอดหนี้สิน! (Debt-Free)</span>
-                <p class="text-[10px] font-bold text-ink-muted mt-0.5">ยินดีด้วยครับ! คุณไม่มีภาระหนี้สินในระบบในขณะนี้</p>
+                <p class="text-caption font-bold text-ink-muted mt-0.5">ยินดีด้วยครับ! คุณไม่มีภาระหนี้สินในระบบในขณะนี้</p>
               </div>
             </div>
-            <div class="text-[10px] font-black text-primary bg-primary/10 px-2.5 py-1 rounded-full uppercase shrink-0">
+            <div class="text-caption font-black text-primary bg-primary/10 px-2.5 py-1 rounded-full uppercase shrink-0">
               รักษาไว้ 🎉
             </div>
           </div>
@@ -350,7 +350,7 @@ function navigateToScore() {
             </h4>
             <button 
               @click="router.push('/tracker')"
-              class="text-[10px] font-extrabold text-primary hover:underline cursor-pointer"
+              class="text-caption font-extrabold text-primary hover:underline cursor-pointer"
             >
               ดูทั้งหมด
             </button>
@@ -376,7 +376,7 @@ function navigateToScore() {
                 </div>
                 <div class="flex flex-col min-w-0 font-bold">
                   <span class="text-xs font-bold text-ink leading-tight">{{ formatCategoryThai(tx.category) }}</span>
-                  <span v-if="tx.note" class="text-[9px] text-ink-muted mt-0.5 max-w-[150px] truncate">{{ tx.note }}</span>
+                  <span v-if="tx.note" class="text-micro text-ink-muted mt-0.5 max-w-[150px] truncate">{{ tx.note }}</span>
                 </div>
               </div>
 
@@ -393,11 +393,11 @@ function navigateToScore() {
         <!-- AI Coaching Teaser (Premium Feature) -->
         <div class="surface-card p-5 border-2 border-sunshine-yellow bg-sunshine-yellow/5 rounded-xl flex items-center justify-between gap-4 relative overflow-hidden">
           <div class="space-y-2.5 max-w-[70%]">
-            <span class="chip flex-inline px-2 py-0.5 rounded-full text-[9px] font-black bg-sunshine-yellow/15 text-tier-building border-tier-building/20">
+            <span class="chip flex-inline px-2 py-0.5 rounded-full text-micro font-black bg-sunshine-yellow/15 text-tier-building border-tier-building/20">
               {{ $t('dashboard.premiumBadge') }}
             </span>
             <h3 class="text-sm font-brand font-black text-ink leading-tight">{{ $t('dashboard.premiumTitle') }}</h3>
-            <p class="text-[10px] font-bold text-ink-muted leading-relaxed">
+            <p class="text-caption font-bold text-ink-muted leading-relaxed">
               {{ $t('dashboard.premiumDesc') }}
             </p>
 

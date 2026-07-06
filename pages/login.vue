@@ -93,7 +93,7 @@ function handleGuestLogin() {
       </div>
 
       <!-- Disclaimer warning -->
-      <div class="text-[10px] text-ink-muted text-center pt-2 leading-relaxed">
+      <div class="text-caption text-ink-muted text-center pt-2 leading-relaxed">
         *ข้อแนะนำทั้งหมดเป็นข้อมูลเพื่อการศึกษาทางการเงินเท่านั้น ไม่ใช่คำแนะนำทางการเงินที่ได้รับใบอนุญาต*
       </div>
 

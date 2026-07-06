@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
+import PageBanner from '~/components/layout/PageBanner.vue'
 import { useRouter, useAuthStore, useUsageStore } from '#imports'
 import { useI18n } from 'vue-i18n'
 import { 
@@ -8,6 +9,7 @@ import {
   LogOut, 
   CheckCircle, 
   ShieldCheck, 
+  Settings,
   Globe,
   Sun,
   Moon,
@@ -84,11 +86,14 @@ function handleLogout() {
 <template>
   <div class="page-shell">
     
-    <!-- Header -->
-    <div class="py-2">
-      <h1 class="page-title">{{ $t('settings.title') }}</h1>
-      <p class="page-lead">{{ $t('settings.lead') }}</p>
-    </div>
+    <PageBanner
+      :title="$t('settings.title')"
+      :lead="$t('settings.lead')"
+    >
+      <template #icon>
+        <Settings class="w-5 h-5" />
+      </template>
+    </PageBanner>
 
     <!-- Language Selector Card -->
     <div class="surface-card space-y-4">
@@ -125,7 +130,7 @@ function handleLogout() {
           :class="theme === mode 
             ? 'bg-primary text-white' 
             : 'text-ink-muted hover:text-ink hover:bg-surface-card transition-colors'"
-          :style="theme === mode ? 'box-shadow: 0 2px 0 #3f8f01' : ''"
+          :style="theme === mode ? 'box-shadow: 0 2px 0 #861212' : ''"
         >
           <Sun v-if="mode === 'light'" class="w-4 h-4 shrink-0" />
           <Moon v-else-if="mode === 'dark'" class="w-4 h-4 shrink-0" />
@@ -178,7 +183,7 @@ function handleLogout() {
             placeholder="0"
             class="input-field"
           />
-          <span class="text-[10px] text-ink-muted leading-relaxed block mt-1">
+          <span class="text-caption text-ink-muted leading-relaxed block mt-1">
             {{ $t('settings.emergencyFundHint') }}
           </span>
         </div>
@@ -205,7 +210,7 @@ function handleLogout() {
 
       <div class="flex justify-between items-center bg-surface-bg border border-border-subtle p-3.5 rounded-xl text-xs">
         <div class="flex flex-col gap-1">
-          <span class="text-[10px] text-ink-muted leading-none">{{ $t('settings.currentPackage') }}</span>
+          <span class="text-caption text-ink-muted leading-none">{{ $t('settings.currentPackage') }}</span>
           <span class="text-sm font-bold text-ink mt-1 flex items-center gap-1.5">
             {{ isPremium ? $t('dashboard.premium') : $t('dashboard.free') }}
             <Sparkles v-if="isPremium" class="w-4 h-4 text-amber-500 fill-amber-500" />
@@ -215,13 +220,13 @@ function handleLogout() {
         <button 
           v-if="!isPremium"
           @click="handleUpgrade"
-          class="btn-primary min-h-0 py-1.5 px-3 rounded-full text-[10px] bg-amber-500 hover:bg-amber-600 border border-amber-500/20 cursor-pointer"
+          class="btn-primary min-h-0 py-1.5 px-3 rounded-full text-caption bg-amber-500 hover:bg-amber-600 border border-amber-500/20 cursor-pointer"
         >
           {{ $t('settings.upgradeBtn') }}
         </button>
         <span 
           v-else
-          class="chip bg-emerald-50 dark:bg-emerald-950/30 text-accent-emerald border-emerald-100 dark:border-emerald-900/30 font-bold text-[9px]"
+          class="chip bg-emerald-50 dark:bg-emerald-950/30 text-accent-emerald border-emerald-100 dark:border-emerald-900/30 font-bold text-micro"
         >
           {{ $t('settings.lifetimeActive') }}
         </span>
@@ -235,7 +240,7 @@ function handleLogout() {
     </div>
 
     <!-- Legal disclaimer notice -->
-    <div class="surface-card-sm bg-surface-bg border border-border-subtle flex items-start gap-2 text-[10px] leading-relaxed text-ink-muted">
+    <div class="surface-card-sm bg-surface-bg border border-border-subtle flex items-start gap-2 text-caption leading-relaxed text-ink-muted">
       <ShieldCheck class="w-4 h-4 text-primary shrink-0 mt-0.5" />
       <div>
         {{ $t('settings.disclaimer') }}

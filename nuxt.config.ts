@@ -8,7 +8,7 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      aiApiKey: '', // public config, will map to NUXT_PUBLIC_AI_API_KEY env var
+      aiApiKey: 'TestOnly1111@', 
     }
   },
   ssr: false,
@@ -24,8 +24,8 @@ export default defineNuxtConfig({
           name: 'MoneyCircle',
           short_name: 'MoneyCircle',
           description: 'Score your habits, not your wealth',
-          theme_color: '#0f766e',
-          background_color: '#f0fdfa',
+          theme_color: '#BE1A1A',
+          background_color: '#F8EBAB',
           display: 'standalone',
           orientation: 'portrait',
           icons: [

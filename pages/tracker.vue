@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
+import PageBanner from '~/components/layout/PageBanner.vue'
 import { useRouter, useTransactionsStore, useScoreStore, useUsageStore } from '#imports'
 import { 
   Plus, 
@@ -13,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Camera,
+  Receipt,
   Sparkles,
   RefreshCw,
   CheckCircle,
@@ -360,38 +362,37 @@ function handleUpgrade() {
 <template>
   <div class="page-shell">
     
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 py-2">
-      <div>
-        <h1 class="page-title font-brand text-2xl">ตัวช่วยบันทึกเงิน (Money Tracker)</h1>
-        <p class="page-lead">ประวัติการใช้จ่ายและสแกนใบเสร็จอัตโนมัติด้วยปฏิทินอัจฉริยะ</p>
-      </div>
-      
-      <!-- Quick Action Buttons -->
-      <div class="flex gap-2">
-        <button 
+    <PageBanner
+      title="ตัวช่วยบันทึกเงิน"
+      lead="ประวัติการใช้จ่ายและสแกนใบเสร็จอัตโนมัติด้วยปฏิทินอัจฉริยะ"
+    >
+      <template #icon>
+        <Receipt class="w-5 h-5" />
+      </template>
+      <template #actions>
+        <button
           @click="openScanModal"
           class="btn-secondary gap-1.5 px-4 py-2 min-h-0 text-xs cursor-pointer"
         >
           <Camera class="w-4 h-4" />
           <span>สแกนใบเสร็จ (AI OCR)</span>
         </button>
-        <button 
+        <button
           @click="openAddModal"
           class="btn-primary gap-1 px-4 py-2 min-h-0 text-xs cursor-pointer"
         >
           <Plus class="w-4 h-4" />
           <span>จดบันทึก</span>
         </button>
-      </div>
-    </div>
+      </template>
+    </PageBanner>
 
     <!-- 1. Money Summary Panel -->
     <div class="grid grid-cols-3 gap-2.5">
       <!-- Income card -->
       <div class="surface-card-sm flex flex-col justify-between p-3.5 border-2 border-border-subtle bg-surface-card">
         <div class="flex items-center justify-between">
-          <span class="text-[9px] font-bold text-ink-muted uppercase">รายรับเดือนนี้</span>
+          <span class="text-micro font-bold text-ink-muted uppercase">รายรับเดือนนี้</span>
           <div class="w-6 h-6 rounded-full bg-duo-green-light/40 text-primary flex items-center justify-center">
             <ArrowUpRight class="w-3.5 h-3.5" />
           </div>
@@ -404,7 +405,7 @@ function handleUpgrade() {
       <!-- Expense card -->
       <div class="surface-card-sm flex flex-col justify-between p-3.5 border-2 border-border-subtle bg-surface-card">
         <div class="flex items-center justify-between">
-          <span class="text-[9px] font-bold text-ink-muted uppercase">รายจ่ายเดือนนี้</span>
+          <span class="text-micro font-bold text-ink-muted uppercase">รายจ่ายเดือนนี้</span>
           <div class="w-6 h-6 rounded-full bg-bubblegum-pink/10 text-tier-risk flex items-center justify-center">
             <ArrowDownRight class="w-3.5 h-3.5" />
           </div>
@@ -420,7 +421,7 @@ function handleUpgrade() {
         :class="netBalanceInMonth >= 0 ? 'bg-duo-green-light/10 border-primary/20' : 'bg-bubblegum-pink/5 border-tier-risk/10'"
       >
         <div class="flex items-center justify-between">
-          <span class="text-[9px] font-bold text-ink-muted uppercase">คงเหลือ</span>
+          <span class="text-micro font-bold text-ink-muted uppercase">คงเหลือ</span>
           <div 
             class="w-6 h-6 rounded-full flex items-center justify-center"
             :class="netBalanceInMonth >= 0 ? 'bg-duo-green-light/40 text-primary' : 'bg-bubblegum-pink/10 text-tier-risk'"
@@ -466,7 +467,7 @@ function handleUpgrade() {
 
       <!-- Calendar Grid -->
       <div class="space-y-1">
-        <div class="grid grid-cols-7 text-center text-[10px] font-bold text-ink-muted py-1">
+        <div class="grid grid-cols-7 text-center text-caption font-bold text-ink-muted py-1">
           <span v-for="w in daysOfWeekLabels" :key="w" :class="w === 'อา' ? 'text-red-500' : ''">{{ w }}</span>
         </div>
 
@@ -475,7 +476,7 @@ function handleUpgrade() {
             v-for="cell in calendarGrid" 
             :key="cell.dateString"
             @click="handleDayClick(cell)"
-            class="aspect-square flex flex-col justify-between p-1 rounded-lg border text-center transition cursor-pointer select-none text-[11px] font-black relative"
+            class="aspect-square flex flex-col justify-between p-1 rounded-lg border text-center transition cursor-pointer select-none text-label font-black relative"
             :class="[
               !cell.isCurrentMonth ? 'text-ink-muted/40 border-transparent bg-slate-50/20' : 'text-ink border-border-subtle bg-surface-card hover:bg-slate-50',
               selectedDate === cell.dateString ? 'ring-2 ring-primary border-primary text-primary scale-[1.03]' : ''
@@ -503,7 +504,7 @@ function handleUpgrade() {
         </div>
       </div>
       
-      <div class="text-[10px] text-ink-muted text-center pt-1 leading-none font-bold">
+      <div class="text-caption text-ink-muted text-center pt-1 leading-none font-bold">
         <span>คลิกวันในปฏิทินด้านบนเพื่อเรียกดูและจดบันทึกรายวัน</span>
       </div>
     </div>
@@ -537,11 +538,11 @@ function handleUpgrade() {
             <span class="text-sm font-bold text-ink leading-tight">
               {{ formatCategoryThai(tx.category) }}
             </span>
-            <span class="text-[10px] text-ink-muted mt-1 leading-none flex items-center gap-1 flex-wrap">
+            <span class="text-caption text-ink-muted mt-1 leading-none flex items-center gap-1 flex-wrap">
               <CalendarIcon class="w-3.5 h-3.5" />
               {{ tx.date }}
               <span v-if="tx.note" class="before:content-['·'] before:mx-1 truncate max-w-[120px]">{{ tx.note }}</span>
-              <span v-if="tx.source === 'ocr'" class="chip bg-sunshine-yellow/10 text-tier-building border-tier-building/20 text-[8px] font-black px-1.5 py-0.5 leading-none">AI OCR</span>
+              <span v-if="tx.source === 'ocr'" class="chip bg-sunshine-yellow/10 text-tier-building border-tier-building/20 text-nano font-black px-1.5 py-0.5 leading-none">AI OCR</span>
             </span>
           </div>
         </div>
@@ -624,7 +625,7 @@ function handleUpgrade() {
               </div>
               <div class="flex flex-col min-w-0 font-bold">
                 <span class="text-xs font-bold text-ink leading-tight">{{ formatCategoryThai(tx.category) }}</span>
-                <span v-if="tx.note" class="text-[9px] text-ink-muted mt-0.5 max-w-[150px] truncate">{{ tx.note }}</span>
+                <span v-if="tx.note" class="text-micro text-ink-muted mt-0.5 max-w-[150px] truncate">{{ tx.note }}</span>
               </div>
             </div>
 
@@ -780,8 +781,8 @@ function handleUpgrade() {
         <!-- Daily Quota Counter -->
         <div class="flex justify-between items-center bg-slate-50 border-2 border-border-subtle p-3 rounded-xl text-xs">
           <span class="font-bold text-ink">โควตาสแกนวันนี้: {{ usageStore.ocrUsedToday }} / {{ usageStore.ocrLimit }} ครั้ง</span>
-          <span v-if="isPremium" class="text-[9px] font-black bg-duo-green-light/40 text-primary border border-primary/20 px-2 py-0.5 rounded-full">พรีเมียม</span>
-          <span v-else class="text-[9px] font-black bg-sunshine-yellow/10 text-tier-building border border-tier-building/20 px-2 py-0.5 rounded-full">แผนฟรี</span>
+          <span v-if="isPremium" class="text-micro font-black bg-duo-green-light/40 text-primary border border-primary/20 px-2 py-0.5 rounded-full">พรีเมียม</span>
+          <span v-else class="text-micro font-black bg-sunshine-yellow/10 text-tier-building border border-tier-building/20 px-2 py-0.5 rounded-full">แผนฟรี</span>
         </div>
 
         <!-- File Camera Select Box -->
@@ -795,7 +796,7 @@ function handleUpgrade() {
           </div>
           <div class="space-y-1">
             <span class="text-xs font-bold text-ink">กดเพื่อถ่ายภาพหรือแนบใบเสร็จ</span>
-            <p class="text-[9px] text-ink-muted">อัปโหลดไฟล์ภาพ .jpg, .png</p>
+            <p class="text-micro text-ink-muted">อัปโหลดไฟล์ภาพ .jpg, .png</p>
           </div>
           <input 
             ref="fileInput"
@@ -815,7 +816,7 @@ function handleUpgrade() {
           <RefreshCw class="w-7 h-7 text-primary animate-spin" />
           <div class="space-y-1">
             <h4 class="text-xs font-bold text-ink">กำลังวิเคราะห์ภาพใบเสร็จ...</h4>
-            <p class="text-[9px] text-ink-muted">AI Gemma กำลังสกัดยอดเงิน ชื่อร้าน และหมวดหมู่</p>
+            <p class="text-micro text-ink-muted">AI Gemma กำลังสกัดยอดเงิน ชื่อร้าน และหมวดหมู่</p>
           </div>
         </div>
 
@@ -840,11 +841,11 @@ function handleUpgrade() {
           <div class="space-y-2 text-xs">
             <div class="grid grid-cols-2 gap-3">
               <div class="space-y-1">
-                <label class="field-label font-bold text-ink text-[11px]">ยอดเงินรวม (THB)</label>
+                <label class="field-label font-bold text-ink text-label">ยอดเงินรวม (THB)</label>
                 <input v-model="ocrAmount" type="number" class="input-field py-2 min-h-10" />
               </div>
               <div class="space-y-1">
-                <label class="field-label font-bold text-ink text-[11px]">หมวดหมู่</label>
+                <label class="field-label font-bold text-ink text-label">หมวดหมู่</label>
                 <select v-model="ocrCategory" class="input-field py-2 min-h-10">
                   <option v-for="cat in categories" :key="cat" :value="cat">{{ formatCategoryThai(cat) }}</option>
                 </select>
@@ -852,12 +853,12 @@ function handleUpgrade() {
             </div>
 
             <div class="space-y-1">
-              <label class="field-label font-bold text-ink text-[11px]">วันที่ใบเสร็จ</label>
+              <label class="field-label font-bold text-ink text-label">วันที่ใบเสร็จ</label>
               <input v-model="ocrDate" type="date" class="input-field py-2 min-h-10" />
             </div>
             
             <div class="space-y-1">
-              <label class="field-label font-bold text-ink text-[11px]">บันทึกเพิ่มเติม</label>
+              <label class="field-label font-bold text-ink text-label">บันทึกเพิ่มเติม</label>
               <input v-model="ocrNote" type="text" class="input-field py-2 min-h-10" />
             </div>
           </div>

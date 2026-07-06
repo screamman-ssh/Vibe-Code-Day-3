@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import PageBanner from '~/components/layout/PageBanner.vue'
 import { useRouter } from '#imports'
 import { useBudgetStore } from '~/stores/budget'
 import { useDebtsStore } from '~/stores/debts'
@@ -7,7 +8,6 @@ import {
   LayoutGrid,
   PiggyBank,
   Wallet,
-  Settings,
   ArrowRight,
   PieChart
 } from 'lucide-vue-next'
@@ -35,12 +35,11 @@ const sections = computed(() => [
   {
     id: 'tools',
     title: 'เครื่องมือการเงิน',
-    subtitle: 'งบประมาณ หนี้สิน และการตั้งค่า',
+    subtitle: 'งบประมาณและหนี้สิน',
     modules: [
       {
         path: '/budget',
         title: 'งบประมาณ',
-        titleEn: 'Budget',
         description: 'ตั้งเพดานรายหมวด ติดตามการใช้จ่าย และควบคุมไม่ให้เกินงบ',
         icon: PiggyBank,
         tone: 'teal',
@@ -51,23 +50,11 @@ const sections = computed(() => [
       {
         path: '/debts',
         title: 'จัดการหนี้สิน',
-        titleEn: 'Debt Manager',
         description: 'บันทึกหนี้ จำลองแผนปลดหนี้ และวิเคราะห์ด้วย AI',
         icon: Wallet,
         tone: 'amber',
         stat: formatCurrency(debtsStore.totalBalance),
         badge: debtsStore.items.length ? `${debtsStore.items.length} บัญชี` : 'ยังไม่มีหนี้',
-        badgeTone: 'neutral'
-      },
-      {
-        path: '/settings',
-        title: 'ตั้งค่าระบบ',
-        titleEn: 'Settings',
-        description: 'โปรไฟล์ API Key และการตั้งค่าแอป',
-        icon: Settings,
-        tone: 'neutral',
-        stat: null,
-        badge: null,
         badgeTone: 'neutral'
       }
     ]
@@ -81,15 +68,14 @@ function go(path) {
 
 <template>
   <div class="page-shell hub-page">
-    <header class="hub-page__header">
-      <div class="hub-page__header-icon">
+    <PageBanner
+      title="ศูนย์แอป"
+      lead="เข้าถึงฟังก์ชันสำคัญของ MoneyCircle ได้จากที่เดียว"
+    >
+      <template #icon>
         <LayoutGrid class="w-5 h-5" />
-      </div>
-      <div>
-        <h1 class="page-title font-brand">ศูนย์แอป</h1>
-        <p class="page-lead">เข้าถึงฟังก์ชันสำคัญของ MoneyCircle ได้จากที่เดียว</p>
-      </div>
-    </header>
+      </template>
+    </PageBanner>
 
     <!-- Quick stats strip -->
     <div class="hub-page__stats">
@@ -112,8 +98,8 @@ function go(path) {
       class="hub-page__section"
     >
       <div class="hub-page__section-head">
-        <h2 class="section-title">{{ section.title }}</h2>
-        <p class="text-[10px] text-ink-muted">{{ section.subtitle }}</p>
+        <h2 class="hub-page__section-title">{{ section.title }}</h2>
+        <p class="page-banner__lead">{{ section.subtitle }}</p>
       </div>
 
       <div class="hub-page__grid">
@@ -134,7 +120,6 @@ function go(path) {
 
           <div class="hub-card__body">
             <p class="hub-card__title">{{ mod.title }}</p>
-            <p class="hub-card__title-en">{{ mod.titleEn }}</p>
             <p class="hub-card__desc">{{ mod.description }}</p>
           </div>
 
@@ -158,25 +143,6 @@ function go(path) {
 </template>
 
 <style scoped>
-.hub-page__header {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.25rem 0 0.5rem;
-}
-
-.hub-page__header-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.75rem;
-  background: color-mix(in oklch, var(--color-primary) 12%, white);
-  color: var(--color-primary);
-  flex-shrink: 0;
-}
-
 .hub-page__stats {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -196,7 +162,7 @@ function go(path) {
 }
 
 .hub-page__stat-label {
-  font-size: 0.5625rem;
+  font-size: var(--text-micro);
   font-weight: 600;
   color: var(--color-ink-muted);
   text-transform: uppercase;
@@ -204,7 +170,7 @@ function go(path) {
 }
 
 .hub-page__stat-value {
-  font-size: 0.6875rem;
+  font-size: var(--text-label);
   font-weight: 700;
   color: var(--color-ink);
   text-align: center;
@@ -219,6 +185,14 @@ function go(path) {
   margin-bottom: 0.625rem;
 }
 
+.hub-page__section-title {
+  font-size: var(--text-xs);
+  font-weight: 800;
+  color: var(--color-ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 .hub-page__grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -228,12 +202,6 @@ function go(path) {
 @media (min-width: 640px) {
   .hub-page__grid {
     grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .hub-page__grid {
-    grid-template-columns: repeat(3, 1fr);
   }
 }
 
@@ -311,24 +279,17 @@ function go(path) {
 }
 
 .hub-card__title {
-  font-size: 0.875rem;
+  font-family: 'Fredoka', 'Sarabun', system-ui, sans-serif;
+  font-size: var(--text-base);
   font-weight: 700;
   color: var(--color-ink);
-  line-height: 1.2;
-}
-
-.hub-card__title-en {
-  font-size: 0.5625rem;
-  font-weight: 600;
-  color: var(--color-ink-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-top: 0.125rem;
+  line-height: 1.25;
 }
 
 .hub-card__desc {
-  font-size: 0.6875rem;
+  font-size: var(--text-sm);
   color: var(--color-ink-muted);
+  font-weight: 500;
   line-height: 1.45;
   margin-top: 0.375rem;
   display: -webkit-box;
@@ -347,13 +308,13 @@ function go(path) {
 }
 
 .hub-card__stat {
-  font-size: 0.6875rem;
+  font-size: var(--text-label);
   font-weight: 700;
   color: var(--color-ink);
 }
 
 .hub-card__badge {
-  font-size: 0.5625rem;
+  font-size: var(--text-micro);
   font-weight: 700;
   padding: 0.125rem 0.5rem;
   border-radius: 9999px;

@@ -67,7 +67,7 @@ function handleLogout() {
         <!-- Brand logo -->
         <div class="px-2">
           <h1 class="text-2xl font-black font-brand text-primary tracking-tight">MoneyCircle</h1>
-          <span class="text-[9px] font-black text-ink-muted uppercase tracking-wider block mt-1">
+          <span class="text-micro font-black text-ink-muted uppercase tracking-wider block mt-1">
             Score your habits, not your wealth
           </span>
         </div>
@@ -101,7 +101,7 @@ function handleLogout() {
               {{ user.displayName }}
               <Sparkles v-if="user.subscriptionTier === 'premium'" class="w-3 h-3 text-amber-500 fill-amber-500 shrink-0" />
             </span>
-            <span class="text-[9px] text-ink-muted uppercase leading-none mt-1">
+            <span class="text-micro text-ink-muted uppercase leading-none mt-1">
               {{ user.subscriptionTier === 'premium' ? $t('shell.premiumMember') : $t('shell.freeAccount') }}
             </span>
           </div>

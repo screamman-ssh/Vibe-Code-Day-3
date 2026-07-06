@@ -46,7 +46,7 @@ function navigate(path) {
       >
         <component :is="item.icon" class="w-5 h-5" :stroke-width="isActive(item.path) ? 2.5 : 2" />
       </div>
-      <span class="text-[10px] font-semibold font-brand leading-none">
+      <span class="text-caption font-semibold font-brand leading-none">
         {{ $t(item.labelKey) }}
       </span>
       <div 

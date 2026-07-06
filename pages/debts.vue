@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
+import PageBanner from '~/components/layout/PageBanner.vue'
 import { storeToRefs } from 'pinia'
 import { useScoreStore } from '~/stores/score'
 import { useDebtsStore } from '~/stores/debts'
@@ -381,20 +382,23 @@ async function triggerAiAnalysis() {
 <template>
   <div class="page-shell">
     
-    <!-- Header -->
-    <div class="flex items-center justify-between py-2">
-      <div>
-        <h1 class="page-title font-brand text-2xl">วิเคราะห์หนี้สิน (Debt Manager)</h1>
-        <p class="page-lead">เปรียบเทียบกลยุทธ์จำลอง คอนฟิกโปะหนี้ และวิเคราะห์แผนด้วย AI</p>
-      </div>
-      <button 
-        @click="openAddModal"
-        class="btn-primary gap-1 px-4 py-2 min-h-0 text-xs cursor-pointer"
-      >
-        <Plus class="w-4 h-4" />
-        <span>เพิ่มหนี้</span>
-      </button>
-    </div>
+    <PageBanner
+      title="วิเคราะห์หนี้สิน"
+      lead="เปรียบเทียบกลยุทธ์จำลอง คอนฟิกโปะหนี้ และวิเคราะห์แผนด้วย AI"
+    >
+      <template #icon>
+        <Wallet class="w-5 h-5" />
+      </template>
+      <template #actions>
+        <button
+          @click="openAddModal"
+          class="btn-primary gap-1 px-4 py-2 min-h-0 text-xs cursor-pointer"
+        >
+          <Plus class="w-4 h-4" />
+          <span>เพิ่มหนี้</span>
+        </button>
+      </template>
+    </PageBanner>
 
     <!-- Quick Tab Selectors -->
     <div class="tab-switch">
@@ -439,7 +443,7 @@ async function triggerAiAnalysis() {
             <Wallet class="w-5 h-5" />
           </div>
           <div class="flex flex-col">
-            <span class="text-[10px] text-ink-muted leading-none">ยอดหนี้คงเหลือปัจจุบัน</span>
+            <span class="text-caption text-ink-muted leading-none">ยอดหนี้คงเหลือปัจจุบัน</span>
             <span class="text-lg font-brand font-black text-ink mt-1.5 leading-none">
               {{ formatCurrency(totalDebtBalance) }}
             </span>
@@ -452,7 +456,7 @@ async function triggerAiAnalysis() {
             <DollarSign class="w-5 h-5" />
           </div>
           <div class="flex flex-col">
-            <span class="text-[10px] text-ink-muted leading-none">ยอดหนี้ตั้งต้นทั้งหมด</span>
+            <span class="text-caption text-ink-muted leading-none">ยอดหนี้ตั้งต้นทั้งหมด</span>
             <span class="text-lg font-brand font-black text-ink mt-1.5 leading-none">
               {{ formatCurrency(totalOriginalDebt) }}
             </span>
@@ -477,7 +481,7 @@ async function triggerAiAnalysis() {
           <div class="flex items-start justify-between">
             <div class="flex flex-col flex-1">
               <span class="text-sm font-bold text-ink leading-tight">{{ d.name }}</span>
-              <span class="text-[10px] text-ink-muted mt-1 leading-none">
+              <span class="text-caption text-ink-muted mt-1 leading-none">
                 อัตราดอกเบี้ย APR {{ d.apr }}% · จ่ายขั้นต่ำ {{ formatCurrency(d.minimumPayment) }}
               </span>
             </div>
@@ -501,7 +505,7 @@ async function triggerAiAnalysis() {
 
           <!-- Progress bar visualization -->
           <div class="space-y-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-            <div class="flex justify-between text-[9px] text-ink-muted leading-none">
+            <div class="flex justify-between text-micro text-ink-muted leading-none">
               <span>ชำระไปแล้ว {{ percentPaid(d) }}%</span>
               <span>คงค้าง {{ formatCurrency(d.balance) }} / ตั้งต้น {{ formatCurrency(d.originalAmount) }}</span>
             </div>
@@ -516,13 +520,13 @@ async function triggerAiAnalysis() {
           <!-- Bottom detailed layout fields -->
           <div class="grid grid-cols-2 gap-4 pt-1 text-xs">
             <div class="flex flex-col">
-              <span class="text-[10px] text-ink-muted leading-none">วันผ่อนชำระ</span>
+              <span class="text-caption text-ink-muted leading-none">วันผ่อนชำระ</span>
               <span class="text-sm font-bold text-ink mt-1.5">ทุกวันที่ {{ d.dueDay }}</span>
             </div>
             <div class="flex flex-col">
-              <span class="text-[10px] text-ink-muted leading-none">สถานะส่งตรงเวลา</span>
+              <span class="text-caption text-ink-muted leading-none">สถานะส่งตรงเวลา</span>
               <span class="text-xs font-bold text-ink mt-1.5">
-                <span class="chip bg-orange-50 text-streak-flame border-orange-100 text-[9px] font-bold px-1.5 py-0.5 rounded">
+                <span class="chip bg-orange-50 text-streak-flame border-orange-100 text-micro font-bold px-1.5 py-0.5 rounded">
                   ตรงเวลา {{ d.onTimeStreak }} งวด
                 </span>
               </span>
@@ -555,7 +559,7 @@ async function triggerAiAnalysis() {
 
         <!-- Select debt for simulation -->
         <div class="space-y-1.5 border-b border-border-subtle pb-3">
-          <label class="field-label font-bold text-ink text-[11px]">เลือกบัญชีหนี้สินเพื่อจำลอง</label>
+          <label class="field-label font-bold text-ink text-label">เลือกบัญชีหนี้สินเพื่อจำลอง</label>
           <select 
             v-model="selectedDebtForSim"
             class="input-field bg-slate-50 border border-slate-200 text-xs py-1.5 min-h-9 cursor-pointer"
@@ -574,11 +578,11 @@ async function triggerAiAnalysis() {
         <!-- Show baseline vs total sim payback sum -->
         <div class="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs">
           <div>
-            <span class="text-ink-muted text-[10px] block leading-none">ยอดผ่อนปกติ (ขั้นต่ำ)</span>
+            <span class="text-ink-muted text-caption block leading-none">ยอดผ่อนปกติ (ขั้นต่ำ)</span>
             <span class="font-bold text-ink text-[13px] mt-1 block">{{ formatCurrency(targetMinPaybackSum) }} / เดือน</span>
           </div>
           <div>
-            <span class="text-ink-muted text-[10px] block leading-none">ยอดชำระจำลอง (ขั้นต่ำ + โปะ)</span>
+            <span class="text-ink-muted text-caption block leading-none">ยอดชำระจำลอง (ขั้นต่ำ + โปะ)</span>
             <span class="font-bold text-accent-emerald text-[13px] mt-1 block">{{ formatCurrency(targetTotalSimPaybackSum) }} / เดือน</span>
           </div>
         </div>
@@ -606,7 +610,7 @@ async function triggerAiAnalysis() {
         <div class="surface-card p-4 space-y-3 bg-surface-card border border-slate-100">
           <div class="flex items-center justify-between border-b border-border-subtle pb-2">
             <span class="text-xs font-bold text-ink">แผน A: จ่ายเฉพาะขั้นต่ำ</span>
-            <span class="chip bg-slate-100 text-ink-muted text-[8px] font-black">มาตรฐาน</span>
+            <span class="chip bg-slate-100 text-ink-muted text-nano font-black">มาตรฐาน</span>
           </div>
           <div class="space-y-2 text-xs leading-none">
             <div class="flex justify-between">
@@ -626,7 +630,7 @@ async function triggerAiAnalysis() {
         <div class="surface-card p-4 space-y-3 bg-surface-card border border-accent-emerald/20 bg-emerald-50/5">
           <div class="flex items-center justify-between border-b border-border-subtle pb-2">
             <span class="text-xs font-bold text-accent-emerald">แผน B: จ่ายขั้นต่ำ + โปะพิเศษ</span>
-            <span class="chip bg-emerald-50 text-accent-emerald border-emerald-100 text-[8px] font-black">ประหยัดสูงสุด</span>
+            <span class="chip bg-emerald-50 text-accent-emerald border-emerald-100 text-nano font-black">ประหยัดสูงสุด</span>
           </div>
           <div class="space-y-2 text-xs leading-none">
             <div class="flex justify-between">
@@ -648,7 +652,7 @@ async function triggerAiAnalysis() {
           </h4>
 
           <div class="space-y-3">
-            <div class="flex justify-between items-center text-[10px] text-ink-muted px-1">
+            <div class="flex justify-between items-center text-caption text-ink-muted px-1">
               <span>แกน Y: ยอดหนี้คงค้างสะสม (บาท)</span>
               <span>แกน X: ระยะเวลาการจำลอง (36 เดือน)</span>
             </div>
@@ -673,20 +677,20 @@ async function triggerAiAnalysis() {
                 <path :d="graphData.pathExtra" fill="none" stroke="#10b981" stroke-width="3.5" class="transition-all duration-500" />
 
                 <!-- X Axis Text ticks -->
-                <text x="40" y="175" class="text-[9px] fill-slate-400 font-bold" text-anchor="middle">เดือน 0</text>
-                <text x="186.6" y="175" class="text-[9px] fill-slate-400 font-bold" text-anchor="middle">เดือน 12</text>
-                <text x="333.3" y="175" class="text-[9px] fill-slate-400 font-bold" text-anchor="middle">เดือน 24</text>
-                <text x="480" y="175" class="text-[9px] fill-slate-400 font-bold" text-anchor="middle">เดือน 36</text>
+                <text x="40" y="175" class="text-micro fill-slate-400 font-bold" text-anchor="middle">เดือน 0</text>
+                <text x="186.6" y="175" class="text-micro fill-slate-400 font-bold" text-anchor="middle">เดือน 12</text>
+                <text x="333.3" y="175" class="text-micro fill-slate-400 font-bold" text-anchor="middle">เดือน 24</text>
+                <text x="480" y="175" class="text-micro fill-slate-400 font-bold" text-anchor="middle">เดือน 36</text>
 
                 <!-- Y Axis Text ticks -->
-                <text x="32" y="14" class="text-[8px] fill-slate-400 font-bold" text-anchor="end">{{ formatCurrency(graphData.initialBal) }}</text>
-                <text x="32" y="89" class="text-[8px] fill-slate-400 font-bold" text-anchor="end">{{ formatCurrency(graphData.initialBal / 2) }}</text>
-                <text x="32" y="164" class="text-[8px] fill-slate-400 font-bold" text-anchor="end">฿0</text>
+                <text x="32" y="14" class="text-nano fill-slate-400 font-bold" text-anchor="end">{{ formatCurrency(graphData.initialBal) }}</text>
+                <text x="32" y="89" class="text-nano fill-slate-400 font-bold" text-anchor="end">{{ formatCurrency(graphData.initialBal / 2) }}</text>
+                <text x="32" y="164" class="text-nano fill-slate-400 font-bold" text-anchor="end">฿0</text>
               </svg>
             </div>
 
             <!-- Custom Legend Markers -->
-            <div class="flex gap-4 items-center justify-center text-[10px] pt-1">
+            <div class="flex gap-4 items-center justify-center text-caption pt-1">
               <div class="flex items-center gap-1.5">
                 <span class="w-4 h-0.5 border-t-2 border-dashed border-slate-400"></span>
                 <span class="text-ink-muted">แผน A: ผ่อนขั้นต่ำปกติ ({{ simulationResults.minMonths }})</span>
@@ -706,7 +710,7 @@ async function triggerAiAnalysis() {
           </div>
           <div class="flex-1 space-y-1">
             <h4 class="text-xs font-bold text-ink">คุณประหยัดเงินและเวลาได้มหาศาล!</h4>
-            <p class="text-[10px] text-ink-muted leading-relaxed">
+            <p class="text-caption text-ink-muted leading-relaxed">
               การโปะเงินเพิ่มเดือนละ {{ formatCurrency(extraMonthlyPayback) }} จะช่วยคุณลดระยะเวลาปลดหนี้ลงได้ถึง <span class="font-bold text-accent-emerald">{{ simulationResults.timeSaved }}</span> และลดรายจ่ายดอกเบี้ยสะสมลงไปได้กว่า <span class="font-bold text-accent-emerald">{{ typeof simulationResults.interestSaved === 'string' ? simulationResults.interestSaved : formatCurrency(simulationResults.interestSaved) }}</span>!
             </p>
           </div>
@@ -725,7 +729,7 @@ async function triggerAiAnalysis() {
         <!-- Form fields for loan calculator -->
         <div class="space-y-3">
           <div class="space-y-1">
-            <label class="field-label font-bold text-ink text-[11px]">เงินต้นเงินกู้ (Principal Amount)</label>
+            <label class="field-label font-bold text-ink text-label">เงินต้นเงินกู้ (Principal Amount)</label>
             <input 
               v-model="calcPrincipal" 
               type="number" 
@@ -735,7 +739,7 @@ async function triggerAiAnalysis() {
 
           <div class="grid grid-cols-2 gap-3">
             <div class="space-y-1">
-              <label class="field-label font-bold text-ink text-[11px]">อัตราดอกเบี้ยปี APR (%)</label>
+              <label class="field-label font-bold text-ink text-label">อัตราดอกเบี้ยปี APR (%)</label>
               <input 
                 v-model="calcApr" 
                 type="number" 
@@ -743,7 +747,7 @@ async function triggerAiAnalysis() {
               />
             </div>
             <div class="space-y-1">
-              <label class="field-label font-bold text-ink text-[11px]">ระยะเวลาผ่อนชำระ (เดือน)</label>
+              <label class="field-label font-bold text-ink text-label">ระยะเวลาผ่อนชำระ (เดือน)</label>
               <input 
                 v-model="calcMonths" 
                 type="number" 
@@ -758,7 +762,7 @@ async function triggerAiAnalysis() {
       <div class="grid grid-cols-3 gap-2.5">
         <!-- Monthly payment card -->
         <div class="surface-card-sm flex flex-col justify-between p-3.5 border border-border-subtle bg-surface-card">
-          <span class="text-[9px] font-bold text-ink-muted uppercase">ยอดผ่อนต่อเดือน</span>
+          <span class="text-micro font-bold text-ink-muted uppercase">ยอดผ่อนต่อเดือน</span>
           <span class="stat-value text-accent-emerald text-sm font-black mt-3 truncate">
             {{ formatCurrency(calculatorResults.pmt) }}
           </span>
@@ -766,7 +770,7 @@ async function triggerAiAnalysis() {
 
         <!-- Total interest paid card -->
         <div class="surface-card-sm flex flex-col justify-between p-3.5 border border-border-subtle bg-surface-card">
-          <span class="text-[9px] font-bold text-ink-muted uppercase">ดอกเบี้ยจ่ายรวม</span>
+          <span class="text-micro font-bold text-ink-muted uppercase">ดอกเบี้ยจ่ายรวม</span>
           <span class="stat-value text-tier-risk text-sm font-black mt-3 truncate">
             {{ formatCurrency(calculatorResults.totalInterest) }}
           </span>
@@ -774,7 +778,7 @@ async function triggerAiAnalysis() {
 
         <!-- Total payment card -->
         <div class="surface-card-sm flex flex-col justify-between p-3.5 border border-border-subtle bg-surface-card">
-          <span class="text-[9px] font-bold text-ink-muted uppercase">ยอดจ่ายคืนรวม</span>
+          <span class="text-micro font-bold text-ink-muted uppercase">ยอดจ่ายคืนรวม</span>
           <span class="stat-value text-ink text-sm font-black mt-3 truncate">
             {{ formatCurrency(calculatorResults.totalPayment) }}
           </span>
@@ -791,7 +795,7 @@ async function triggerAiAnalysis() {
           </div>
           <div class="flex-1 space-y-1">
             <h3 class="text-xs font-bold text-ink">วิเคราะห์แนวทางและกลยุทธ์การชำระหนี้ด้วย AI</h3>
-            <p class="text-[10px] text-ink-muted leading-relaxed">
+            <p class="text-caption text-ink-muted leading-relaxed">
               AI จะนำข้อมูลยอดหนี้ APR ดอกเบี้ย และรายจ่ายงบประมาณจริงของคุณมาทำการวิเคราะห์ เพื่อสรุปลำดับการชำระชะลอหนี้ให้ประหยัดที่สุด
             </p>
           </div>

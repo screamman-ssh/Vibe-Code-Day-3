@@ -101,7 +101,7 @@ const colors = computed(() => {
     <!-- Content overlay -->
     <div class="relative z-10 flex flex-col items-center justify-center" :style="{ color: colors.text }">
       <span v-if="rank" class="leading-none select-none tracking-tight">{{ rank }}</span>
-      <span v-else-if="label" class="leading-none text-[9px] uppercase tracking-wide select-none">{{ label }}</span>
+      <span v-else-if="label" class="leading-none text-micro uppercase tracking-wide select-none">{{ label }}</span>
       <slot v-else />
     </div>
   </div>

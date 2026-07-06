@@ -1,9 +1,11 @@
 <script setup>
 import { ref, computed } from 'vue'
+import PageBanner from '~/components/layout/PageBanner.vue'
 import { useBudgetStore } from '~/stores/budget'
 import { useScoreStore } from '~/stores/score'
 import { 
   PieChart, 
+  PiggyBank,
   Save, 
   Edit3, 
   X, 
@@ -110,20 +112,23 @@ function handleDeleteCategory(categoryName) {
 <template>
   <div class="page-shell">
     
-    <!-- Header -->
-    <div class="flex items-center justify-between py-2">
-      <div>
-        <h1 class="page-title">วางแผนงบประมาณ</h1>
-        <p class="page-lead">เปรียบเทียบวงเงินเป้าหมายและรายจ่ายรายหมวดหมู่ของคุณ</p>
-      </div>
-      <button 
-        @click="openAddModal"
-        class="btn-primary gap-1 px-4 py-2 min-h-0 text-xs cursor-pointer"
-      >
-        <Plus class="w-4 h-4" />
-        <span>เพิ่มหมวดหมู่</span>
-      </button>
-    </div>
+    <PageBanner
+      title="วางแผนงบประมาณ"
+      lead="เปรียบเทียบวงเงินเป้าหมายและรายจ่ายรายหมวดหมู่ของคุณ"
+    >
+      <template #icon>
+        <PiggyBank class="w-5 h-5" />
+      </template>
+      <template #actions>
+        <button
+          @click="openAddModal"
+          class="btn-primary gap-1 px-4 py-2 min-h-0 text-xs cursor-pointer"
+        >
+          <Plus class="w-4 h-4" />
+          <span>เพิ่มหมวดหมู่</span>
+        </button>
+      </template>
+    </PageBanner>
 
     <!-- Adherence Gauge Card -->
     <div class="surface-card flex flex-col items-center p-6 text-center">
@@ -170,20 +175,20 @@ function handleDeleteCategory(categoryName) {
               <div class="flex gap-1 items-center shrink-0">
                 <span 
                   v-if="c.spentAmount > c.limitAmount" 
-                  class="chip chip-negative text-[8px] font-black px-1.5 py-0.5 leading-none"
+                  class="chip chip-negative text-nano font-black px-1.5 py-0.5 leading-none"
                 >
                   เกินงบ
                 </span>
                 <span 
                   v-else-if="c.limitAmount > 0 && (c.spentAmount / c.limitAmount) >= 0.85" 
-                  class="chip bg-sunshine-yellow/10 text-tier-building border-tier-building/20 text-[8px] font-black px-1.5 py-0.5 leading-none"
+                  class="chip bg-sunshine-yellow/10 text-tier-building border-tier-building/20 text-nano font-black px-1.5 py-0.5 leading-none"
                 >
                   ใกล้เต็ม
                 </span>
               </div>
             </div>
 
-            <div class="flex flex-col text-[10px] text-ink-muted leading-tight">
+            <div class="flex flex-col text-caption text-ink-muted leading-tight">
               <span>จ่ายแล้ว: <span class="font-bold text-ink">{{ formatCurrency(c.spentAmount) }}</span></span>
               <span class="mt-1">งบตั้งเป้า: <span class="font-bold text-ink">{{ formatCurrency(c.limitAmount) }}</span></span>
             </div>
