@@ -1,10 +1,10 @@
-name = "moneycircle"
+name = "vibe-code-day-3"
 compatibility_date = "2024-11-01"
 pages_build_output_dir = "dist"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "moneycircle"
+database_name = "vibe_code_training"
 database_id = "65b810fc-498b-4575-8e3c-f0b4a8413d04"
 
 [vars]
