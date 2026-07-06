@@ -9,6 +9,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       aiApiKey: 'TestOnly1111@', 
+      googleClientId: process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID || ''
     }
   },
   ssr: false,
@@ -34,6 +35,8 @@ export default defineNuxtConfig({
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+          skipWaiting: true,
+          clientsClaim: true,
         },
       }),
     ],

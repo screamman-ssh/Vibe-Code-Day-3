@@ -1,75 +1,71 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { useApi } from '~/composables/useApi'
+import { useScoreStore } from '~/stores/score'
 
 export const useTransactionsStore = defineStore('transactions', () => {
-  const items = ref([
-    {
-      id: 'tx-1',
-      type: 'expense',
-      amount: 89,
-      category: 'Food',
-      merchant: '7-Eleven',
-      note: 'ข้าวกล่องและน้ำดื่ม',
-      date: new Date().toISOString().split('T')[0],
-      source: 'ocr'
-    },
-    {
-      id: 'tx-2',
-      type: 'expense',
-      amount: 120,
-      category: 'Transport',
-      merchant: 'BTS',
-      note: 'ค่าเดินทางไปทำงาน',
-      date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      source: 'manual'
-    },
-    {
-      id: 'tx-3',
-      type: 'expense',
-      amount: 450,
-      category: 'Entertainment',
-      merchant: 'Major Cineplex',
-      note: 'ตั๋วหนังและป๊อปคอร์น',
-      date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      source: 'manual'
-    },
-    {
-      id: 'tx-4',
-      type: 'income',
-      amount: 28000,
-      category: 'Other',
-      merchant: 'บริษัทจำกัด',
-      note: 'เงินเดือนประจำเดือน',
-      date: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-      source: 'manual'
-    }
-  ])
+  const items = ref([])
+  const api = useApi()
 
-  function createTransaction(data) {
-    const newTx = {
-      id: `tx-${Date.now()}`,
-      ...data,
-      source: data.source || 'manual'
+  async function fetchTransactions() {
+    try {
+      const txs = await api.get('/api/v1/transactions')
+      items.value = txs
+    } catch (err) {
+      console.error('Failed to fetch transactions:', err)
     }
-    items.value.unshift(newTx)
-    return newTx
   }
 
-  function updateTransaction(id, data) {
-    const idx = items.value.findIndex(t => t.id === id)
-    if (idx !== -1) {
-      items.value[idx] = { ...items.value[idx], ...data }
-      return items.value[idx]
+  async function createTransaction(data) {
+    try {
+      const newTx = await api.post('/api/v1/transactions', data)
+      items.value.unshift(newTx)
+      
+      // Trigger score recalculation in the background
+      const scoreStore = useScoreStore()
+      scoreStore.recalculate()
+      
+      return newTx
+    } catch (err) {
+      console.error('Failed to create transaction:', err)
+      throw err
     }
-    return null
   }
 
-  function deleteTransaction(id) {
-    items.value = items.value.filter(t => t.id !== id)
+  async function updateTransaction(id, data) {
+    try {
+      const updatedTx = await api.put(`/api/v1/transactions/${id}`, data)
+      const idx = items.value.findIndex(t => t.id === id)
+      if (idx !== -1) {
+        items.value[idx] = updatedTx
+      }
+      
+      const scoreStore = useScoreStore()
+      scoreStore.recalculate()
+      
+      return updatedTx
+    } catch (err) {
+      console.error('Failed to update transaction:', err)
+      throw err
+    }
+  }
+
+  async function deleteTransaction(id) {
+    try {
+      await api.delete(`/api/v1/transactions/${id}`)
+      items.value = items.value.filter(t => t.id !== id)
+      
+      const scoreStore = useScoreStore()
+      scoreStore.recalculate()
+    } catch (err) {
+      console.error('Failed to delete transaction:', err)
+      throw err
+    }
   }
 
   return {
     items,
+    fetchTransactions,
     createTransaction,
     updateTransaction,
     deleteTransaction

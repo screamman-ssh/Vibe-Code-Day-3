@@ -1,19 +1,44 @@
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { useRoute } from '#imports'
 import { useAuthStore } from './stores/auth'
+import { useTransactionsStore } from './stores/transactions'
+import { useBudgetStore } from './stores/budget'
+import { useDebtsStore } from './stores/debts'
+import { useGroupStore } from './stores/group'
+import { useScoreStore } from './stores/score'
 import { useTheme } from './composables/useTheme'
 import AppShell from './components/layout/AppShell.vue'
 
 const route = useRoute()
 const auth = useAuthStore()
 
+const txStore = useTransactionsStore()
+const budgetStore = useBudgetStore()
+const debtsStore = useDebtsStore()
+const groupStore = useGroupStore()
+const scoreStore = useScoreStore()
+
 const { initTheme, applyTheme } = useTheme()
 
 // Initialize theme
 initTheme()
 
+async function fetchAllUserData() {
+  if (auth.isLoggedIn) {
+    await Promise.allSettled([
+      txStore.fetchTransactions(),
+      budgetStore.fetchBudgets(),
+      debtsStore.fetchDebts(),
+      groupStore.fetchGroupDetails(),
+      scoreStore.fetchScore()
+    ])
+  }
+}
+
 onMounted(() => {
+  fetchAllUserData()
+
   if (typeof window !== 'undefined') {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
     const handler = () => {
@@ -23,6 +48,27 @@ onMounted(() => {
       }
     }
     mediaQuery.addEventListener('change', handler)
+  }
+})
+
+// Fetch when logged in, clear stores on logout
+watch(() => auth.isLoggedIn, (loggedIn) => {
+  if (loggedIn) {
+    fetchAllUserData()
+  } else {
+    txStore.items = []
+    budgetStore.categories = []
+    debtsStore.items = []
+    groupStore.currentGroup = null
+    groupStore.leaderboard = []
+    groupStore.feedEvents = []
+    scoreStore.currentScore = {
+      totalScore: 50,
+      tier: 'Building',
+      tierTh: 'กำลังสร้าง',
+      streakDays: 0,
+      dimensions: []
+    }
   }
 })
 

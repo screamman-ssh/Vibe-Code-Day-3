@@ -19,86 +19,126 @@ export const useAuthStore = defineStore('auth', () => {
   const isLoggedIn = computed(() => !!user.value)
   const needsOnboarding = computed(() => user.value && !user.value.onboardingComplete)
 
-  function loginAsPersona(persona) {
-    const personas = {
-      nune: {
-        id: 'google-user-nune',
-        googleId: 'google-user-nune',
-        displayName: 'Nune',
-        avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=nune',
-        subscriptionTier: 'free',
-        emergencyFundAmount: 5000,
-        onboardingComplete: true
-      },
-      boss: {
-        id: 'google-user-boss',
-        googleId: 'google-user-boss',
-        displayName: 'Boss',
-        avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=boss',
-        subscriptionTier: 'premium',
-        emergencyFundAmount: 15000,
-        onboardingComplete: true
-      }
-    }
-    
-    user.value = personas[persona] || {
-      id: `google-user-${persona}`,
-      googleId: `google-user-${persona}`,
-      displayName: persona,
-      avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${persona}`,
-      subscriptionTier: 'free',
-      emergencyFundAmount: 0,
-      onboardingComplete: false
-    }
-    
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('user', JSON.stringify(user.value))
-      localStorage.setItem('accessToken', `mock_token_${persona}`)
-    }
-    
-    return user.value
-  }
-
-  function loginAsGuest(name) {
-    user.value = {
-      id: `guest-${Date.now()}`,
-      googleId: `guest-${Date.now()}`,
-      displayName: name || 'ผู้ใช้ทั่วไป',
-      avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${Date.now()}`,
-      subscriptionTier: 'free',
-      emergencyFundAmount: 0,
-      onboardingComplete: false
-    }
-    
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('user', JSON.stringify(user.value))
-      localStorage.setItem('accessToken', `mock_token_guest_${Date.now()}`)
-    }
-    
-    return user.value
-  }
-
-  function completeOnboarding(payload) {
-    if (user.value) {
-      user.value.onboardingComplete = true
+  async function loginAsPersona(persona) {
+    try {
+      const res = await $fetch('/api/v1/auth/google', {
+        method: 'POST',
+        body: { id_token: `mock_token_${persona}` }
+      })
+      
+      user.value = res.user
       if (typeof window !== 'undefined') {
-        localStorage.setItem('user', JSON.stringify(user.value))
+        localStorage.setItem('user', JSON.stringify(res.user))
+        localStorage.setItem('accessToken', res.accessToken)
+        localStorage.setItem('refreshToken', res.refreshToken)
+      }
+      return user.value
+    } catch (err) {
+      console.error('Persona login failed:', err)
+      throw err
+    }
+  }
+
+  async function loginWithGoogle(idToken) {
+    try {
+      const res = await $fetch('/api/v1/auth/google', {
+        method: 'POST',
+        body: { id_token: idToken }
+      })
+      
+      user.value = res.user
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user', JSON.stringify(res.user))
+        localStorage.setItem('accessToken', res.accessToken)
+        localStorage.setItem('refreshToken', res.refreshToken)
+      }
+      return user.value
+    } catch (err) {
+      console.error('Google SSO login failed:', err)
+      throw err
+    }
+  }
+
+  async function loginAsGuest(name) {
+    try {
+      const res = await $fetch('/api/v1/auth/guest', {
+        method: 'POST',
+        body: { displayName: name }
+      })
+      
+      user.value = res.user
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user', JSON.stringify(res.user))
+        localStorage.setItem('accessToken', res.accessToken)
+        localStorage.setItem('refreshToken', res.refreshToken)
+      }
+      return user.value
+    } catch (err) {
+      console.error('Guest login failed:', err)
+      throw err
+    }
+  }
+
+  async function completeOnboarding(payload) {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
+      const res = await $fetch('/api/v1/auth/onboarding', {
+        method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        body: payload
+      })
+      
+      user.value = res
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user', JSON.stringify(res))
+      }
+      return user.value
+    } catch (err) {
+      console.error('Onboarding completion failed:', err)
+      throw err
+    }
+  }
+
+  async function logout() {
+    try {
+      const rToken = typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null
+      if (rToken) {
+        await $fetch('/api/v1/auth/logout', {
+          method: 'POST',
+          body: { refreshToken: rToken }
+        })
+      }
+    } catch (err) {
+      console.warn('Logout endpoint call failed:', err)
+    } finally {
+      user.value = null
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('user')
+        localStorage.removeItem('accessToken')
+        localStorage.removeItem('refreshToken')
       }
     }
-    return user.value
   }
 
-  function logout() {
-    user.value = null
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('user')
-      localStorage.removeItem('accessToken')
-      localStorage.removeItem('refreshToken')
+  async function refresh() {
+    try {
+      const rToken = typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null
+      if (!rToken) throw new Error('No refresh token')
+      
+      const res = await $fetch('/api/v1/auth/refresh', {
+        method: 'POST',
+        body: { refreshToken: rToken }
+      })
+      
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('accessToken', res.accessToken)
+        localStorage.setItem('refreshToken', res.refreshToken)
+      }
+    } catch (err) {
+      console.error('Token refresh failed:', err)
+      logout()
+      throw err
     }
-  }
-
-  function refresh() {
-    // No-op for mocks
   }
 
   return {
@@ -106,6 +146,7 @@ export const useAuthStore = defineStore('auth', () => {
     isLoggedIn,
     needsOnboarding,
     loginAsPersona,
+    loginWithGoogle,
     loginAsGuest,
     completeOnboarding,
     logout,

@@ -1,26 +1,65 @@
 <script setup>
-import { ref } from 'vue'
-import { useRouter, useAuthStore } from '#imports'
+import { ref, onMounted } from 'vue'
+import { useRouter, useAuthStore, useRuntimeConfig } from '#imports'
 import { LogIn, User } from 'lucide-vue-next'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const config = useRuntimeConfig()
 
 const guestName = ref('')
 const error = ref('')
 
-function handlePersonaLogin(persona) {
-  authStore.loginAsPersona(persona)
-  router.push('/')
+onMounted(() => {
+  // Load Google script dynamically
+  const script = document.createElement('script')
+  script.src = 'https://accounts.google.com/gsi/client'
+  script.async = true
+  script.defer = true
+  script.onload = () => {
+    if (window.google) {
+      window.google.accounts.id.initialize({
+        client_id: config.public.googleClientId,
+        callback: handleGoogleCallback
+      })
+      window.google.accounts.id.renderButton(
+        document.getElementById('google-signin-btn'),
+        { theme: 'outline', size: 'large', shape: 'pill', width: 380 }
+      )
+    }
+  }
+  document.head.appendChild(script)
+})
+
+async function handleGoogleCallback(response) {
+  try {
+    await authStore.loginWithGoogle(response.credential)
+    router.push('/')
+  } catch (err) {
+    error.value = 'การเข้าสู่ระบบด้วย Google ล้มเหลว'
+  }
 }
 
-function handleGuestLogin() {
+async function handlePersonaLogin(persona) {
+  try {
+    await authStore.loginAsPersona(persona)
+    router.push('/')
+  } catch (err) {
+    error.value = 'ไม่สามารถเข้าสู่ระบบด้วย Persona ได้'
+  }
+}
+
+async function handleGuestLogin() {
   if (!guestName.value.trim()) {
     error.value = 'กรุณากรอกชื่อสำหรับแสดงผล'
     return
   }
-  authStore.loginAsGuest(guestName.value.trim())
-  router.push('/onboarding')
+  try {
+    await authStore.loginAsGuest(guestName.value.trim())
+    router.push('/onboarding')
+  } catch (err) {
+    error.value = 'การสร้างบัญชีผู้ใช้ชั่วคราวล้มเหลว'
+  }
 }
 </script>
 
@@ -37,6 +76,20 @@ function handleGuestLogin() {
       </div>
 
       <div class="border-t border-border-subtle" />
+
+      <!-- Real Google SSO -->
+      <div class="space-y-3">
+        <h3 class="text-xs font-extrabold text-ink-muted uppercase tracking-wider text-center">เข้าสู่ระบบด้วย Google</h3>
+        <div class="flex justify-center w-full">
+          <div id="google-signin-btn" class="w-full"></div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-ink-muted font-bold py-1">
+        <div class="w-full border-t border-border-subtle" />
+        <span class="px-3">หรือ</span>
+        <div class="w-full border-t border-border-subtle" />
+      </div>
 
       <!-- Development Personas -->
       <div class="space-y-3">

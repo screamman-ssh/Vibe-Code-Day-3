@@ -82,8 +82,8 @@ const questsProgressPercent = computed(() => {
 
 // Debts progress computation
 const hasDebts = computed(() => debtsStore.items.length > 0)
-const totalOriginalDebt = computed(() => debtsStore.items.reduce((sum, d) => sum + d.originalAmount, 0))
-const totalDebtBalance = computed(() => debtsStore.items.reduce((sum, d) => sum + d.balance, 0))
+const totalOriginalDebt = computed(() => debtsStore.totalOriginalAmount)
+const totalDebtBalance = computed(() => debtsStore.totalBalance)
 const debtPayoffPercent = computed(() => {
   if (totalOriginalDebt.value === 0) return 0
   const paid = totalOriginalDebt.value - totalDebtBalance.value
@@ -178,15 +178,30 @@ function navigateToScore() {
         
         <!-- Quick Group Teaser -->
         <div 
+          v-if="groupStore.currentGroup"
           @click="router.push('/circle')"
-          class="circle-teaser"
+          class="circle-teaser animate-fade-in"
         >
           <div class="flex items-center gap-2.5 font-bold">
             <div class="w-2.5 h-2.5 rounded-full bg-primary animate-ping" />
-            <span class="text-xs font-black">{{ $t('dashboard.circleActivity', { name: groupStore.currentGroup.name }) }}</span>
+            <span class="text-xs font-black">{{ $t('dashboard.circleActivity', { name: groupStore.currentGroup?.name }) }}</span>
           </div>
           <div class="flex items-center gap-1 text-label text-primary uppercase font-extrabold tracking-wider">
             <span>{{ $t('dashboard.viewRank') }}</span>
+            <ArrowRight class="w-3 h-3" />
+          </div>
+        </div>
+        
+        <div 
+          v-else
+          @click="router.push('/circle')"
+          class="circle-teaser border-2 border-dashed border-border-subtle bg-slate-50/50 hover:bg-slate-50 cursor-pointer transition-colors"
+        >
+          <div class="flex items-center gap-2.5 font-bold">
+            <span class="text-xs font-black text-ink-muted">คุณยังไม่มีกลุ่มเพื่อน — เข้าร่วมกลุ่มเพื่อแข่งขันคะแนนกับเพื่อน</span>
+          </div>
+          <div class="flex items-center gap-1 text-label text-primary uppercase font-extrabold tracking-wider">
+            <span>ไปที่กลุ่ม</span>
             <ArrowRight class="w-3 h-3" />
           </div>
         </div>

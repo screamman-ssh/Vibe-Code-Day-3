@@ -1,63 +1,107 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { useApi } from '~/composables/useApi'
+import { useScoreStore } from '~/stores/score'
 
 export const useBudgetStore = defineStore('budget', () => {
-  const categories = ref([
-    { category: 'Food', limitAmount: 5000, spentAmount: 1450 },
-    { category: 'Transport', limitAmount: 2000, spentAmount: 620 },
-    { category: 'Housing', limitAmount: 10000, spentAmount: 10000 },
-    { category: 'Utilities', limitAmount: 3000, spentAmount: 2100 },
-    { category: 'Entertainment', limitAmount: 2500, spentAmount: 2200 },
-    { category: 'Health', limitAmount: 1500, spentAmount: 0 },
-    { category: 'Education', limitAmount: 2000, spentAmount: 0 },
-    { category: 'Debt Payment', limitAmount: 5000, spentAmount: 3000 },
-    { category: 'Savings', limitAmount: 5000, spentAmount: 1000 },
-    { category: 'Other', limitAmount: 2000, spentAmount: 540 }
-  ])
+  const categories = ref([])
+  const api = useApi()
 
-  function updateBudget(cats) {
-    categories.value = categories.value.map(c => {
-      const updated = cats.find(x => x.category === c.category)
-      return updated ? { ...c, limitAmount: updated.limitAmount } : c
-    })
-    return categories.value
+  async function fetchBudgets(month = null) {
+    try {
+      const url = month ? `/api/v1/budgets?month=${month}` : '/api/v1/budgets'
+      const data = await api.get(url)
+      categories.value = data
+    } catch (err) {
+      console.error('Failed to fetch budgets:', err)
+    }
   }
 
-  function addCategory(categoryName, limit) {
+  async function updateBudget(cats, month = null) {
+    try {
+      for (const cat of cats) {
+        await api.put('/api/v1/budgets', {
+          category: cat.category,
+          limitAmount: cat.limitAmount,
+          month
+        })
+      }
+      await fetchBudgets(month)
+      
+      const scoreStore = useScoreStore()
+      scoreStore.recalculate()
+      
+      return categories.value
+    } catch (err) {
+      console.error('Failed to update budgets:', err)
+      throw err
+    }
+  }
+
+  async function addCategory(categoryName, limit, month = null) {
     const trimmed = categoryName.trim()
     if (!trimmed) return false
     if (categories.value.some(c => c.category.toLowerCase() === trimmed.toLowerCase())) {
       return false
     }
-    categories.value.push({
-      category: trimmed,
-      limitAmount: parseFloat(limit || 0),
-      spentAmount: 0
-    })
-    return true
+    
+    try {
+      await api.put('/api/v1/budgets', {
+        category: trimmed,
+        limitAmount: parseFloat(limit || 0),
+        month
+      })
+      await fetchBudgets(month)
+      
+      const scoreStore = useScoreStore()
+      scoreStore.recalculate()
+      
+      return true
+    } catch (err) {
+      console.error('Failed to add category:', err)
+      return false
+    }
   }
 
-  function deleteCategory(categoryName) {
-    categories.value = categories.value.filter(c => c.category !== categoryName)
+  async function deleteCategory(categoryName, month = null) {
+    try {
+      await api.delete(`/api/v1/budgets/${encodeURIComponent(categoryName)}?month=${month || ''}`)
+      categories.value = categories.value.filter(c => c.category !== categoryName)
+      
+      const scoreStore = useScoreStore()
+      scoreStore.recalculate()
+    } catch (err) {
+      console.error('Failed to delete category:', err)
+      throw err
+    }
   }
 
-  function editCategory(oldName, newName, limit) {
+  async function editCategory(oldName, newName, limit, month = null) {
     const trimmedNewName = newName.trim()
     if (!trimmedNewName) return
-    categories.value = categories.value.map(c => {
-      if (c.category === oldName) {
-        return {
-          ...c,
-          category: trimmedNewName,
-          limitAmount: parseFloat(limit || 0)
-        }
+
+    try {
+      // If name changed, delete old and create new. Else just update limit.
+      if (oldName !== trimmedNewName) {
+        await api.delete(`/api/v1/budgets/${encodeURIComponent(oldName)}?month=${month || ''}`)
       }
-      return c
-    })
+      await api.put('/api/v1/budgets', {
+        category: trimmedNewName,
+        limitAmount: parseFloat(limit || 0),
+        month
+      })
+      await fetchBudgets(month)
+      
+      const scoreStore = useScoreStore()
+      scoreStore.recalculate()
+    } catch (err) {
+      console.error('Failed to edit category:', err)
+    }
   }
 
   return {
     categories,
+    fetchBudgets,
     updateBudget,
     addCategory,
     deleteCategory,

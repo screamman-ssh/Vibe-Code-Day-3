@@ -1,39 +1,28 @@
 import { defineStore } from 'pinia'
-import { ref, computed, watch } from 'vue'
-
-const STORAGE_KEY = 'moneycircle_debts'
-
-const DEFAULT_DEBTS = [
-  { id: 'd-1', name: 'บัตรเครดิตธนาคาร A', originalAmount: 50000, balance: 35000, apr: 16, minimumPayment: 1750, dueDay: 15, onTimeStreak: 4 },
-  { id: 'd-2', name: 'สินเชื่อส่วนบุคคล B', originalAmount: 100000, balance: 65000, apr: 18, minimumPayment: 3250, dueDay: 28, onTimeStreak: 2 }
-]
-
-function loadDebts() {
-  if (typeof window === 'undefined') return [...DEFAULT_DEBTS]
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved) return JSON.parse(saved)
-  } catch {
-    localStorage.removeItem(STORAGE_KEY)
-  }
-  return [...DEFAULT_DEBTS]
-}
+import { ref, computed } from 'vue'
+import { useApi } from '~/composables/useApi'
+import { useScoreStore } from '~/stores/score'
 
 export const useDebtsStore = defineStore('debts', () => {
-  const items = ref(loadDebts())
+  const items = ref([])
+  const api = useApi()
 
-  watch(items, (val) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(val))
+  async function fetchDebts() {
+    try {
+      const data = await api.get('/api/v1/debts')
+      items.value = data
+    } catch (err) {
+      console.error('Failed to fetch debts:', err)
     }
-  }, { deep: true })
+  }
 
   const totalBalance = computed(() =>
     items.value.reduce((sum, d) => sum + d.balance, 0)
   )
 
   const totalOriginalAmount = computed(() =>
-    items.value.reduce((sum, d) => sum + d.originalAmount, 0)
+    // Default fallback to balance if originalAmount is missing in schema rows
+    items.value.reduce((sum, d) => sum + (d.originalAmount ?? d.balance), 0)
   )
 
   const totalMinimumPayment = computed(() =>
@@ -47,49 +36,83 @@ export const useDebtsStore = defineStore('debts', () => {
     return Math.round((weighted / total) * 10) / 10
   })
 
-  function addDebt(data) {
-    const orig = parseFloat(data.originalAmount)
-    const bal = parseFloat(data.balance ?? data.originalAmount)
-    const debt = {
-      id: `d-${Date.now()}`,
-      name: data.name,
-      originalAmount: orig,
-      balance: bal,
-      apr: parseFloat(data.apr || 0),
-      minimumPayment: parseFloat(data.minimumPayment || bal * 0.05),
-      dueDay: parseInt(data.dueDay || 15),
-      onTimeStreak: 0
+  async function addDebt(data) {
+    try {
+      const newDebt = await api.post('/api/v1/debts', {
+        name: data.name,
+        balance: parseFloat(data.balance ?? data.originalAmount),
+        apr: parseFloat(data.apr || 0),
+        minimumPayment: parseFloat(data.minimumPayment || 0),
+        dueDay: parseInt(data.dueDay || 15)
+      })
+      items.value.push(newDebt)
+
+      const scoreStore = useScoreStore()
+      scoreStore.recalculate()
+
+      return newDebt
+    } catch (err) {
+      console.error('Failed to add debt:', err)
+      throw err
     }
-    items.value.push(debt)
-    return debt
   }
 
-  function updateDebt(id, data) {
-    const idx = items.value.findIndex(d => d.id === id)
-    if (idx === -1) return null
-    const current = items.value[idx]
-    items.value[idx] = {
-      ...current,
-      ...data,
-      originalAmount: data.originalAmount != null ? parseFloat(data.originalAmount) : current.originalAmount,
-      balance: data.balance != null ? parseFloat(data.balance) : current.balance,
-      apr: data.apr != null ? parseFloat(data.apr) : current.apr,
-      minimumPayment: data.minimumPayment != null ? parseFloat(data.minimumPayment) : current.minimumPayment,
-      dueDay: data.dueDay != null ? parseInt(data.dueDay) : current.dueDay
+  async function updateDebt(id, data) {
+    try {
+      const updated = await api.put(`/api/v1/debts/${id}`, {
+        name: data.name,
+        balance: data.balance != null ? parseFloat(data.balance) : undefined,
+        apr: data.apr != null ? parseFloat(data.apr) : undefined,
+        minimumPayment: data.minimumPayment != null ? parseFloat(data.minimumPayment) : undefined,
+        dueDay: data.dueDay != null ? parseInt(data.dueDay) : undefined
+      })
+      
+      const idx = items.value.findIndex(d => d.id === id)
+      if (idx !== -1) {
+        items.value[idx] = updated
+      }
+
+      const scoreStore = useScoreStore()
+      scoreStore.recalculate()
+
+      return updated
+    } catch (err) {
+      console.error('Failed to update debt:', err)
+      throw err
     }
-    return items.value[idx]
   }
 
-  function deleteDebt(id) {
-    items.value = items.value.filter(d => d.id !== id)
+  async function deleteDebt(id) {
+    try {
+      await api.delete(`/api/v1/debts/${id}`)
+      items.value = items.value.filter(d => d.id !== id)
+
+      const scoreStore = useScoreStore()
+      scoreStore.recalculate()
+    } catch (err) {
+      console.error('Failed to delete debt:', err)
+      throw err
+    }
   }
 
-  function recordPayment(id, amount) {
-    const debt = items.value.find(d => d.id === id)
-    if (!debt) return null
-    debt.balance = Math.max(debt.balance - parseFloat(amount), 0)
-    debt.onTimeStreak++
-    return debt
+  async function recordPayment(id, amount) {
+    try {
+      const res = await api.post(`/api/v1/debts/${id}/payments`, { amount })
+      
+      const idx = items.value.findIndex(d => d.id === id)
+      if (idx !== -1) {
+        items.value[idx].balance = res.balance
+        items.value[idx].onTimeStreak = res.onTimeStreak
+      }
+
+      const scoreStore = useScoreStore()
+      scoreStore.recalculate()
+
+      return items.value[idx]
+    } catch (err) {
+      console.error('Failed to record payment:', err)
+      throw err
+    }
   }
 
   return {
@@ -98,6 +121,7 @@ export const useDebtsStore = defineStore('debts', () => {
     totalOriginalAmount,
     totalMinimumPayment,
     weightedApr,
+    fetchDebts,
     addDebt,
     updateDebt,
     deleteDebt,
