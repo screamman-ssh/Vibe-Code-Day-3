@@ -65,19 +65,21 @@ export async function streamChatCompletion({
   const config = useRuntimeConfig()
   const filter = createReasoningStreamFilter()
 
+  const body = {
+    model: DEFAULT_MODEL,
+    messages,
+    stream: true,
+    temperature,
+    max_tokens: maxTokens
+  }
+
   const response = await fetch(`${DEFAULT_BASE_URL}/chat/completions`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${config.public.aiApiKey}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({
-      model: DEFAULT_MODEL,
-      messages,
-      stream: true,
-      temperature,
-      max_tokens: maxTokens
-    })
+    body: JSON.stringify(body)
   })
 
   if (!response.ok) {
@@ -131,6 +133,38 @@ export async function streamChatCompletion({
   }
 
   return filter.getFull()
+}
+
+export async function chatCompletionOnce({
+  messages,
+  temperature = 0,
+  maxTokens = 500
+}) {
+  const config = useRuntimeConfig()
+
+  const response = await fetch(`${DEFAULT_BASE_URL}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${config.public.aiApiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: DEFAULT_MODEL,
+      messages,
+      stream: false,
+      temperature,
+      max_tokens: maxTokens
+    })
+  })
+
+  if (!response.ok) {
+    const errText = await response.text().catch(() => '')
+    throw new Error(errText || `LLM request failed (${response.status})`)
+  }
+
+  const json = await response.json()
+  const msg = json?.choices?.[0]?.message || {}
+  return msg.content || msg.reasoning_content || ''
 }
 
 export function createOpenAIClient() {

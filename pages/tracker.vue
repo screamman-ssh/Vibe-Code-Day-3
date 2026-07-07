@@ -1,8 +1,10 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import PageBanner from '~/components/layout/PageBanner.vue'
 import { useRouter, useTransactionsStore, useScoreStore, useUsageStore } from '#imports'
 import { confirmDialog } from '~/composables/useConfirmDialog'
+import { useApi } from '~/composables/useApi'
+import { chatCompletionOnce } from '~/composables/useOpenAIClient'
 import { 
   Plus, 
   Trash2, 
@@ -19,13 +21,13 @@ import {
   Sparkles,
   RefreshCw,
   CheckCircle,
-  ShieldAlert
 } from 'lucide-vue-next'
 
 const router = useRouter()
 const txStore = useTransactionsStore()
 const scoreStore = useScoreStore()
 const usageStore = useUsageStore()
+const api = useApi()
 
 // Calendar navigation states
 const today = new Date()
@@ -50,15 +52,11 @@ const date = ref(new Date().toISOString().split('T')[0])
 const showScanModal = ref(false)
 const showUpgradeModal = ref(false)
 const fileInput = ref(null)
-const previewImage = ref(null)
-const isOcrLoading = ref(false)
-const showOcrResultForm = ref(false)
+const isOcrLoading = ref(false) // true when actively processing queue
 
-// OCR Extracted fields
-const ocrAmount = ref('')
-const ocrCategory = ref('Food')
-const ocrDate = ref('')
-const ocrNote = ref('')
+// OCR Queue items (multi-slip)
+const ocrQueue = ref([])
+const activeQueueId = ref(null)
 
 const isPremium = computed(() => usageStore.tier === 'premium')
 
@@ -294,13 +292,8 @@ async function handleDelete(id) {
 
 // OCR Scan functions
 function openScanModal() {
-  if (usageStore.ocrUsedToday >= usageStore.ocrLimit && !isPremium.value) {
-    showUpgradeModal.value = true
-    return
-  }
-  previewImage.value = null
-  showOcrResultForm.value = false
   isOcrLoading.value = false
+  activeQueueId.value = null
   showScanModal.value = true
 }
 
@@ -308,50 +301,234 @@ function triggerCamera() {
   fileInput.value.click()
 }
 
-function handleFileChange(event) {
-  const file = event.target.files[0]
-  if (!file) return
-
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    previewImage.value = e.target.result
+function safeJsonParse(text) {
+  if (!text || typeof text !== 'string') return null
+  const trimmed = text.trim()
+  const start = trimmed.indexOf('{')
+  const end = trimmed.lastIndexOf('}')
+  if (start === -1 || end === -1 || end <= start) return null
+  try {
+    return JSON.parse(trimmed.slice(start, end + 1))
+  } catch {
+    return null
   }
-  reader.readAsDataURL(file)
-
-  runOcrMockAnalysis()
 }
 
-function runOcrMockAnalysis() {
-  isOcrLoading.value = true
-  showOcrResultForm.value = false
+function getAuthToken() {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem('accessToken')
+}
 
-  setTimeout(() => {
-    isOcrLoading.value = false
+async function uploadReceiptImage(file) {
+  const sign = await api.post('/api/v1/chat/attachments/sign', {
+    fileName: file.name,
+    mimeType: file.type,
+    fileSize: file.size
+  })
+
+  const token = getAuthToken()
+  const uploadResponse = await fetch(sign.uploadUrl, {
+    method: sign.method || 'PUT',
+    headers: {
+      ...(sign.headers || {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    },
+    body: file
+  })
+
+  if (!uploadResponse.ok) {
+    throw new Error('อัปโหลดรูปไม่สำเร็จ')
+  }
+
+  return sign.attachmentId
+}
+
+async function parseOcrTextToTx(ocrText) {
+  const prompt = `คุณคือ parser สำหรับ OCR ใบเสร็จ
+
+รับข้อความ OCR แล้วสรุปเป็น JSON สำหรับบันทึกรายจ่าย 1 รายการ
+
+กฎ:
+- ตอบเป็น JSON เท่านั้น
+- ห้ามเดา amount ถ้าไม่พบตัวเลขยอดรวมที่ชัดเจน (ให้คืน null)
+- category ต้องเป็นหนึ่งใน: Food, Transport, Housing, Utilities, Entertainment, Health, Education, Debt Payment, Savings, Income, Other
+- date: ถ้าไม่แน่ใจให้ใช้ "today"
+
+รูปแบบ:
+{"amount": number|null, "category": string, "date": "today"|"YYYY-MM-DD", "note": string}
+
+OCR:
+${ocrText || ''}`
+
+  const content = await chatCompletionOnce({
+    messages: [{ role: 'user', content: prompt }],
+    temperature: 0,
+    maxTokens: 400
+  })
+
+  const parsed = safeJsonParse(content) || {}
+  return {
+    amount: typeof parsed.amount === 'number' ? parsed.amount : null,
+    category: typeof parsed.category === 'string' ? parsed.category : 'Other',
+    date: typeof parsed.date === 'string' ? parsed.date : 'today',
+    note: typeof parsed.note === 'string' ? parsed.note : 'สแกนใบเสร็จอัตโนมัติด้วย OCR'
+  }
+}
+
+function makeQueueItem(file, previewUrl) {
+  const id = `q_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+  return {
+    id,
+    file,
+    fileName: file?.name || 'receipt',
+    previewUrl,
+    status: 'queued', // queued|uploading|ocr|parsing|ready|needs_review|recorded|error
+    error: '',
+    attachmentId: null,
+    // extracted fields
+    amount: '',
+    category: 'Food',
+    date: new Date().toISOString().split('T')[0],
+    note: 'สแกนใบเสร็จอัตโนมัติด้วย OCR'
+  }
+}
+
+function resetFileInput() {
+  if (fileInput.value) fileInput.value.value = ''
+}
+
+async function enqueueFiles(files) {
+  for (const file of files) {
+    if (!file) continue
+    const previewUrl = URL.createObjectURL(file)
+    ocrQueue.value.push(makeQueueItem(file, previewUrl))
+  }
+  resetFileInput()
+  await processOcrQueue()
+}
+
+async function handleFileChange(event) {
+  const files = Array.from(event?.target?.files || [])
+  if (!files.length) return
+  await enqueueFiles(files)
+}
+
+async function cleanupQueueItem(item) {
+  if (item?.attachmentId) {
+    try {
+      await api.delete(`/api/v1/chat/attachments/${item.attachmentId}`)
+    } catch {
+      // ignore cleanup errors
+    }
+  }
+}
+
+function normalizeTxDate(d) {
+  if (!d || d === 'today') return selectedDate.value || new Date().toISOString().split('T')[0]
+  return d
+}
+
+async function processOneQueueItem(item) {
+  activeQueueId.value = item.id
+  item.status = 'uploading'
+  item.error = ''
+  item.attachmentId = null
+
+  try {
+    item.attachmentId = await uploadReceiptImage(item.file)
+    item.status = 'ocr'
+    const ocrRes = await api.post('/api/v1/ocr/receipt', {
+      attachmentIds: [item.attachmentId],
+      hint: 'สแกนใบเสร็จเพื่อบันทึกรายจ่าย'
+    })
+    const ocrText = typeof ocrRes?.text === 'string' ? ocrRes.text : ''
     usageStore.useOcrScan()
 
-    // Populate mock OCR parameters
-    ocrAmount.value = '149'
-    ocrCategory.value = 'Food'
-    ocrDate.value = selectedDate.value || new Date().toISOString().split('T')[0]
-    ocrNote.value = 'สแกนใบเสร็จอัตโนมัติด้วย AI'
-    showOcrResultForm.value = true
-  }, 2200)
+    item.status = 'parsing'
+    const tx = await parseOcrTextToTx(ocrText)
+
+    item.amount = tx.amount == null ? '' : String(tx.amount)
+    item.category = categories.includes(tx.category) ? tx.category : 'Other'
+    item.date = normalizeTxDate(tx.date)
+    item.note = tx.note || item.note
+
+    item.status = item.amount ? 'ready' : 'needs_review'
+  } catch (err) {
+    console.error(err)
+    item.status = 'error'
+    item.error = err?.message || 'สแกนไม่สำเร็จ'
+  } finally {
+    activeQueueId.value = null
+    await cleanupQueueItem(item)
+  }
 }
 
-function handleConfirmOcr() {
-  if (!ocrAmount.value || ocrAmount.value <= 0) return
+async function processOcrQueue() {
+  if (isOcrLoading.value) return
+  const next = ocrQueue.value.find(i => i.status === 'queued')
+  if (!next) return
+
+  isOcrLoading.value = true
+  try {
+    // sequential processing to avoid hammering OCR/LLM
+    let item = next
+    while (item) {
+      // eslint-disable-next-line no-await-in-loop
+      await processOneQueueItem(item)
+      item = ocrQueue.value.find(i => i.status === 'queued')
+    }
+  } finally {
+    isOcrLoading.value = false
+  }
+}
+
+function removeQueueItem(id) {
+  const idx = ocrQueue.value.findIndex(i => i.id === id)
+  if (idx === -1) return
+  const item = ocrQueue.value[idx]
+  try {
+    if (item?.previewUrl?.startsWith('blob:')) URL.revokeObjectURL(item.previewUrl)
+  } catch {}
+  ocrQueue.value.splice(idx, 1)
+}
+
+async function retryQueueItem(id) {
+  const item = ocrQueue.value.find(i => i.id === id)
+  if (!item) return
+  item.status = 'queued'
+  item.error = ''
+  await processOcrQueue()
+}
+
+async function confirmQueueItem(id) {
+  const item = ocrQueue.value.find(i => i.id === id)
+  if (!item) return
+  if (!item.amount || Number(item.amount) <= 0) return
 
   txStore.createTransaction({
     type: 'expense',
-    amount: parseFloat(ocrAmount.value),
-    category: ocrCategory.value,
-    note: ocrNote.value,
-    date: ocrDate.value,
+    amount: Number.parseFloat(item.amount),
+    category: item.category,
+    note: item.note,
+    date: item.date,
     source: 'ocr'
   })
 
   scoreStore.currentScore.totalScore = Math.min(Math.max(scoreStore.currentScore.totalScore - 1, 0), 100)
-  showScanModal.value = false
+  item.status = 'recorded'
+}
+
+async function confirmAllReady() {
+  const items = ocrQueue.value.filter(i => i.status === 'ready')
+  for (const item of items) {
+    // eslint-disable-next-line no-await-in-loop
+    await confirmQueueItem(item.id)
+  }
+}
+
+function handleConfirmOcr() {
+  // legacy: keep for backward compatibility if template still calls this
+  confirmAllReady()
 }
 
 function handleUpgrade() {
@@ -780,6 +957,16 @@ function handleUpgrade() {
           <span>สแกนใบเสร็จด้วย AI OCR</span>
         </h3>
 
+        <!-- Hidden file input (always present so queue can add more) -->
+        <input
+          ref="fileInput"
+          type="file"
+          multiple
+          accept="image/*"
+          class="hidden"
+          @change="handleFileChange"
+        />
+
         <!-- Daily Quota Counter -->
         <div class="flex justify-between items-center bg-slate-50 border-2 border-border-subtle p-3 rounded-xl text-xs">
           <span class="font-bold text-ink">โควตาสแกนวันนี้: {{ usageStore.ocrUsedToday }} / {{ usageStore.ocrLimit }} ครั้ง</span>
@@ -789,7 +976,7 @@ function handleUpgrade() {
 
         <!-- File Camera Select Box -->
         <div 
-          v-if="!previewImage && !isOcrLoading"
+          v-if="!ocrQueue.length && !isOcrLoading"
           @click="triggerCamera"
           class="border-2 border-dashed border-cloud-gray hover:border-primary rounded-xl p-8 text-center flex flex-col items-center justify-center gap-3 bg-slate-50/50 cursor-pointer transition"
         >
@@ -797,80 +984,119 @@ function handleUpgrade() {
             <Camera class="w-6 h-6" />
           </div>
           <div class="space-y-1">
-            <span class="text-xs font-bold text-ink">กดเพื่อถ่ายภาพหรือแนบใบเสร็จ</span>
-            <p class="text-micro text-ink-muted">อัปโหลดไฟล์ภาพ .jpg, .png</p>
-          </div>
-          <input 
-            ref="fileInput"
-            type="file" 
-            accept="image/*" 
-            capture="environment" 
-            class="hidden" 
-            @change="handleFileChange"
-          />
-        </div>
-
-        <!-- OCR Loader -->
-        <div 
-          v-if="isOcrLoading"
-          class="flex flex-col items-center justify-center p-8 text-center space-y-4"
-        >
-          <RefreshCw class="w-7 h-7 text-primary animate-spin" />
-          <div class="space-y-1">
-            <h4 class="text-xs font-bold text-ink">กำลังวิเคราะห์ภาพใบเสร็จ...</h4>
-            <p class="text-micro text-ink-muted">AI Gemma กำลังสกัดยอดเงิน ชื่อร้าน และหมวดหมู่</p>
+            <span class="text-xs font-bold text-ink">กดเพื่อแนบใบเสร็จ (เลือกได้หลายรูป)</span>
+            <p class="text-micro text-ink-muted">อัปโหลดไฟล์ภาพ .jpg, .png, .webp</p>
           </div>
         </div>
 
-        <!-- Image Preview -->
-        <div v-if="previewImage && !isOcrLoading" class="relative rounded-xl overflow-hidden border-2 border-border-subtle bg-slate-100 max-h-40 flex items-center justify-center">
-          <img :src="previewImage" class="object-cover max-h-40 w-full" />
-          <button 
-            @click="previewImage = null; showOcrResultForm = false"
-            class="absolute top-2 right-2 p-1.5 bg-black/60 text-white rounded-full hover:bg-black/80 cursor-pointer"
-          >
-            <X class="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <!-- Extracted Form details -->
-        <div v-if="showOcrResultForm" class="space-y-3 pt-2">
-          <div class="flex items-center gap-1.5 text-xs font-black text-primary">
-            <CheckCircle class="w-4 h-4 fill-emerald-50" />
-            <span>AI สกัดยอดสำเร็จ! ตรวจสอบความถูกต้อง</span>
+        <!-- OCR Queue -->
+        <div v-if="ocrQueue.length" class="space-y-3">
+          <div class="flex items-center justify-between">
+            <p class="text-xs font-bold text-ink">คิวใบเสร็จ: {{ ocrQueue.length }} รูป</p>
+            <div class="flex gap-2">
+              <button
+                @click="triggerCamera"
+                class="btn-secondary text-xs px-3 py-1.5 rounded-full cursor-pointer"
+              >
+                เพิ่มรูป
+              </button>
+              <button
+                v-if="ocrQueue.some(i => i.status === 'ready')"
+                @click="confirmAllReady"
+                class="btn-primary text-xs px-3 py-1.5 rounded-full cursor-pointer"
+              >
+                บันทึกทั้งหมดที่พร้อม
+              </button>
+            </div>
           </div>
 
-          <div class="space-y-2 text-xs">
-            <div class="grid grid-cols-2 gap-3">
-              <div class="space-y-1">
-                <label class="field-label font-bold text-ink text-label">ยอดเงินรวม (THB)</label>
-                <input v-model="ocrAmount" type="number" class="input-field py-2 min-h-10" />
+          <div class="space-y-2">
+            <div
+              v-for="item in ocrQueue"
+              :key="item.id"
+              class="border-2 border-border-subtle rounded-xl p-3 bg-slate-50/40 space-y-2"
+            >
+              <div class="flex gap-3 items-start">
+                <img
+                  :src="item.previewUrl"
+                  :alt="item.fileName"
+                  class="w-16 h-16 rounded-lg object-cover border border-border-subtle bg-white"
+                />
+                <div class="min-w-0 flex-1">
+                  <p class="text-xs font-bold text-ink truncate">{{ item.fileName }}</p>
+                  <p class="text-micro text-ink-muted">
+                    <span v-if="item.status === 'queued'">รอคิว</span>
+                    <span v-else-if="item.status === 'uploading'">กำลังอัปโหลด...</span>
+                    <span v-else-if="item.status === 'ocr'">กำลัง OCR...</span>
+                    <span v-else-if="item.status === 'parsing'">กำลังแปลงเป็นธุรกรรม...</span>
+                    <span v-else-if="item.status === 'ready'">พร้อมบันทึก</span>
+                    <span v-else-if="item.status === 'needs_review'">ต้องตรวจสอบ</span>
+                    <span v-else-if="item.status === 'recorded'">บันทึกแล้ว</span>
+                    <span v-else-if="item.status === 'error'">ผิดพลาด</span>
+                  </p>
+                  <p v-if="item.status === 'error'" class="text-micro font-bold text-tier-risk mt-1">
+                    {{ item.error || 'สแกนไม่สำเร็จ' }}
+                  </p>
+                </div>
+                <div class="flex gap-1">
+                  <button
+                    v-if="item.status === 'error'"
+                    @click="retryQueueItem(item.id)"
+                    class="p-2 rounded-lg bg-white border border-border-subtle text-ink-muted hover:text-ink cursor-pointer"
+                    title="ลองใหม่"
+                  >
+                    <RefreshCw class="w-4 h-4" />
+                  </button>
+                  <button
+                    v-if="item.status !== 'uploading' && item.status !== 'ocr' && item.status !== 'parsing'"
+                    @click="removeQueueItem(item.id)"
+                    class="p-2 rounded-lg bg-white border border-border-subtle text-ink-muted hover:text-tier-risk cursor-pointer"
+                    title="ลบ"
+                  >
+                    <Trash2 class="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-              <div class="space-y-1">
-                <label class="field-label font-bold text-ink text-label">หมวดหมู่</label>
-                <select v-model="ocrCategory" class="input-field py-2 min-h-10">
-                  <option v-for="cat in categories" :key="cat" :value="cat">{{ formatCategoryThai(cat) }}</option>
-                </select>
-              </div>
-            </div>
 
-            <div class="space-y-1">
-              <label class="field-label font-bold text-ink text-label">วันที่ใบเสร็จ</label>
-              <input v-model="ocrDate" type="date" class="input-field py-2 min-h-10" />
-            </div>
-            
-            <div class="space-y-1">
-              <label class="field-label font-bold text-ink text-label">บันทึกเพิ่มเติม</label>
-              <input v-model="ocrNote" type="text" class="input-field py-2 min-h-10" />
+              <div v-if="item.status === 'ready' || item.status === 'needs_review'" class="space-y-2">
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                  <div class="space-y-1">
+                    <label class="field-label font-bold text-ink text-label">ยอดเงินรวม (THB)</label>
+                    <input v-model="item.amount" type="number" class="input-field py-2 min-h-10" />
+                  </div>
+                  <div class="space-y-1">
+                    <label class="field-label font-bold text-ink text-label">หมวดหมู่</label>
+                    <select v-model="item.category" class="input-field py-2 min-h-10">
+                      <option v-for="cat in categories" :key="cat" :value="cat">{{ formatCategoryThai(cat) }}</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                  <div class="space-y-1">
+                    <label class="field-label font-bold text-ink text-label">วันที่ใบเสร็จ</label>
+                    <input v-model="item.date" type="date" class="input-field py-2 min-h-10" />
+                  </div>
+                  <div class="space-y-1">
+                    <label class="field-label font-bold text-ink text-label">บันทึกเพิ่มเติม</label>
+                    <input v-model="item.note" type="text" class="input-field py-2 min-h-10" />
+                  </div>
+                </div>
+
+                <button
+                  @click="confirmQueueItem(item.id)"
+                  class="btn-primary w-full justify-center text-sm cursor-pointer"
+                >
+                  บันทึกรายจ่ายใบเสร็จนี้
+                </button>
+              </div>
             </div>
           </div>
 
-          <button 
-            @click="handleConfirmOcr"
-            class="btn-primary w-full justify-center text-sm cursor-pointer mt-2"
-          >
-            บันทึกรายจ่ายใบเสร็จ
-          </button>
+          <div v-if="isOcrLoading" class="flex items-center gap-2 text-xs font-bold text-ink-muted pt-1">
+            <RefreshCw class="w-4 h-4 text-primary animate-spin" />
+            กำลังประมวลผลคิว...
+          </div>
         </div>
       </div>
     </div>

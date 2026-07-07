@@ -2,13 +2,18 @@ import { useAuthStore } from '~/stores/auth'
 
 export function useApi() {
   const authStore = useAuthStore()
+  const config = useRuntimeConfig()
 
   const request = async (url, options = {}) => {
     const headers = { ...options.headers }
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
+    const aiKey = config?.public?.aiApiKey || null
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`
+    }
+    if (aiKey && !headers['x-llm-key'] && !headers['x-ai-key']) {
+      headers['x-llm-key'] = aiKey
     }
 
     try {

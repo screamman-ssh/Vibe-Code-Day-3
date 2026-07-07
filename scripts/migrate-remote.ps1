@@ -30,6 +30,7 @@ Invoke-D1Migration '0002_user_bio (optional)' './migrations/0002_user_bio.sql' -
 Invoke-D1Migration '0004_social_repost_columns (optional)' './migrations/0004_social_repost_columns.sql' -Optional
 Invoke-D1Migration '0003_social_engagement' './migrations/0003_social_engagement.sql'
 Invoke-D1Migration '0005_chat_history' './migrations/0005_chat_history.sql'
+Invoke-D1Migration '0006_chat_drafts' './migrations/0006_chat_drafts.sql'
 
 Write-Host ""
 Write-Host "Production D1 migration complete." -ForegroundColor Green

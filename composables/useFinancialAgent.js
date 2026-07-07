@@ -9,6 +9,10 @@ import {
 } from '~/utils/financialTools'
 import { streamChatCompletion } from '~/composables/useOpenAIClient'
 import { trimChatContext } from '~/composables/useChatHistory'
+import {
+  buildMultimodalUserContent,
+  messageHasImages
+} from '~/utils/chatMultimodal'
 
 const STYLE_RULES = `รูปแบบการตอบ (สำคัญมาก):
 - สั้น กระชับ อ่านง่าย ไม่เกิน 5-8 บรรทัด ยกเว้นผู้ใช้ขอรายละเอียด
@@ -32,6 +36,16 @@ const SYSTEM_PROMPT_GENERAL = `คุณคือ MoneyCircle AI ผู้ช่
 - ตอบตรงคำถาม สั้น เป็นกันเอง
 - ทักทาย → ตอบสั้น 1-3 ประโยค ไม่ยัดเรื่องการเงิน
 - คำถามทั่วไป → ตอบก่อน ชวนเรื่องการเงินได้ทีหลังถ้าเหมาะ
+
+${STYLE_RULES}`
+
+const SYSTEM_PROMPT_VISION = `คุณคือ MoneyCircle AI โค้ชการเงินภาษาไทย
+
+กฎเมื่อผู้ใช้แนบรูป:
+- อ่านและวิเคราะห์รูปที่แนบมา (สลิป ใบเสร็จ สรุปรายจ่าย ภาพหน้าจอ ฯลฯ)
+- สรุปรายการ ยอดเงิน วันที่ ร้านค้า หมวดหมู่ ถ้ามีในภาพ
+- แนะนำว่าควรบันทึกเป็นรายการอะไรในแอป (ถ้าเหมาะ)
+- ห้ามแต่งตัวเลขที่มองไม่เห็นในภาพ
 
 ${STYLE_RULES}`
 
@@ -59,11 +73,11 @@ function traceHasPersonalData(toolTrace) {
   return toolTrace.some(t => t.result?.ok && t.result?.empty === false)
 }
 
-function buildMockResponse(userMessage, toolTrace) {
+function buildFallbackResponse(userMessage, toolTrace) {
   const hasAppData = assessFinancialDataState().hasAnyData || traceHasPersonalData(toolTrace)
 
   if (!hasAppData) {
-    return `${buildGeneralFinancialAdvice(userMessage)}\n\n*โหมดสำรอง — ยังไม่มีข้อมูลในแอป แต่ยังให้คำแนะนำการเงินเบื้องต้นได้*`
+    return `${buildGeneralFinancialAdvice(userMessage)}\n\n*หมายเหตุ: ตอนนี้ AI ตอบแบบเต็มรูปแบบไม่ได้ จึงให้คำแนะนำทั่วไปแทน*`
   }
 
   const budget = toolTrace.find(t => t.name === 'get_budget_status')
@@ -107,25 +121,11 @@ function buildMockResponse(userMessage, toolTrace) {
   }
 
   if (!hasSection) {
-    return `${buildGeneralFinancialAdvice(userMessage)}\n\n*โหมดสำรอง — ข้อมูลในแอปยังไม่เพียงพอ จึงให้คำแนะนำทั่วไปแทน*`
+    return `${buildGeneralFinancialAdvice(userMessage)}\n\n*หมายเหตุ: ข้อมูลในแอปยังไม่พอสำหรับสรุปแบบละเอียด จึงให้คำแนะนำทั่วไปแทน*`
   }
 
-  response += '*คำแนะนำนี้อิงข้อมูลจริงจากแอปของคุณ (โหมดสำรองเมื่อเชื่อมต่อ AI ไม่ได้)*'
+  response += '*สรุปนี้อิงข้อมูลจริงจากแอปของคุณ*'
   return response
-}
-
-/** Emit text in small chunks so offline fallback still feels streamed */
-async function emitSimulatedStream(text, callbacks) {
-  callbacks.onStreamStart?.()
-  const chunkSize = 12
-  let full = ''
-  for (let i = 0; i < text.length; i += chunkSize) {
-    const piece = text.slice(i, i + chunkSize)
-    full += piece
-    callbacks.onToken?.(piece, full)
-    await new Promise(r => setTimeout(r, 16))
-  }
-  return full
 }
 
 export function useFinancialAgent() {
@@ -146,39 +146,73 @@ export function useFinancialAgent() {
     return toolTrace
   }
 
-  async function streamAnswer(apiMessages, callbacks) {
+  async function streamAnswer(apiMessages, callbacks, options = {}) {
     return streamChatCompletion({
       messages: apiMessages,
       onStreamStart: () => callbacks.onStreamStart?.(),
       onToken: async (_piece, full) => {
         callbacks.onToken?.(_piece, full)
-      }
+      },
+      temperature: options.temperature,
+      maxTokens: options.maxTokens
     })
   }
 
-  async function runAgent({ chatMessages, userMessage, callbacks = {} }) {
-    const isFinance = hasFinancialIntent(userMessage)
+  async function buildApiMessages(systemPrompt, chatMessages, userAttachments = []) {
+    const trimmed = trimChatContext(chatMessages)
+    const lastUserIndex = trimmed.map(m => m.role).lastIndexOf('user')
+    const messages = []
+
+    for (let i = 0; i < trimmed.length; i++) {
+      const message = trimmed[i]
+
+      if (message.role === 'user' && i === lastUserIndex && messageHasImages(userAttachments)) {
+        messages.push({
+          role: 'user',
+          content: await buildMultimodalUserContent(message.content, userAttachments)
+        })
+        continue
+      }
+
+      messages.push({
+        role: message.role,
+        content: message.content
+      })
+    }
+
+    return [
+      { role: 'system', content: systemPrompt },
+      ...messages
+    ]
+  }
+
+  async function runAgent({ chatMessages, userMessage, userAttachments = [], callbacks = {} }) {
+    const hasImages = messageHasImages(userAttachments)
+    const isFinance = hasFinancialIntent(userMessage) || hasImages
 
     // Phase 1: only retrieve financial data when the question is finance-related
     const toolTrace = isFinance ? gatherContext(userMessage, callbacks) : []
     const contextBlock = buildContextBlock(toolTrace)
-    const systemPrompt = isFinance
-      ? SYSTEM_PROMPT_FINANCE + contextBlock
-      : SYSTEM_PROMPT_GENERAL
 
-    const apiMessages = [
-      { role: 'system', content: systemPrompt },
-      ...trimChatContext(chatMessages).map(m => ({ role: m.role, content: m.content }))
-    ]
+    let systemPrompt = SYSTEM_PROMPT_GENERAL
+    if (hasImages) {
+      systemPrompt = SYSTEM_PROMPT_VISION + contextBlock
+    } else if (isFinance) {
+      systemPrompt = SYSTEM_PROMPT_FINANCE + contextBlock
+    }
+
+    const apiMessages = await buildApiMessages(systemPrompt, chatMessages, userAttachments)
 
     let finalContent = ''
 
     try {
-      finalContent = await streamAnswer(apiMessages, callbacks)
+      finalContent = await streamAnswer(apiMessages, callbacks, {
+        temperature: hasImages ? 0.7 : 0.5,
+        maxTokens: hasImages ? 800 : 350
+      })
 
       if (!finalContent?.trim() && isFinance) {
-        finalContent = buildMockResponse(userMessage, toolTrace)
-        await emitSimulatedStream(finalContent, callbacks)
+        finalContent = buildFallbackResponse(userMessage, toolTrace)
       }
 
       return {
@@ -186,10 +220,9 @@ export function useFinancialAgent() {
         toolTrace: toolTrace.map(({ name, args, summary }) => ({ name, args, summary }))
       }
     } catch (err) {
-      const mockContent = isFinance
-        ? buildMockResponse(userMessage, toolTrace)
+      finalContent = isFinance
+        ? buildFallbackResponse(userMessage, toolTrace)
         : 'ขออภัยครับ ตอนนี้เชื่อมต่อ AI ไม่ได้ชั่วคราว ลองใหม่อีกครั้งนะครับ'
-      finalContent = await emitSimulatedStream(mockContent, callbacks)
       return {
         content: finalContent,
         toolTrace: toolTrace.map(({ name, args, summary }) => ({ name, args, summary })),

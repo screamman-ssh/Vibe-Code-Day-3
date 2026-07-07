@@ -5,31 +5,8 @@ export function useDB(event: H3Event) {
   if (env && env.DB) {
     return env.DB
   }
-  
-  // Local fallback mock D1 executor interface to prevent crashes when running under standard dev preset
-  // In Cloudflare deployment or pages dev, env.DB will always exist.
-  return {
-    prepare(query: string) {
-      return {
-        bind(...args: any[]) {
-          return {
-            async first() { return null },
-            async all() { return { results: [] } },
-            async run() { return { success: true } }
-          }
-        },
-        async first() { return null },
-        async all() { return { results: [] } },
-        async run() { return { success: true } }
-      }
-    },
-    async batch(statements: any[]) {
-      return []
-    },
-    async exec(query: string) {
-      return { count: 0, duration: 0 }
-    }
-  }
+
+  throw new Error('D1 binding "DB" is missing. Run via `npm run pages:dev` / `wrangler pages dev` so Cloudflare env bindings are available.')
 }
 
 export function getJwtSecret(event: H3Event): string {

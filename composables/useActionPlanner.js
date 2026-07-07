@@ -1,0 +1,158 @@
+import { chatCompletionOnce } from '~/composables/useOpenAIClient'
+import { buildMultimodalUserContent } from '~/utils/chatMultimodal'
+import { normalizeActions } from '~/utils/chatActionTypes'
+import { useApi } from '~/composables/useApi'
+
+const ROUTER_SYSTEM_PROMPT = `คุณคือ intent router ของแอปการเงิน MoneyCircle
+
+หน้าที่: แปลงข้อความผู้ใช้เป็น "แผนการกระทำ" แบบ JSON เพื่อให้แอปโชว์พรีวิวและให้ผู้ใช้กดยืนยันก่อนเขียนข้อมูลลงระบบ
+
+กฎสำคัญ:
+- ตอบเป็น JSON เท่านั้น ห้ามมีข้อความอื่น
+- ถ้าไม่มั่นใจหรือข้อมูลไม่พอ ให้คืน {"actions":[]}
+- ห้ามเดาตัวเลข (amount) ถ้าไม่มีในข้อความ
+- วันที่: ถ้าไม่ระบุ ให้ใช้ "today"
+- หมวดหมู่ธุรกรรมใช้ค่าเหล่านี้: Food, Transport, Housing, Utilities, Entertainment, Health, Education, Debt Payment, Savings, Income, Other
+
+สคีมา:
+{
+  "actions": [
+    {
+      "type": "create_transaction" | "update_transaction" | "delete_transaction" | "set_budget" | "add_debt" | "record_debt_payment" | "create_social_post",
+      "data": { ... }
+    }
+  ]
+}
+
+รายละเอียด data:
+- create_transaction: { "txType":"income"|"expense", "amount":number, "category":string, "merchant"?:string, "note"?:string, "date":"today"|"YYYY-MM-DD" }
+- update_transaction: { "transactionId":string, "txType"?:string, "amount"?:number, "category"?:string, "merchant"?:string, "note"?:string, "date"?:string }
+- delete_transaction: { "transactionId":string }
+- set_budget: { "category":string, "limitAmount":number, "month"?: "YYYY-MM" }
+- add_debt: { "name":string, "balance":number, "apr"?:number, "minimumPayment"?:number, "dueDay"?:number }
+- record_debt_payment: { "debtName":string, "amount":number }
+- create_social_post: { "content":string }
+`
+
+const VISION_PLANNER_PROMPT = `คุณคือ receipt/slip parser ของแอปการเงิน MoneyCircle
+
+หน้าที่: อ่านรูปสลิป/ใบเสร็จ/หน้าจอธนาคาร แล้วแปลงเป็น JSON actions สำหรับให้ผู้ใช้ตรวจก่อนบันทึก
+
+กฎสำคัญ:
+- ตอบเป็น JSON เท่านั้น
+- ถ้าอ่านรูปไม่ได้ ให้คืน {"actions":[]}
+- ดึงทุกรายการที่เห็นในภาพ (หลายรายการได้)
+- ใช้ตัวเลขจากภาพเท่านั้น ห้ามแต่ง
+- วันที่ไม่ชัด → "today"
+- หมวด: Food, Transport, Housing, Utilities, Entertainment, Health, Education, Debt Payment, Savings, Income, Other
+- ถ้าผู้ใช้ขอโพสต์/แชร์ → เพิ่ม create_social_post ด้วยข้อความสรุปสั้นๆ
+
+สคีมาเดียวกับ intent router (actions array)
+`
+
+function safeJsonParse(text) {
+  if (!text || typeof text !== 'string') return null
+  const trimmed = text.trim()
+  const start = trimmed.indexOf('{')
+  const end = trimmed.lastIndexOf('}')
+  if (start === -1 || end === -1 || end <= start) return null
+
+  try {
+    return JSON.parse(trimmed.slice(start, end + 1))
+  } catch {
+    return null
+  }
+}
+
+export function looksLikeWriteIntent(userMessage) {
+  const q = (userMessage || '').toLowerCase()
+  return [
+    'บันทึก', 'เพิ่ม', 'ใส่', 'ลง', 'จด',
+    'ตั้งงบ', 'กำหนดงบ', 'งบหมวด',
+    'สร้างหนี้', 'เพิ่มหนี้', 'บัตร', 'สินเชื่อ',
+    'จ่ายหนี้', 'ชำระ', 'โปะ',
+    'โพสต์', 'แชร์', 'ลงโพสต์', 'post'
+  ].some(k => q.includes(k))
+}
+
+export function looksLikeRecordFromImage(userMessage) {
+  const q = (userMessage || '').toLowerCase()
+  return [
+    'บันทึก', 'จด', 'ใส่', 'เพิ่ม', 'ลง', 'save', 'record',
+    'สลิป', 'ใบเสร็จ', 'receipt'
+  ].some(k => q.includes(k))
+}
+
+export function shouldPlanWriteAction(userMessage, hasAttachments = false) {
+  if (looksLikeWriteIntent(userMessage)) return true
+  return hasAttachments && looksLikeRecordFromImage(userMessage)
+}
+
+export async function routeIntentToActions(userMessage) {
+  const content = await chatCompletionOnce({
+    messages: [
+      { role: 'system', content: ROUTER_SYSTEM_PROMPT },
+      { role: 'user', content: userMessage || '' }
+    ],
+    temperature: 0,
+    maxTokens: 600
+  })
+
+  const parsed = safeJsonParse(content)
+  if (!parsed || !Array.isArray(parsed.actions)) return { actions: [] }
+
+  return { actions: normalizeActions(parsed.actions) }
+}
+
+export async function routeVisionToActions(userMessage, attachments = []) {
+  const api = useApi()
+  const attachmentIds = (attachments || [])
+    .map(a => a?.id)
+    .filter(id => typeof id === 'string' && id && !id.startsWith('local_'))
+
+  let ocrText = ''
+  if (attachmentIds.length) {
+    try {
+      const res = await api.post('/api/v1/ocr/receipt', {
+        attachmentIds,
+        hint: userMessage || ''
+      })
+      ocrText = typeof res?.text === 'string' ? res.text : ''
+    } catch (err) {
+      // OCR is best-effort; fall back to direct vision planner
+      ocrText = ''
+    }
+  }
+
+  const userContent = ocrText
+    ? `${userMessage || ''}\n\n=== OCR TEXT (from receipt image) ===\n${ocrText}\n=== END OCR TEXT ===\n\nแปลงเป็น JSON actions ตามสคีมา`
+    : await buildMultimodalUserContent(
+      `${userMessage || ''}\n\nดึงรายการธุรกรรมจากรูปเป็น JSON actions ตามสคีมา`,
+      attachments
+    )
+
+  const content = await chatCompletionOnce({
+    messages: [
+      { role: 'system', content: VISION_PLANNER_PROMPT },
+      { role: 'user', content: userContent }
+    ],
+    temperature: 0,
+    maxTokens: 900
+  })
+
+  const parsed = safeJsonParse(content)
+  if (!parsed || !Array.isArray(parsed.actions)) return { actions: [] }
+
+  return { actions: normalizeActions(parsed.actions) }
+}
+
+export async function planWriteActions(userMessage, attachments = []) {
+  const hasAttachments = Array.isArray(attachments) && attachments.length > 0
+
+  if (hasAttachments && (looksLikeRecordFromImage(userMessage) || looksLikeWriteIntent(userMessage))) {
+    const visionPlan = await routeVisionToActions(userMessage, attachments)
+    if (visionPlan.actions.length) return visionPlan
+  }
+
+  return routeIntentToActions(userMessage)
+}

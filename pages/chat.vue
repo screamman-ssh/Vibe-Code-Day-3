@@ -6,12 +6,17 @@ import { useBudgetStore } from '~/stores/budget'
 import { useDebtsStore } from '~/stores/debts'
 import { useFinancialAgent } from '~/composables/useFinancialAgent'
 import { useChatHistory } from '~/composables/useChatHistory'
+import { useChatDraft } from '~/composables/useChatDraft'
+import { planWriteActions } from '~/composables/useActionPlanner'
+import { useActionExecutor } from '~/composables/useActionExecutor'
+import { normalizeActions } from '~/utils/chatActionTypes'
 import { TOOL_LABELS, assessFinancialDataState } from '~/utils/financialTools'
 import ChatMessageMarkdown from '~/components/chat/ChatMessageMarkdown.vue'
 import ChatThinkingPlaceholder from '~/components/chat/ChatThinkingPlaceholder.vue'
+import ChatComposer from '~/components/chat/ChatComposer.vue'
+import ActionPreviewCard from '~/components/chat/ActionPreviewCard.vue'
 import {
   Sparkles,
-  Send,
   User,
   Database,
   RotateCcw,
@@ -23,9 +28,26 @@ const txStore = useTransactionsStore()
 const budgetStore = useBudgetStore()
 const debtsStore = useDebtsStore()
 const { runAgent } = useFinancialAgent()
+const { executePlan } = useActionExecutor()
 const { loadHistory, saveHistory, clearHistory, trimChatContext } = useChatHistory()
 
 const user = computed(() => auth.user || { displayName: 'คุณ', avatarUrl: '', subscriptionTier: 'free', id: 'guest' })
+const historyUserIdRef = computed(() => user.value?.id || 'guest')
+
+const {
+  draftText,
+  attachments: draftAttachments,
+  isLoading: isDraftLoading,
+  isSyncing: isDraftSyncing,
+  loadDraft,
+  addFiles,
+  removeAttachment,
+  retryUpload,
+  clearDraft,
+  watchDraft
+} = useChatDraft(historyUserIdRef)
+
+watchDraft(historyUserIdRef)
 
 function buildWelcomeMessage() {
   return `สวัสดีครับคุณ **${user.value.displayName}**! ผมคือ AI โค้ชการเงินของ MoneyCircle\n\nถามเรื่องงบ ออม หนี้ — หรือคุยเรื่องอื่นก็ได้ ผมจะดึงข้อมูลจากแอปมาช่วยเมื่อเกี่ยวข้อง`
@@ -69,17 +91,24 @@ async function restoreChatHistory() {
 }
 
 const messages = ref(createWelcomeState())
-const inputMessage = ref('')
 const isLoading = ref(false)
 const isStreaming = ref(false)
 const activeTools = ref([])
 const chatContainer = ref(null)
 const showSuggestions = ref(true)
 const isHistoryLoading = ref(false)
+const attachmentErrors = ref([])
+const pendingPlanIndex = ref(null)
+const isApplyingPlan = ref(false)
 
 const hasPendingReply = computed(() => isLoading.value || isStreaming.value)
+const hasPendingPlan = computed(() => pendingPlanIndex.value != null)
 
 const hasUserMessages = computed(() => messages.value.some(m => m.role === 'user'))
+
+const hasUploadingAttachments = computed(() =>
+  draftAttachments.value.some(item => item.status === 'uploading')
+)
 
 function isActiveAssistant(idx) {
   return idx === messages.value.length - 1 && messages.value[idx]?.role === 'assistant'
@@ -152,20 +181,92 @@ function formatToolTrace(trace) {
 async function resetChat() {
   if (hasPendingReply.value) return
   await clearHistory(historyUserId())
+  await clearDraft(historyUserId())
   messages.value = createWelcomeState()
   showSuggestions.value = true
+  attachmentErrors.value = []
   scrollToBottom()
 }
 
-async function handleSend(text) {
-  const msgText = typeof text === 'string' ? text : inputMessage.value
-  if (!msgText?.trim() || hasPendingReply.value) return
+async function clonePreviewUrl(url) {
+  if (!url) return null
+  if (typeof url !== 'string' || !url.startsWith('blob:')) return url
+
+  const response = await fetch(url)
+  const blob = await response.blob()
+  return URL.createObjectURL(blob)
+}
+
+async function buildMessageAttachments() {
+  const ready = draftAttachments.value.filter(item => item.status === 'ready')
+
+  const previewUrls = await Promise.all(
+    ready.map(item => clonePreviewUrl(item.localPreviewUrl))
+  )
+
+  return ready.map((item, idx) => ({
+    id: item.id,
+    fileName: item.fileName,
+    mimeType: item.mimeType,
+    previewUrl: previewUrls[idx] || item.localPreviewUrl
+  }))
+}
+
+async function handleAddFiles(fileList) {
+  attachmentErrors.value = []
+  const errors = await addFiles(fileList)
+  if (errors.length) {
+    attachmentErrors.value = [...new Set(errors)]
+  }
+}
+
+async function handleSend(text, options = {}) {
+  const msgText = typeof text === 'string' ? text : draftText.value
+  const readyAttachments = await buildMessageAttachments()
+  const hasText = msgText?.trim()
+  const hasAttachments = readyAttachments.length > 0
+
+  if ((!hasText && !hasAttachments) || hasPendingReply.value || hasUploadingAttachments.value || hasPendingPlan.value) return
 
   showSuggestions.value = false
-  messages.value.push({ role: 'user', content: msgText.trim() })
-  inputMessage.value = ''
+  messages.value.push({
+    role: 'user',
+    content: hasText ? msgText.trim() : '(แนบรูป)',
+    attachments: readyAttachments
+  })
+
+  const sentText = hasText ? msgText.trim() : 'ช่วยวิเคราะห์รูปที่แนบมาให้หน่อย'
+  draftText.value = ''
+  await clearDraft(historyUserId())
   persistChatHistory()
   scrollToBottom()
+
+  // Phase 3: write intent → vision/text planner → editable preview card
+  if (!options.skipIntentRouter && historyUserId() !== 'guest') {
+    try {
+      const rawPlan = await planWriteActions(sentText, readyAttachments)
+      const actions = normalizeActions(rawPlan?.actions)
+      if (actions.length) {
+        pendingPlanIndex.value = messages.value.push({
+          role: 'assistant',
+          content: '',
+          toolTrace: [],
+          status: 'done',
+          previewPlan: {
+            actions,
+            sourceText: sentText,
+            attachmentCount: readyAttachments.length,
+            state: 'pending'
+          }
+        }) - 1
+        persistChatHistory()
+        scrollToBottom()
+        return
+      }
+    } catch (err) {
+      console.error('Action planner failed:', err)
+    }
+  }
 
   isLoading.value = true
   isStreaming.value = false
@@ -184,7 +285,8 @@ async function handleSend(text) {
   try {
     const result = await runAgent({
       chatMessages: chatHistory,
-      userMessage: msgText.trim(),
+      userMessage: sentText,
+      userAttachments: readyAttachments,
       callbacks: {
         onToolStart(name) {
           messages.value[assistantIndex].status = 'tools'
@@ -228,9 +330,58 @@ async function handleSend(text) {
   }
 }
 
+async function applyPreviewPlan(index) {
+  const msg = messages.value[index]
+  const plan = msg?.previewPlan
+  if (!plan || !Array.isArray(plan.actions) || plan.state !== 'pending') return
+
+  const actions = normalizeActions(plan.actions)
+  if (!actions.length) {
+    plan.state = 'failed'
+    plan.error = 'ไม่มีรายการที่บันทึกได้'
+    pendingPlanIndex.value = null
+    return
+  }
+
+  isApplyingPlan.value = true
+  plan.state = 'applying'
+  plan.actions = actions
+
+  try {
+    await executePlan(actions)
+
+    msg.previewPlan.state = 'applied'
+    pendingPlanIndex.value = null
+    persistChatHistory()
+
+    await handleSend(
+      `อัปเดตข้อมูลให้แล้ว: ${plan.sourceText}\n\nช่วยสรุปผลและแนะนำต่อให้หน่อย`,
+      { skipIntentRouter: true }
+    )
+  } catch (err) {
+    console.error('Failed to apply plan:', err)
+    msg.previewPlan.state = 'failed'
+    msg.previewPlan.error = err?.message || 'Apply failed'
+    pendingPlanIndex.value = null
+    persistChatHistory()
+  } finally {
+    isApplyingPlan.value = false
+  }
+}
+
+function cancelPreviewPlan(index) {
+  const msg = messages.value[index]
+  if (msg?.previewPlan?.state === 'pending' || msg?.previewPlan?.state === 'failed') {
+    msg.previewPlan.state = 'cancelled'
+    pendingPlanIndex.value = null
+    persistChatHistory()
+  }
+}
+
 watch(() => auth.user?.id, async () => {
   if (!hasPendingReply.value) {
     await restoreChatHistory()
+    await loadDraft(historyUserId())
     scrollToBottom()
   }
 })
@@ -238,6 +389,7 @@ watch(() => auth.user?.id, async () => {
 watch(messages, () => scrollToBottom(), { deep: true })
 onMounted(async () => {
   await restoreChatHistory()
+  await loadDraft(historyUserId())
   scrollToBottom()
 })
 </script>
@@ -296,6 +448,22 @@ onMounted(async () => {
               :status="getThinkingStatus(msg, idx)"
               :active-tools="getThinkingStatus(msg, idx) === 'tools' ? activeTools : []"
             />
+            <ActionPreviewCard
+              v-if="msg.previewPlan && (msg.previewPlan.state === 'pending' || msg.previewPlan.state === 'failed')"
+              :plan="msg.previewPlan"
+              :disabled="hasPendingReply || isApplyingPlan"
+              @confirm="applyPreviewPlan(idx)"
+              @cancel="cancelPreviewPlan(idx)"
+            />
+            <p v-if="msg.previewPlan?.state === 'applied'" class="tool-trace-footer">
+              บันทึกข้อมูลแล้ว
+            </p>
+            <p v-if="msg.previewPlan?.state === 'cancelled'" class="tool-trace-footer">
+              ยกเลิกการบันทึก
+            </p>
+            <p v-if="msg.previewPlan?.state === 'failed'" class="chat-page__attachment-error">
+              บันทึกไม่สำเร็จ: {{ msg.previewPlan.error || 'เกิดข้อผิดพลาด' }}
+            </p>
             <ChatMessageMarkdown
               v-if="msg.content"
               :content="msg.content"
@@ -305,7 +473,18 @@ onMounted(async () => {
               ใช้ข้อมูล: {{ formatToolTrace(msg.toolTrace) }}
             </p>
           </template>
-          <template v-else>{{ msg.content }}</template>
+          <template v-else>
+            <div v-if="msg.attachments?.length" class="chat-page__user-attachments">
+              <img
+                v-for="attachment in msg.attachments"
+                :key="attachment.id"
+                :src="attachment.previewUrl"
+                :alt="attachment.fileName"
+                class="chat-page__user-attachment"
+              />
+            </div>
+            <span v-if="msg.content && msg.content !== '(แนบรูป)'">{{ msg.content }}</span>
+          </template>
         </div>
 
         <div v-if="msg.role === 'user'" class="chat-page__avatar chat-page__avatar--user">
@@ -348,26 +527,20 @@ onMounted(async () => {
         </button>
       </div>
 
-      <form class="chat-page__input-row" @submit.prevent="handleSend()">
-        <input
-          id="chat-message-input"
-          v-model="inputMessage"
-          type="text"
-          autocomplete="off"
-          aria-label="พิมพ์คำถาม"
-          placeholder="พิมพ์คำถาม..."
-          class="chat-page__input"
-          :disabled="hasPendingReply"
-        />
-        <button
-          type="submit"
-          class="chat-page__send"
-          :disabled="hasPendingReply || !inputMessage.trim()"
-          aria-label="ส่งข้อความ"
-        >
-          <Send class="w-4 h-4" />
-        </button>
-      </form>
+      <p v-if="attachmentErrors.length" class="chat-page__attachment-error">
+        {{ attachmentErrors[0] }}
+      </p>
+
+      <ChatComposer
+        v-model="draftText"
+        :attachments="draftAttachments"
+        :disabled="hasPendingReply || isDraftLoading || hasPendingPlan"
+        :is-syncing="isDraftSyncing"
+        @send="handleSend()"
+        @add-files="handleAddFiles"
+        @remove-attachment="removeAttachment"
+        @retry-upload="retryUpload"
+      />
     </footer>
   </div>
 </template>
@@ -523,6 +696,28 @@ onMounted(async () => {
   font-weight: 500;
 }
 
+.chat-page__user-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-bottom: 0.375rem;
+}
+
+.chat-page__user-attachment {
+  width: 5rem;
+  height: 5rem;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.chat-page__attachment-error {
+  margin: 0 0 0.375rem;
+  font-size: var(--text-caption);
+  color: var(--color-danger, #dc2626);
+  padding-left: 0.25rem;
+}
+
 .chat-page__avatar--thinking {
   animation: chat-avatar-pulse 1.4s ease-in-out infinite;
 }
@@ -622,57 +817,6 @@ onMounted(async () => {
   color: var(--color-ink-muted);
   border-color: var(--color-border-subtle);
   background: transparent;
-}
-
-.chat-page__input-row {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.chat-page__input {
-  flex: 1;
-  min-height: 2.75rem;
-  padding: 0.5rem 0.875rem;
-  border-radius: 12px;
-  border: 2px solid var(--color-border-subtle);
-  background: var(--color-surface-card);
-  font-size: var(--text-label);
-  color: var(--color-ink);
-  outline: none;
-  transition: border-color 150ms;
-}
-
-.chat-page__input:focus {
-  border-color: var(--color-primary);
-}
-
-.chat-page__input:disabled {
-  opacity: 0.6;
-}
-
-.chat-page__send {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: 12px;
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: opacity 150ms;
-}
-
-.chat-page__send:hover:not(:disabled) {
-  opacity: 0.9;
-}
-
-.chat-page__send:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
 }
 
 .scrollbar-none::-webkit-scrollbar {
