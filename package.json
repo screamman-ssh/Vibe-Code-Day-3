@@ -10,6 +10,7 @@
     "postinstall": "nuxt prepare",
     "db:migrate:local": "wrangler d1 execute vibe_code_training --local --file=./migrations/0001_init.sql && wrangler d1 execute vibe_code_training --local --file=./migrations/0002_social.sql && wrangler d1 execute vibe_code_training --local --file=./migrations/0003_social_engagement.sql",
     "db:migrate:remote": "wrangler d1 execute vibe_code_training --remote --file=./migrations/0001_init.sql && wrangler d1 execute vibe_code_training --remote --file=./migrations/0002_social.sql && wrangler d1 execute vibe_code_training --remote --file=./migrations/0003_social_engagement.sql",
+    "db:migrate:remote:all": "powershell -ExecutionPolicy Bypass -File ./scripts/migrate-remote.ps1",
     "db:migrate:social:local": "wrangler d1 execute vibe_code_training --local --file=./migrations/0002_social.sql",
     "db:migrate:engagement:local": "wrangler d1 execute vibe_code_training --local --file=./migrations/0003_social_engagement.sql",
     "db:migrate:engagement:remote": "wrangler d1 execute vibe_code_training --remote --file=./migrations/0003_social_engagement.sql",
@@ -17,6 +18,8 @@
     "db:migrate:repost-columns:remote": "wrangler d1 execute vibe_code_training --remote --file=./migrations/0004_social_repost_columns.sql",
     "db:migrate:bio:local": "wrangler d1 execute vibe_code_training --local --file=./migrations/0002_user_bio.sql",
     "db:migrate:bio:remote": "wrangler d1 execute vibe_code_training --remote --file=./migrations/0002_user_bio.sql",
+    "db:migrate:chat:local": "wrangler d1 execute vibe_code_training --local --file=./migrations/0005_chat_history.sql",
+    "db:migrate:chat:remote": "wrangler d1 execute vibe_code_training --remote --file=./migrations/0005_chat_history.sql",
     "pages:dev": "npm run build && npm run db:migrate:local && wrangler pages dev dist --d1=65b810fc-498b-4575-8e3c-f0b4a8413d04 --local",
     "pages:deploy": "npm run build && wrangler pages deploy dist"
   },

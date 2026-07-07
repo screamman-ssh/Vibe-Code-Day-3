@@ -32,9 +32,23 @@ export function getPostDisplayText(post) {
   }
 }
 
+/** SQLite CURRENT_TIMESTAMP is UTC without a timezone suffix. */
+export function parseDbDate(dateStr) {
+  if (!dateStr) return null
+  const s = String(dateStr).trim()
+  if (!s) return null
+  if (/[zZ]$|[+-]\d{2}:\d{2}$/.test(s)) {
+    return new Date(s)
+  }
+  const iso = s.includes('T') ? s : s.replace(' ', 'T')
+  return new Date(iso.endsWith('Z') ? iso : `${iso}Z`)
+}
+
 export function formatTimeAgo(dateStr) {
   if (!dateStr) return ''
-  const diff = Date.now() - new Date(dateStr).getTime()
+  const date = parseDbDate(dateStr)
+  if (!date || Number.isNaN(date.getTime())) return ''
+  const diff = Date.now() - date.getTime()
   const mins = Math.floor(diff / 60000)
   if (mins < 1) return 'เมื่อกี้'
   if (mins < 60) return `${mins} นาทีที่แล้ว`
@@ -47,7 +61,9 @@ export function formatTimeAgo(dateStr) {
 /** Short feed timestamp like reference: 5ชม, 3ว, 28 มิ.ย. */
 export function formatFeedTime(dateStr) {
   if (!dateStr) return ''
-  const diff = Date.now() - new Date(dateStr).getTime()
+  const date = parseDbDate(dateStr)
+  if (!date || Number.isNaN(date.getTime())) return ''
+  const diff = Date.now() - date.getTime()
   const mins = Math.floor(diff / 60000)
   if (mins < 1) return 'เมื่อกี้'
   if (mins < 60) return `${mins}น`
@@ -55,7 +71,7 @@ export function formatFeedTime(dateStr) {
   if (hours < 24) return `${hours}ชม`
   const days = Math.floor(hours / 24)
   if (days < 7) return `${days}ว`
-  return new Date(dateStr).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })
+  return date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', timeZone: 'Asia/Bangkok' })
 }
 
 export function getUserHandle(displayName = '') {

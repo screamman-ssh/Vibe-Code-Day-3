@@ -118,9 +118,8 @@ async function handleReport() {
 async function handleTopLevelReply(content) {
   isSubmittingReply.value = true
   try {
-    const reply = await socialStore.createReply(threadRootId.value, content)
-    replies.value = [...replies.value, reply]
-    props.post.replyCount = (props.post.replyCount || 0) + 1
+    await socialStore.createReply(threadRootId.value, content, null, props.post)
+    replies.value = [...(socialStore.replyCache[threadRootId.value] || [])]
   } catch (err) {
     console.error('Reply failed:', err)
   } finally {
@@ -131,9 +130,8 @@ async function handleTopLevelReply(content) {
 async function handleNestedReply({ parentReplyId, content }) {
   isSubmittingReply.value = true
   try {
-    const reply = await socialStore.createReply(threadRootId.value, content, parentReplyId)
-    replies.value = [...replies.value, reply]
-    props.post.replyCount = (props.post.replyCount || 0) + 1
+    await socialStore.createReply(threadRootId.value, content, parentReplyId, props.post)
+    replies.value = [...(socialStore.replyCache[threadRootId.value] || [])]
   } catch (err) {
     console.error('Nested reply failed:', err)
   } finally {

@@ -7,7 +7,8 @@ import {
   buildGeneralFinancialAdvice,
   TOOL_LABELS
 } from '~/utils/financialTools'
-import { createOpenAIClient, DEFAULT_MODEL } from '~/composables/useOpenAIClient'
+import { streamChatCompletion } from '~/composables/useOpenAIClient'
+import { trimChatContext } from '~/composables/useChatHistory'
 
 const STYLE_RULES = `รูปแบบการตอบ (สำคัญมาก):
 - สั้น กระชับ อ่านง่าย ไม่เกิน 5-8 บรรทัด ยกเว้นผู้ใช้ขอรายละเอียด
@@ -145,29 +146,17 @@ export function useFinancialAgent() {
     return toolTrace
   }
 
-  async function streamAnswer(openai, apiMessages, callbacks) {
-    callbacks.onStreamStart?.()
-    const stream = await openai.chat.completions.create({
-      model: DEFAULT_MODEL,
+  async function streamAnswer(apiMessages, callbacks) {
+    return streamChatCompletion({
       messages: apiMessages,
-      temperature: 0.5,
-      max_tokens: 350,
-      stream: true
-    })
-
-    let content = ''
-    for await (const chunk of stream) {
-      const text = chunk.choices[0]?.delta?.content || ''
-      if (text) {
-        content += text
-        callbacks.onToken?.(text, content)
+      onStreamStart: () => callbacks.onStreamStart?.(),
+      onToken: async (_piece, full) => {
+        callbacks.onToken?.(_piece, full)
       }
-    }
-    return content
+    })
   }
 
   async function runAgent({ chatMessages, userMessage, callbacks = {} }) {
-    const openai = createOpenAIClient()
     const isFinance = hasFinancialIntent(userMessage)
 
     // Phase 1: only retrieve financial data when the question is finance-related
@@ -179,14 +168,13 @@ export function useFinancialAgent() {
 
     const apiMessages = [
       { role: 'system', content: systemPrompt },
-      ...chatMessages.map(m => ({ role: m.role, content: m.content }))
+      ...trimChatContext(chatMessages).map(m => ({ role: m.role, content: m.content }))
     ]
 
     let finalContent = ''
 
     try {
-      // Phase 2: stream the answer (plain chat completion, no tools param)
-      finalContent = await streamAnswer(openai, apiMessages, callbacks)
+      finalContent = await streamAnswer(apiMessages, callbacks)
 
       if (!finalContent?.trim() && isFinance) {
         finalContent = buildMockResponse(userMessage, toolTrace)

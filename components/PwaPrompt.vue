@@ -21,18 +21,14 @@ async function onReload() {
   await $pwa?.updateServiceWorker(true)
 }
 
-function onDismiss() {
+async function onDismiss() {
   if (!$pwa) return
   if (showInstall.value) {
-    $pwa.cancelPrompt()
+    $pwa.cancelInstall()
     return
   }
-  if (showUpdate.value) {
-    $pwa.cancelPrompt()
-    return
-  }
-  if (showOfflineReady.value) {
-    $pwa.offlineReady = false
+  if (showUpdate.value || showOfflineReady.value) {
+    await $pwa.cancelPrompt()
   }
 }
 </script>
@@ -82,7 +78,7 @@ function onDismiss() {
   right: 1rem;
   bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
   left: 1rem;
-  z-index: 100;
+  z-index: 200;
   max-width: 24rem;
   margin-left: auto;
   padding: 0.875rem 1rem;

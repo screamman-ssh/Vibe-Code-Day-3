@@ -100,7 +100,7 @@ export const useSocialStore = defineStore('social', () => {
     return buildReplyTree(flat)
   }
 
-  async function createReply(threadRootId, content, parentReplyId = null) {
+  async function createReply(threadRootId, content, parentReplyId = null, postRef = null) {
     const reply = await api.post(`/api/v1/social/posts/${threadRootId}/replies`, {
       content,
       parentReplyId
@@ -111,12 +111,16 @@ export const useSocialStore = defineStore('social', () => {
     }
     replyCache.value[threadRootId].push(reply)
 
+    const bumped = new Set()
     const bump = (p) => {
+      if (!p || bumped.has(p)) return
       if (p.id === threadRootId || p.repostOf?.id === threadRootId) {
         p.replyCount = (p.replyCount || 0) + 1
+        bumped.add(p)
       }
     }
     feedPosts.value.forEach(bump)
+    if (postRef) bump(postRef)
 
     return reply
   }

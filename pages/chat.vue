@@ -5,12 +5,13 @@ import { useTransactionsStore } from '~/stores/transactions'
 import { useBudgetStore } from '~/stores/budget'
 import { useDebtsStore } from '~/stores/debts'
 import { useFinancialAgent } from '~/composables/useFinancialAgent'
+import { useChatHistory } from '~/composables/useChatHistory'
 import { TOOL_LABELS, assessFinancialDataState } from '~/utils/financialTools'
 import ChatMessageMarkdown from '~/components/chat/ChatMessageMarkdown.vue'
+import ChatThinkingPlaceholder from '~/components/chat/ChatThinkingPlaceholder.vue'
 import {
   Sparkles,
   Send,
-  RefreshCw,
   User,
   Database,
   RotateCcw,
@@ -22,24 +23,74 @@ const txStore = useTransactionsStore()
 const budgetStore = useBudgetStore()
 const debtsStore = useDebtsStore()
 const { runAgent } = useFinancialAgent()
+const { loadHistory, saveHistory, clearHistory, trimChatContext } = useChatHistory()
 
-const user = computed(() => auth.user || { displayName: 'คุณ', avatarUrl: '', subscriptionTier: 'free' })
+const user = computed(() => auth.user || { displayName: 'คุณ', avatarUrl: '', subscriptionTier: 'free', id: 'guest' })
 
 function buildWelcomeMessage() {
   return `สวัสดีครับคุณ **${user.value.displayName}**! ผมคือ AI โค้ชการเงินของ MoneyCircle\n\nถามเรื่องงบ ออม หนี้ — หรือคุยเรื่องอื่นก็ได้ ผมจะดึงข้อมูลจากแอปมาช่วยเมื่อเกี่ยวข้อง`
 }
 
-const messages = ref([
-  { role: 'assistant', content: buildWelcomeMessage(), toolTrace: [] }
-])
+function createWelcomeState() {
+  return [{ role: 'assistant', content: buildWelcomeMessage(), toolTrace: [], status: 'done' }]
+}
+
+function historyUserId() {
+  return user.value?.id || 'guest'
+}
+
+async function persistChatHistory() {
+  try {
+    await saveHistory(historyUserId(), messages.value)
+  } catch (err) {
+    console.error('Failed to persist chat history:', err)
+  }
+}
+
+async function restoreChatHistory() {
+  isHistoryLoading.value = true
+  try {
+    const saved = await loadHistory(historyUserId())
+    if (saved?.length) {
+      const onlyWelcome = saved.length === 1
+        && saved[0].role === 'assistant'
+        && !saved.some(message => message.role === 'user')
+
+      messages.value = onlyWelcome ? createWelcomeState() : saved
+      showSuggestions.value = !messages.value.some(message => message.role === 'user')
+      return
+    }
+
+    messages.value = createWelcomeState()
+    showSuggestions.value = true
+  } finally {
+    isHistoryLoading.value = false
+  }
+}
+
+const messages = ref(createWelcomeState())
 const inputMessage = ref('')
 const isLoading = ref(false)
 const isStreaming = ref(false)
 const activeTools = ref([])
 const chatContainer = ref(null)
 const showSuggestions = ref(true)
+const isHistoryLoading = ref(false)
+
+const hasPendingReply = computed(() => isLoading.value || isStreaming.value)
 
 const hasUserMessages = computed(() => messages.value.some(m => m.role === 'user'))
+
+function isActiveAssistant(idx) {
+  return idx === messages.value.length - 1 && messages.value[idx]?.role === 'assistant'
+}
+
+function getThinkingStatus(msg, idx) {
+  if (!isActiveAssistant(idx) || msg.content) return null
+  if (activeTools.value.length || msg.status === 'tools') return 'tools'
+  if (isStreaming.value || msg.status === 'streaming') return 'streaming'
+  return 'thinking'
+}
 
 const overBudgetCategories = computed(() =>
   budgetStore.categories.filter(c => c.spentAmount > c.limitAmount)
@@ -98,30 +149,36 @@ function formatToolTrace(trace) {
   return trace.map(t => TOOL_LABELS[t.name] || t.name).join(', ')
 }
 
-function resetChat() {
-  if (isLoading.value) return
-  messages.value = [{ role: 'assistant', content: buildWelcomeMessage(), toolTrace: [] }]
+async function resetChat() {
+  if (hasPendingReply.value) return
+  await clearHistory(historyUserId())
+  messages.value = createWelcomeState()
   showSuggestions.value = true
   scrollToBottom()
 }
 
 async function handleSend(text) {
   const msgText = typeof text === 'string' ? text : inputMessage.value
-  if (!msgText?.trim() || isLoading.value) return
+  if (!msgText?.trim() || hasPendingReply.value) return
 
   showSuggestions.value = false
   messages.value.push({ role: 'user', content: msgText.trim() })
   inputMessage.value = ''
+  persistChatHistory()
   scrollToBottom()
 
   isLoading.value = true
+  isStreaming.value = false
   activeTools.value = []
 
-  const chatHistory = messages.value.filter(m => m.role === 'user' || m.role === 'assistant')
+  const chatHistory = trimChatContext(
+    messages.value.filter(message => message.role === 'user' || message.role === 'assistant')
+  )
   const assistantIndex = messages.value.push({
     role: 'assistant',
     content: '',
-    toolTrace: []
+    toolTrace: [],
+    status: 'thinking'
   }) - 1
 
   try {
@@ -130,19 +187,25 @@ async function handleSend(text) {
       userMessage: msgText.trim(),
       callbacks: {
         onToolStart(name) {
+          messages.value[assistantIndex].status = 'tools'
           if (!activeTools.value.includes(name)) activeTools.value.push(name)
           scrollToBottom()
         },
         onToolDone(name) {
           activeTools.value = activeTools.value.filter(t => t !== name)
+          if (!activeTools.value.length) {
+            messages.value[assistantIndex].status = 'thinking'
+          }
         },
         onStreamStart() {
           isLoading.value = false
           isStreaming.value = true
+          messages.value[assistantIndex].status = 'streaming'
         },
         onToken(_chunk, full) {
           isLoading.value = false
           isStreaming.value = true
+          messages.value[assistantIndex].status = 'streaming'
           messages.value[assistantIndex].content = full
           scrollToBottom()
         }
@@ -151,19 +214,32 @@ async function handleSend(text) {
 
     messages.value[assistantIndex].content = result.content
     messages.value[assistantIndex].toolTrace = result.toolTrace
+    messages.value[assistantIndex].status = 'done'
   } catch (err) {
     console.error(err)
     messages.value[assistantIndex].content = `ขออภัยครับ เกิดข้อผิดพลาด (${err.message}) กรุณาลองใหม่อีกครั้ง`
+    messages.value[assistantIndex].status = 'done'
   } finally {
     isLoading.value = false
     isStreaming.value = false
     activeTools.value = []
+    persistChatHistory()
     scrollToBottom()
   }
 }
 
+watch(() => auth.user?.id, async () => {
+  if (!hasPendingReply.value) {
+    await restoreChatHistory()
+    scrollToBottom()
+  }
+})
+
 watch(messages, () => scrollToBottom(), { deep: true })
-onMounted(() => scrollToBottom())
+onMounted(async () => {
+  await restoreChatHistory()
+  scrollToBottom()
+})
 </script>
 
 <template>
@@ -185,7 +261,7 @@ onMounted(() => scrollToBottom())
       <button
         type="button"
         class="chat-page__reset"
-        :disabled="isLoading"
+        :disabled="hasPendingReply"
         title="เริ่มบทสนทนาใหม่"
         @click="resetChat"
       >
@@ -195,6 +271,7 @@ onMounted(() => scrollToBottom())
 
     <!-- Messages -->
     <div ref="chatContainer" class="chat-page__messages">
+      <p v-if="isHistoryLoading" class="chat-page__history-loading">กำลังโหลดประวัติแชท...</p>
       <div
         v-for="(msg, idx) in messages"
         :key="idx"
@@ -204,6 +281,7 @@ onMounted(() => scrollToBottom())
         <div
           v-if="msg.role === 'assistant'"
           class="chat-page__avatar chat-page__avatar--assistant"
+          :class="{ 'chat-page__avatar--thinking': getThinkingStatus(msg, idx) }"
         >
           <Sparkles class="w-3.5 h-3.5 fill-primary" />
         </div>
@@ -213,12 +291,17 @@ onMounted(() => scrollToBottom())
           :class="msg.role === 'user' ? 'chat-page__bubble--user' : 'chat-page__bubble--assistant'"
         >
           <template v-if="msg.role === 'assistant'">
+            <ChatThinkingPlaceholder
+              v-if="getThinkingStatus(msg, idx)"
+              :status="getThinkingStatus(msg, idx)"
+              :active-tools="getThinkingStatus(msg, idx) === 'tools' ? activeTools : []"
+            />
             <ChatMessageMarkdown
               v-if="msg.content"
               :content="msg.content"
-              :streaming="isStreaming && idx === messages.length - 1"
+              :streaming="isStreaming && isActiveAssistant(idx)"
             />
-            <p v-if="msg.toolTrace?.length" class="tool-trace-footer">
+            <p v-if="msg.toolTrace?.length && msg.status === 'done'" class="tool-trace-footer">
               ใช้ข้อมูล: {{ formatToolTrace(msg.toolTrace) }}
             </p>
           </template>
@@ -233,21 +316,6 @@ onMounted(() => scrollToBottom())
             class="w-full h-full object-cover rounded-full"
           />
           <User v-else class="w-3.5 h-3.5" />
-        </div>
-      </div>
-
-      <!-- Typing indicator -->
-      <div v-if="isLoading || activeTools.length" class="chat-page__row chat-page__row--assistant">
-        <div class="chat-page__avatar chat-page__avatar--assistant animate-pulse">
-          <RefreshCw class="w-3.5 h-3.5 animate-spin" />
-        </div>
-        <div class="chat-page__bubble chat-page__bubble--assistant chat-page__bubble--typing">
-          <span>{{ isLoading && !activeTools.length ? 'กำลังคิดคำตอบ...' : 'กำลังดึงข้อมูลจากแอป...' }}</span>
-          <div v-if="activeTools.length" class="flex flex-wrap gap-1 mt-1.5">
-            <span v-for="tool in activeTools" :key="tool" class="tool-status-chip">
-              {{ TOOL_LABELS[tool] || tool }}
-            </span>
-          </div>
         </div>
       </div>
     </div>
@@ -265,7 +333,7 @@ onMounted(() => scrollToBottom())
             :key="s.prompt"
             type="button"
             class="chat-page__chip"
-            :disabled="isLoading"
+            :disabled="hasPendingReply"
             @click="handleSend(s.prompt)"
           >
             {{ s.label }}
@@ -273,7 +341,7 @@ onMounted(() => scrollToBottom())
         </div>
       </div>
 
-      <div v-else-if="hasUserMessages && !isLoading" class="chat-page__suggestions-toggle">
+      <div v-else-if="hasUserMessages && !hasPendingReply" class="chat-page__suggestions-toggle">
         <button type="button" class="chat-page__chip chat-page__chip--ghost" @click="showSuggestions = true">
           <Lightbulb class="w-3 h-3" />
           แสดงคำถามแนะนำ
@@ -289,12 +357,12 @@ onMounted(() => scrollToBottom())
           aria-label="พิมพ์คำถาม"
           placeholder="พิมพ์คำถาม..."
           class="chat-page__input"
-          :disabled="isLoading"
+          :disabled="hasPendingReply"
         />
         <button
           type="submit"
           class="chat-page__send"
-          :disabled="isLoading || !inputMessage.trim()"
+          :disabled="hasPendingReply || !inputMessage.trim()"
           aria-label="ส่งข้อความ"
         >
           <Send class="w-4 h-4" />
@@ -414,6 +482,14 @@ onMounted(() => scrollToBottom())
   -webkit-overflow-scrolling: touch;
 }
 
+.chat-page__history-loading {
+  margin: 0;
+  text-align: center;
+  font-size: var(--text-xs);
+  color: var(--color-ink-muted);
+  padding: 0.5rem 0;
+}
+
 .chat-page__row {
   display: flex;
   align-items: flex-end;
@@ -432,10 +508,10 @@ onMounted(() => scrollToBottom())
 
 .chat-page__bubble {
   max-width: min(88%, 28rem);
-  padding: 0.625rem 0.875rem;
+  padding: 0.75rem 1rem;
   border-radius: 12px;
-  font-size: var(--text-label);
-  line-height: 1.55;
+  font-size: var(--text-base);
+  line-height: 1.5;
   word-break: break-word;
 }
 
@@ -444,6 +520,20 @@ onMounted(() => scrollToBottom())
   color: white;
   border-bottom-right-radius: 4px;
   white-space: pre-line;
+  font-weight: 500;
+}
+
+.chat-page__avatar--thinking {
+  animation: chat-avatar-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes chat-avatar-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--color-primary) 20%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in oklch, var(--color-primary) 12%, transparent);
+  }
 }
 
 .chat-page__bubble--assistant {
@@ -456,6 +546,7 @@ onMounted(() => scrollToBottom())
 .chat-page__bubble--typing {
   color: var(--color-ink-muted);
   font-size: var(--text-xs);
+  min-height: 2.5rem;
 }
 
 .chat-page__footer {
