@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
   google_id           TEXT UNIQUE,
   display_name        TEXT NOT NULL,
   avatar_url          TEXT,
+  bio                 TEXT,
   subscription_tier   TEXT NOT NULL DEFAULT 'free',
   emergency_fund_amount REAL DEFAULT 0.00,
   avg_monthly_expenses REAL DEFAULT 0.00,

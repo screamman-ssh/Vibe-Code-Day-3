@@ -16,6 +16,7 @@ import {
   Monitor
 } from 'lucide-vue-next'
 import { useTheme } from '~/composables/useTheme'
+import { confirmDialog } from '~/composables/useConfirmDialog'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -75,8 +76,9 @@ function handleUpgrade() {
   }
 }
 
-function handleLogout() {
-  if (confirm(t('shell.logoutConfirm'))) {
+async function handleLogout() {
+  const ok = await confirmDialog(t('shell.logoutConfirm'), { variant: 'danger' })
+  if (ok) {
     authStore.logout()
     router.push('/login')
   }

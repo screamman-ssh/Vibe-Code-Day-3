@@ -1,17 +1,14 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter, useAuthStore, useRuntimeConfig } from '#imports'
-import { LogIn, User } from 'lucide-vue-next'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const config = useRuntimeConfig()
 
-const guestName = ref('')
 const error = ref('')
 
 onMounted(() => {
-  // Load Google script dynamically
   const script = document.createElement('script')
   script.src = 'https://accounts.google.com/gsi/client'
   script.async = true
@@ -39,28 +36,6 @@ async function handleGoogleCallback(response) {
     error.value = 'การเข้าสู่ระบบด้วย Google ล้มเหลว'
   }
 }
-
-async function handlePersonaLogin(persona) {
-  try {
-    await authStore.loginAsPersona(persona)
-    router.push('/')
-  } catch (err) {
-    error.value = 'ไม่สามารถเข้าสู่ระบบด้วย Persona ได้'
-  }
-}
-
-async function handleGuestLogin() {
-  if (!guestName.value.trim()) {
-    error.value = 'กรุณากรอกชื่อสำหรับแสดงผล'
-    return
-  }
-  try {
-    await authStore.loginAsGuest(guestName.value.trim())
-    router.push('/onboarding')
-  } catch (err) {
-    error.value = 'การสร้างบัญชีผู้ใช้ชั่วคราวล้มเหลว'
-  }
-}
 </script>
 
 <template>
@@ -77,72 +52,13 @@ async function handleGuestLogin() {
 
       <div class="border-t border-border-subtle" />
 
-      <!-- Real Google SSO -->
+      <!-- Google SSO -->
       <div class="space-y-3">
         <h3 class="text-xs font-extrabold text-ink-muted uppercase tracking-wider text-center">เข้าสู่ระบบด้วย Google</h3>
         <div class="flex justify-center w-full">
           <div id="google-signin-btn" class="w-full"></div>
         </div>
-      </div>
-
-      <div class="flex items-center justify-between text-xs text-ink-muted font-bold py-1">
-        <div class="w-full border-t border-border-subtle" />
-        <span class="px-3">หรือ</span>
-        <div class="w-full border-t border-border-subtle" />
-      </div>
-
-      <!-- Development Personas -->
-      <div class="space-y-3">
-        <h3 class="text-xs font-extrabold text-ink-muted uppercase tracking-wider text-center">เข้าสู่ระบบด้วย Persona (สำหรับนักพัฒนา)</h3>
-        <div class="grid grid-cols-2 gap-3">
-          <button 
-            @click="handlePersonaLogin('nune')"
-            class="btn-secondary flex items-center justify-center gap-2 p-3 text-sm font-bold text-ink"
-          >
-            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=nune" class="w-6 h-6 rounded-full" />
-            <span>Nune (Free)</span>
-          </button>
-          
-          <button 
-            @click="handlePersonaLogin('boss')"
-            class="btn-secondary flex items-center justify-center gap-2 p-3 text-sm font-bold text-ink"
-          >
-            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=boss" class="w-6 h-6 rounded-full" />
-            <span>Boss (Premium)</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="flex items-center justify-between text-xs text-ink-muted font-bold py-1">
-        <div class="w-full border-t border-border-subtle" />
-        <span class="px-3">หรือ</span>
-        <div class="w-full border-t border-border-subtle" />
-      </div>
-
-      <!-- Guest Login Form -->
-      <div class="space-y-4">
-        <div class="space-y-1">
-          <label class="field-label font-bold text-ink">สร้างบัญชีผู้ใช้ชั่วคราว</label>
-          <div class="relative flex items-center">
-            <User class="w-4 h-4 text-ink-muted absolute left-3 pointer-events-none" />
-            <input 
-              v-model="guestName"
-              type="text" 
-              placeholder="กรอกชื่อของคุณ..." 
-              class="input-field pl-10"
-              @keyup.enter="handleGuestLogin"
-            />
-          </div>
-          <span v-if="error" class="text-xs font-semibold text-tier-risk block mt-1">{{ error }}</span>
-        </div>
-
-        <button 
-          @click="handleGuestLogin"
-          class="btn-primary w-full gap-2 text-sm cursor-pointer justify-center"
-        >
-          <LogIn class="w-4 h-4" />
-          <span>เริ่มต้นใช้งานทันที</span>
-        </button>
+        <span v-if="error" class="text-xs font-semibold text-tier-risk block text-center">{{ error }}</span>
       </div>
 
       <!-- Disclaimer warning -->

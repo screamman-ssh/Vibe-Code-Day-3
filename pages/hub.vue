@@ -4,17 +4,21 @@ import PageBanner from '~/components/layout/PageBanner.vue'
 import { useRouter } from '#imports'
 import { useBudgetStore } from '~/stores/budget'
 import { useDebtsStore } from '~/stores/debts'
+import { useSocialStore } from '~/stores/social'
 import {
   LayoutGrid,
   PiggyBank,
   Wallet,
   ArrowRight,
-  PieChart
+  PieChart,
+  Globe,
+  Users
 } from 'lucide-vue-next'
 
 const router = useRouter()
 const budgetStore = useBudgetStore()
 const debtsStore = useDebtsStore()
+const socialStore = useSocialStore()
 const totalBudgetLimit = computed(() =>
   budgetStore.categories.reduce((s, c) => s + c.limitAmount, 0)
 )
@@ -55,6 +59,33 @@ const sections = computed(() => [
         tone: 'amber',
         stat: formatCurrency(debtsStore.totalBalance),
         badge: debtsStore.items.length ? `${debtsStore.items.length} บัญชี` : 'ยังไม่มีหนี้',
+        badgeTone: 'neutral'
+      }
+    ]
+  },
+  {
+    id: 'social',
+    title: 'ชุมชน',
+    subtitle: 'ติดตามและรับโพสต์จากคนอื่น',
+    modules: [
+      {
+        path: '/social',
+        title: 'ชุมชนการเงิน',
+        description: 'ติดตามเพื่อน ดูโพสต์ความคืบหน้า และแชร์เคล็ดลับการเงิน',
+        icon: Globe,
+        tone: 'sky',
+        stat: socialStore.followingCount ? `ติดตาม ${socialStore.followingCount} คน` : 'เริ่มติดตามเพื่อน',
+        badge: null,
+        badgeTone: 'neutral'
+      },
+      {
+        path: '/circle',
+        title: 'กลุ่มเพื่อน',
+        description: 'แข่งคะแนนและดูกิจกรรมกลุ่มของคุณ',
+        icon: Users,
+        tone: 'mint',
+        stat: 'Leaderboard',
+        badge: null,
         badgeTone: 'neutral'
       }
     ]

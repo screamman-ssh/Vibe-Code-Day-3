@@ -6,9 +6,12 @@ import { useTransactionsStore } from './stores/transactions'
 import { useBudgetStore } from './stores/budget'
 import { useDebtsStore } from './stores/debts'
 import { useGroupStore } from './stores/group'
+import { useSocialStore } from './stores/social'
 import { useScoreStore } from './stores/score'
 import { useTheme } from './composables/useTheme'
 import AppShell from './components/layout/AppShell.vue'
+import ConfirmDialog from './components/ui/ConfirmDialog.vue'
+import PwaPrompt from './components/PwaPrompt.vue'
 
 const route = useRoute()
 const auth = useAuthStore()
@@ -17,6 +20,7 @@ const txStore = useTransactionsStore()
 const budgetStore = useBudgetStore()
 const debtsStore = useDebtsStore()
 const groupStore = useGroupStore()
+const socialStore = useSocialStore()
 const scoreStore = useScoreStore()
 
 const { initTheme, applyTheme } = useTheme()
@@ -31,6 +35,7 @@ async function fetchAllUserData() {
       budgetStore.fetchBudgets(),
       debtsStore.fetchDebts(),
       groupStore.fetchGroupDetails(),
+      socialStore.fetchFeed(),
       scoreStore.fetchScore()
     ])
   }
@@ -62,6 +67,7 @@ watch(() => auth.isLoggedIn, (loggedIn) => {
     groupStore.currentGroup = null
     groupStore.leaderboard = []
     groupStore.feedEvents = []
+    socialStore.reset()
     scoreStore.currentScore = {
       totalScore: 50,
       tier: 'Building',
@@ -79,6 +85,9 @@ const showShell = computed(() => {
 
 <template>
   <div id="app">
+    <NuxtPwaManifest />
+    <PwaPrompt />
+    <ConfirmDialog />
     <AppShell v-if="showShell" :show-nav="true">
       <NuxtPage />
     </AppShell>

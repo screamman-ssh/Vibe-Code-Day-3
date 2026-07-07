@@ -4,6 +4,7 @@ import PageBanner from '~/components/layout/PageBanner.vue'
 import { storeToRefs } from 'pinia'
 import { useScoreStore } from '~/stores/score'
 import { useDebtsStore } from '~/stores/debts'
+import { alertDialog, confirmDialog } from '~/composables/useConfirmDialog'
 import { createOpenAIClient, DEFAULT_MODEL } from '~/composables/useOpenAIClient'
 import ChatMessageMarkdown from '~/components/chat/ChatMessageMarkdown.vue'
 import { 
@@ -166,7 +167,7 @@ const formatCurrency = (val) => {
 }
 
 const percentPaid = (debt) => {
-  const orig = debt.originalAmount || 1
+  const orig = debt.originalAmount ?? debt.balance ?? 1
   const paid = Math.max(orig - debt.balance, 0)
   return Math.round((paid / orig) * 100)
 }
@@ -237,8 +238,9 @@ function handleLogPayment() {
   showPayModal.value = false
 }
 
-function handleDeleteDebt(id) {
-  if (confirm('คุณต้องการลบข้อมูลหนี้สินนี้ใช่หรือไม่?')) {
+async function handleDeleteDebt(id) {
+  const ok = await confirmDialog('คุณต้องการลบข้อมูลหนี้สินนี้ใช่หรือไม่?', { variant: 'danger' })
+  if (ok) {
     debtsStore.deleteDebt(id)
   }
 }
@@ -341,7 +343,7 @@ const calculatorResults = computed(() => {
 // 3. AI Debt Strategy Planner Call
 async function triggerAiAnalysis() {
   if (debts.value.length === 0) {
-    alert('กรุณาเพิ่มบัญชีหนี้สินก่อนรับแผนวิเคราะห์')
+    await alertDialog('กรุณาเพิ่มบัญชีหนี้สินก่อนรับแผนวิเคราะห์')
     return
   }
 
@@ -507,7 +509,7 @@ async function triggerAiAnalysis() {
           <div class="space-y-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
             <div class="flex justify-between text-micro text-ink-muted leading-none">
               <span>ชำระไปแล้ว {{ percentPaid(d) }}%</span>
-              <span>คงค้าง {{ formatCurrency(d.balance) }} / ตั้งต้น {{ formatCurrency(d.originalAmount) }}</span>
+              <span>คงค้าง {{ formatCurrency(d.balance) }} / ตั้งต้น {{ formatCurrency(d.originalAmount ?? d.balance) }}</span>
             </div>
             <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
               <div 

@@ -3,7 +3,7 @@ import { useRoute, useRouter } from '#imports'
 import {
   LayoutDashboard,
   Receipt,
-  Users,
+  Globe,
   Sparkles,
   LayoutGrid
 } from 'lucide-vue-next'
@@ -11,18 +11,19 @@ import {
 const route = useRoute()
 const router = useRouter()
 
-const hubPaths = ['/hub', '/budget', '/debts', '/settings']
+const hubPaths = ['/hub', '/budget', '/debts', '/settings', '/social']
 
 const navItems = [
   { path: '/', labelKey: 'nav.dashboard', icon: LayoutDashboard },
   { path: '/tracker', labelKey: 'nav.tracker', icon: Receipt },
   { path: '/chat', labelKey: 'nav.chat', icon: Sparkles },
   { path: '/hub', labelKey: 'nav.hub', icon: LayoutGrid },
-  { path: '/circle', labelKey: 'nav.circle', icon: Users },
+  { path: '/social', labelKey: 'nav.social', icon: Globe },
 ]
 
 function isActive(path) {
-  if (path === '/hub') return hubPaths.includes(route.path)
+  if (path === '/hub') return hubPaths.includes(route.path) && route.path !== '/social'
+  if (path === '/social') return route.path.startsWith('/social')
   return route.path === path
 }
 

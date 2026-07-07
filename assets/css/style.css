@@ -269,6 +269,32 @@ body {
   @apply text-ink-muted hover:text-ink hover:bg-surface-card;
 }
 
+.sub-tab-nav {
+  @apply flex border-b-2 border-border-subtle bg-surface-card;
+}
+
+.sub-tab-btn {
+  @apply flex-1 inline-flex items-center justify-center gap-1.5 px-2 py-3 text-xs font-bold whitespace-nowrap cursor-pointer border-b-2 -mb-0.5 transition;
+  transition:
+    background-color 150ms cubic-bezier(0.25, 1, 0.5, 1),
+    color 150ms cubic-bezier(0.25, 1, 0.5, 1),
+    border-color 150ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.sub-tab-btn--active {
+  @apply text-primary border-primary;
+  background: color-mix(in oklch, var(--color-primary-light) 65%, white);
+}
+
+.sub-tab-btn--inactive {
+  @apply text-ink-muted border-transparent;
+}
+
+.sub-tab-btn--inactive:hover {
+  @apply text-ink;
+  background: color-mix(in oklch, var(--color-primary-light) 35%, white);
+}
+
 .icon-tile {
   @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-bg text-ink-muted border border-border-subtle;
 }

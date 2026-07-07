@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import PageBanner from '~/components/layout/PageBanner.vue'
 import { useRouter, useTransactionsStore, useScoreStore, useUsageStore } from '#imports'
+import { confirmDialog } from '~/composables/useConfirmDialog'
 import { 
   Plus, 
   Trash2, 
@@ -284,8 +285,9 @@ function handleSave() {
   showAddModal.value = false
 }
 
-function handleDelete(id) {
-  if (confirm('คุณต้องการลบรายการนี้ใช่หรือไม่?')) {
+async function handleDelete(id) {
+  const ok = await confirmDialog('คุณต้องการลบรายการนี้ใช่หรือไม่?', { variant: 'danger' })
+  if (ok) {
     txStore.deleteTransaction(id)
   }
 }

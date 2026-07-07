@@ -22,6 +22,7 @@ export default defineNuxtPlugin((nuxtApp) => {
           debts: 'Debts',
           chat: 'AI Coach',
           circle: 'Circle',
+          social: 'Community',
           settings: 'Settings',
           logout: 'Logout'
         },
@@ -30,6 +31,11 @@ export default defineNuxtPlugin((nuxtApp) => {
           freeAccount: 'Free Account',
           premiumMember: 'Premium Member',
           logoutConfirm: 'Are you sure you want to log out?'
+        },
+        dialog: {
+          confirm: 'Confirm',
+          cancel: 'Cancel',
+          ok: 'OK'
         },
         score: {
           healthTitle: 'Financial Health Score',
@@ -93,6 +99,7 @@ export default defineNuxtPlugin((nuxtApp) => {
           debts: 'จัดการหนี้สิน',
           chat: 'AI โค้ชการเงิน',
           circle: 'กลุ่มเพื่อน',
+          social: 'ชุมชน',
           settings: 'ตั้งค่าระบบ',
           logout: 'ออกจากระบบ'
         },
@@ -101,6 +108,11 @@ export default defineNuxtPlugin((nuxtApp) => {
           freeAccount: 'บัญชีใช้งานฟรี',
           premiumMember: 'สมาชิกพรีเมียม',
           logoutConfirm: 'คุณต้องการออกจากระบบใช่หรือไม่?'
+        },
+        dialog: {
+          confirm: 'ยืนยัน',
+          cancel: 'ยกเลิก',
+          ok: 'ตกลง'
         },
         score: {
           healthTitle: 'คะแนนสุขภาพเงิน',

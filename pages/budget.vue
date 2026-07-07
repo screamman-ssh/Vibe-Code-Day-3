@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import PageBanner from '~/components/layout/PageBanner.vue'
 import { useBudgetStore } from '~/stores/budget'
 import { useScoreStore } from '~/stores/score'
+import { alertDialog, confirmDialog } from '~/composables/useConfirmDialog'
 import { 
   PieChart, 
   PiggyBank,
@@ -73,7 +74,7 @@ function handleAddCategory() {
 
   const success = budgetStore.addCategory(name, parseFloat(newLimit.value || 0))
   if (!success) {
-    alert('หมวดหมู่นี้มีอยู่แล้วในระบบ')
+    alertDialog('หมวดหมู่นี้มีอยู่แล้วในระบบ')
     return
   }
 
@@ -102,8 +103,12 @@ function handleSaveEdit() {
 }
 
 // Delete category handler
-function handleDeleteCategory(categoryName) {
-  if (confirm(`คุณต้องการลบหมวดหมู่ "${formatCategoryThai(categoryName)}" และข้อมูลวงเงินใช่หรือไม่?`)) {
+async function handleDeleteCategory(categoryName) {
+  const ok = await confirmDialog(
+    `คุณต้องการลบหมวดหมู่ "${formatCategoryThai(categoryName)}" และข้อมูลวงเงินใช่หรือไม่?`,
+    { variant: 'danger' }
+  )
+  if (ok) {
     budgetStore.deleteCategory(categoryName)
   }
 }

@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from '#imports'
 import { useAuthStore } from '~/stores/auth'
 import { useI18n } from 'vue-i18n'
+import { confirmDialog } from '~/composables/useConfirmDialog'
 import BottomNav from './BottomNav.vue'
 import {
   LayoutDashboard,
@@ -10,6 +11,7 @@ import {
   PiggyBank,
   Wallet,
   Users,
+  Globe,
   Settings,
   LogOut,
   Sparkles,
@@ -40,6 +42,7 @@ const navItems = [
   { path: '/debts', labelKey: 'nav.debts', icon: Wallet },
   { path: '/chat', labelKey: 'nav.chat', icon: Sparkles },
   { path: '/circle', labelKey: 'nav.circle', icon: Users },
+  { path: '/social', labelKey: 'nav.social', icon: Globe },
   { path: '/settings', labelKey: 'nav.settings', icon: Settings },
 ]
 
@@ -47,8 +50,9 @@ function navigate(path) {
   router.push(path)
 }
 
-function handleLogout() {
-  if (confirm(t('shell.logoutConfirm'))) {
+async function handleLogout() {
+  const ok = await confirmDialog(t('shell.logoutConfirm'), { variant: 'danger' })
+  if (ok) {
     authStore.logout()
     router.push('/login')
   }
@@ -79,11 +83,11 @@ function handleLogout() {
             :key="item.path"
             @click="navigate(item.path)"
             class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all text-left cursor-pointer focus:outline-none"
-            :class="activePath === item.path 
+            :class="(item.path === '/social' ? activePath.startsWith('/social') : activePath === item.path)
               ? 'bg-accent-emerald/10 text-accent-emerald' 
               : 'text-ink-muted hover:text-ink hover:bg-surface-bg'"
           >
-            <component :is="item.icon" class="w-4 h-4 shrink-0" :stroke-width="activePath === item.path ? 2.5 : 2" />
+            <component :is="item.icon" class="w-4 h-4 shrink-0" :stroke-width="(item.path === '/social' ? activePath.startsWith('/social') : activePath === item.path) ? 2.5 : 2" />
             <span class="font-brand">{{ $t(item.labelKey) }}</span>
           </button>
         </nav>
