@@ -115,6 +115,7 @@ function submit() {
     @dragleave="onDragLeave"
     @drop="onDrop"
   >
+    <!-- Attachments Preview Area -->
     <div v-if="attachments.length" class="chat-composer__attachments">
       <div
         v-for="item in attachments"
@@ -161,30 +162,10 @@ function submit() {
 
     <p v-if="isSyncing" class="chat-composer__sync">กำลังบันทึกแบบร่าง...</p>
 
-    <form class="chat-composer__row" @submit.prevent="submit">
-      <div class="chat-composer__tools">
-        <button
-          type="button"
-          class="chat-composer__tool"
-          :disabled="disabled || !canAddMore()"
-          title="เลือกรูปจากแกลเลอรี"
-          aria-label="เลือกรูปจากแกลเลอรี"
-          @click="openGallery"
-        >
-          <ImagePlus class="w-4 h-4" />
-        </button>
-        <button
-          type="button"
-          class="chat-composer__tool"
-          :disabled="disabled || !canAddMore()"
-          title="ถ่ายรูป"
-          aria-label="ถ่ายรูป"
-          @click="openCamera"
-        >
-          <Camera class="w-4 h-4" />
-        </button>
-      </div>
-
+    <!-- Unified Form Box (Gemini / ChatGPT Style) -->
+    <form class="chat-composer__container" @submit.prevent="submit">
+      
+      <!-- Text Area (top) -->
       <textarea
         id="chat-message-input"
         :value="modelValue"
@@ -199,14 +180,42 @@ function submit() {
         @keydown.enter.exact.prevent="submit"
       />
 
-      <button
-        type="submit"
-        class="chat-composer__send"
-        :disabled="!canSend()"
-        aria-label="ส่งข้อความ"
-      >
-        <Send class="w-4 h-4" />
-      </button>
+      <!-- Controls Row (bottom) -->
+      <div class="chat-composer__bottom">
+        <!-- Tools on the left -->
+        <div class="chat-composer__tools">
+          <button
+            type="button"
+            class="chat-composer__tool"
+            :disabled="disabled || !canAddMore()"
+            title="เลือกรูปจากแกลเลอรี"
+            aria-label="เลือกรูปจากแกลเลอรี"
+            @click="openGallery"
+          >
+            <ImagePlus class="w-4.5 h-4.5" />
+          </button>
+          <button
+            type="button"
+            class="chat-composer__tool"
+            :disabled="disabled || !canAddMore()"
+            title="ถ่ายรูป"
+            aria-label="ถ่ายรูป"
+            @click="openCamera"
+          >
+            <Camera class="w-4.5 h-4.5" />
+          </button>
+        </div>
+
+        <!-- Send Button on the right -->
+        <button
+          type="submit"
+          class="chat-composer__send"
+          :disabled="!canSend()"
+          aria-label="ส่งข้อความ"
+        >
+          <Send class="w-4 h-4" />
+        </button>
+      </div>
     </form>
 
     <input
@@ -233,8 +242,7 @@ function submit() {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  border-radius: 12px;
-  transition: background 150ms, box-shadow 150ms;
+  transition: all 150ms;
 }
 
 .chat-composer--drag {
@@ -257,7 +265,7 @@ function submit() {
   border-radius: 10px;
   overflow: hidden;
   flex-shrink: 0;
-  border: 2px solid var(--color-border-subtle);
+  border: 1px solid var(--color-border-subtle);
   background: var(--color-surface-card);
 }
 
@@ -342,18 +350,73 @@ function submit() {
   padding-left: 0.25rem;
 }
 
-.chat-composer__row {
+/* Unified Container Box */
+.chat-composer__container {
   display: flex;
-  gap: 0.5rem;
-  align-items: flex-end;
+  flex-direction: column;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.02),
+    0 4px 12px rgba(0, 0, 0, 0.02);
+  transition: all 200ms ease;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.dark .chat-composer__container {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(26, 44, 53, 0.6);
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.1),
+    0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.chat-composer__container:focus-within {
+  border-color: var(--color-primary);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 
+    0 0 0 3px color-mix(in oklch, var(--color-primary) 12%, transparent),
+    0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.dark .chat-composer__container:focus-within {
+  background: rgba(26, 44, 53, 0.85);
+}
+
+/* Inner Text Area */
+.chat-composer__input {
+  width: 100%;
+  min-height: 2.75rem;
+  max-height: 10rem;
+  padding: 0.875rem 1rem 0.5rem;
+  border: none;
+  background: transparent;
+  font-size: var(--text-base);
+  color: var(--color-ink);
+  outline: none;
+  resize: none;
+  line-height: 1.45;
+}
+
+.chat-composer__input:disabled {
+  opacity: 0.6;
+}
+
+/* Bottom Actions Row inside the Container */
+.chat-composer__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.375rem 0.5rem 0.5rem;
+  border-top: 1px solid transparent;
 }
 
 .chat-composer__tools {
   display: flex;
-  flex-direction: row;
-  gap: 0.375rem;
-  flex-shrink: 0;
-  align-items: flex-end;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .chat-composer__tool {
@@ -362,70 +425,63 @@ function submit() {
   justify-content: center;
   width: 2.25rem;
   height: 2.25rem;
-  border-radius: 10px;
-  border: 2px solid var(--color-border-subtle);
-  background: var(--color-surface-card);
+  border-radius: 9999px;
+  border: none;
+  background: transparent;
   color: var(--color-ink-muted);
   cursor: pointer;
-  transition: color 150ms, border-color 150ms;
+  transition: all 150ms ease;
 }
 
 .chat-composer__tool:hover:not(:disabled) {
   color: var(--color-primary);
-  border-color: color-mix(in oklch, var(--color-primary) 30%, var(--color-border-subtle));
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.dark .chat-composer__tool:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .chat-composer__tool:disabled {
-  opacity: 0.45;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 
-.chat-composer__input {
-  flex: 1;
-  min-height: 2.75rem;
-  max-height: 8rem;
-  padding: 0.625rem 0.875rem;
-  border-radius: 12px;
-  border: 2px solid var(--color-border-subtle);
-  background: var(--color-surface-card);
-  font-size: var(--text-label);
-  color: var(--color-ink);
-  outline: none;
-  resize: none;
-  line-height: 1.4;
-  transition: border-color 150ms;
-}
-
-.chat-composer__input:focus {
-  border-color: var(--color-primary);
-}
-
-.chat-composer__input:disabled {
-  opacity: 0.6;
-}
-
+/* Send Button inside Container */
 .chat-composer__send {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: 12px;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
   background: var(--color-primary);
   color: white;
   border: none;
   cursor: pointer;
-  flex-shrink: 0;
-  transition: opacity 150ms;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .chat-composer__send:hover:not(:disabled) {
-  opacity: 0.9;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px color-mix(in oklch, var(--color-primary) 30%, transparent);
+}
+
+.chat-composer__send:active:not(:disabled) {
+  transform: scale(0.95);
 }
 
 .chat-composer__send:disabled {
-  opacity: 0.45;
+  opacity: 0.3;
+  background: var(--color-border-subtle);
+  color: var(--color-ink-muted);
   cursor: not-allowed;
+  box-shadow: none;
+}
+
+.dark .chat-composer__send:disabled {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.25);
 }
 
 .sr-only {
