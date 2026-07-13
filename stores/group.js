@@ -55,6 +55,19 @@ export const useGroupStore = defineStore('group', () => {
     }
   }
 
+  async function leaveGroup() {
+    try {
+      await api.post('/api/v1/group/leave')
+      currentGroup.value = null
+      leaderboard.value = []
+      feedEvents.value = []
+      return { ok: true }
+    } catch (err) {
+      console.error('Failed to leave group:', err)
+      throw err
+    }
+  }
+
   return {
     currentGroup,
     leaderboard,
@@ -62,6 +75,7 @@ export const useGroupStore = defineStore('group', () => {
     fetchGroupDetails,
     reactToEvent,
     createGroup,
-    joinGroupByCode
+    joinGroupByCode,
+    leaveGroup
   }
 })

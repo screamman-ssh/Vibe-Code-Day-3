@@ -1,6 +1,6 @@
 import { chatCompletionOnce } from '~/composables/useOpenAIClient'
 import { buildMultimodalUserContent } from '~/utils/chatMultimodal'
-import { normalizeActions } from '~/utils/chatActionTypes'
+import { normalizeActions, heuristicParseToActions } from '~/utils/chatActionTypes'
 import { useApi } from '~/composables/useApi'
 
 const ROUTER_SYSTEM_PROMPT = `คุณคือ intent router ของแอปการเงิน MoneyCircle
@@ -10,7 +10,6 @@ const ROUTER_SYSTEM_PROMPT = `คุณคือ intent router ของแอ�
 กฎสำคัญ:
 - ตอบเป็น JSON เท่านั้น ห้ามมีข้อความอื่น
 - ถ้าไม่มั่นใจหรือข้อมูลไม่พอ ให้คืน {"actions":[]}
-- ห้ามเดาตัวเลข (amount) ถ้าไม่มีในข้อความ
 - วันที่: ถ้าไม่ระบุ ให้ใช้ "today"
 - หมวดหมู่ธุรกรรมใช้ค่าเหล่านี้: Food, Transport, Housing, Utilities, Entertainment, Health, Education, Debt Payment, Savings, Income, Other
 
@@ -26,12 +25,6 @@ const ROUTER_SYSTEM_PROMPT = `คุณคือ intent router ของแอ�
 
 รายละเอียด data:
 - create_transaction: { "txType":"income"|"expense", "amount":number, "category":string, "merchant"?:string, "note"?:string, "date":"today"|"YYYY-MM-DD" }
-- update_transaction: { "transactionId":string, "txType"?:string, "amount"?:number, "category"?:string, "merchant"?:string, "note"?:string, "date"?:string }
-- delete_transaction: { "transactionId":string }
-- set_budget: { "category":string, "limitAmount":number, "month"?: "YYYY-MM" }
-- add_debt: { "name":string, "balance":number, "apr"?:number, "minimumPayment"?:number, "dueDay"?:number }
-- record_debt_payment: { "debtName":string, "amount":number }
-- create_social_post: { "content":string }
 `
 
 const VISION_PLANNER_PROMPT = `คุณคือ receipt/slip parser ของแอปการเงิน MoneyCircle
@@ -40,19 +33,21 @@ const VISION_PLANNER_PROMPT = `คุณคือ receipt/slip parser ของ�
 
 กฎสำคัญ:
 - ตอบเป็น JSON เท่านั้น
-- ถ้าอ่านรูปไม่ได้ ให้คืน {"actions":[]}
 - ดึงทุกรายการที่เห็นในภาพ (หลายรายการได้)
 - ใช้ตัวเลขจากภาพเท่านั้น ห้ามแต่ง
+- โอนเข้า/รับเงิน → txType "income", category "Income"
 - วันที่ไม่ชัด → "today"
 - หมวด: Food, Transport, Housing, Utilities, Entertainment, Health, Education, Debt Payment, Savings, Income, Other
-- ถ้าผู้ใช้ขอโพสต์/แชร์ → เพิ่ม create_social_post ด้วยข้อความสรุปสั้นๆ
 
 สคีมาเดียวกับ intent router (actions array)
 `
 
 function safeJsonParse(text) {
   if (!text || typeof text !== 'string') return null
-  const trimmed = text.trim()
+  let trimmed = text.trim()
+  const fence = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i)
+  if (fence?.[1]) trimmed = fence[1].trim()
+
   const start = trimmed.indexOf('{')
   const end = trimmed.lastIndexOf('}')
   if (start === -1 || end === -1 || end <= start) return null
@@ -85,7 +80,8 @@ export function looksLikeRecordFromImage(userMessage) {
 
 export function shouldPlanWriteAction(userMessage, hasAttachments = false) {
   if (looksLikeWriteIntent(userMessage)) return true
-  return hasAttachments && looksLikeRecordFromImage(userMessage)
+  if (hasAttachments) return true
+  return looksLikeRecordFromImage(userMessage)
 }
 
 export async function routeIntentToActions(userMessage) {
@@ -119,7 +115,6 @@ export async function routeVisionToActions(userMessage, attachments = []) {
       })
       ocrText = typeof res?.text === 'string' ? res.text : ''
     } catch (err) {
-      // OCR is best-effort; fall back to direct vision planner
       ocrText = ''
     }
   }
@@ -141,18 +136,65 @@ export async function routeVisionToActions(userMessage, attachments = []) {
   })
 
   const parsed = safeJsonParse(content)
-  if (!parsed || !Array.isArray(parsed.actions)) return { actions: [] }
+  const actions = parsed && Array.isArray(parsed.actions)
+    ? normalizeActions(parsed.actions)
+    : []
 
-  return { actions: normalizeActions(parsed.actions) }
+  if (actions.length) return { actions }
+
+  if (ocrText) {
+    return routeIntentToActions(
+      `${userMessage || ''}\n\n=== OCR TEXT (from receipt image) ===\n${ocrText}\n=== END OCR TEXT ===\n\nแปลงเป็น JSON actions ตามสคีมา`
+    )
+  }
+
+  return { actions: [] }
 }
 
-export async function planWriteActions(userMessage, attachments = []) {
+async function planWriteActionsClient(userMessage, attachments = []) {
   const hasAttachments = Array.isArray(attachments) && attachments.length > 0
 
-  if (hasAttachments && (looksLikeRecordFromImage(userMessage) || looksLikeWriteIntent(userMessage))) {
+  if (hasAttachments) {
     const visionPlan = await routeVisionToActions(userMessage, attachments)
     if (visionPlan.actions.length) return visionPlan
   }
 
-  return routeIntentToActions(userMessage)
+  if (shouldPlanWriteAction(userMessage, hasAttachments)) {
+    const intentPlan = await routeIntentToActions(userMessage)
+    if (intentPlan.actions.length) return intentPlan
+    return { actions: heuristicParseToActions(userMessage) }
+  }
+
+  return { actions: [] }
+}
+
+export async function planWriteActions(userMessage, attachments = []) {
+  const hasAttachments = Array.isArray(attachments) && attachments.length > 0
+  const attachmentIds = (attachments || [])
+    .map(a => a?.id)
+    .filter(id => typeof id === 'string' && id && !id.startsWith('local_'))
+
+  if (attachmentIds.length || shouldPlanWriteAction(userMessage, hasAttachments)) {
+    try {
+      const api = useApi()
+      const res = await api.post('/api/v1/chat/plan', {
+        message: userMessage || '',
+        attachmentIds
+      })
+      const actions = normalizeActions(res?.actions)
+      if (actions.length) return { actions }
+      // Server returned empty — keep going to client + heuristic
+    } catch (err) {
+      console.error('Server action planner failed, falling back to client:', err)
+    }
+  }
+
+  const clientPlan = await planWriteActionsClient(userMessage, attachments)
+  if (clientPlan.actions.length) return clientPlan
+
+  if (shouldPlanWriteAction(userMessage, hasAttachments)) {
+    return { actions: heuristicParseToActions(userMessage) }
+  }
+
+  return { actions: [] }
 }

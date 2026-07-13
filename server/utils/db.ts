@@ -17,7 +17,7 @@ export function getJwtSecret(event: H3Event): string {
 export function getLlmConfig(event: H3Event) {
   const env = event.context.cloudflare?.env
   return {
-    baseUrl: env?.LLM_BASE_URL || 'https://ai-service1.yami.workers.dev/v1',
+    baseUrl: env?.LLM_BASE_URL || 'https://ai-service1.yami.workers.dev/lizu/v1',
     model: env?.LLM_MODEL || 'unsloth/gemma-4-12b-it-qat',
     apiKey: env?.LLM_API_KEY || ''
   }

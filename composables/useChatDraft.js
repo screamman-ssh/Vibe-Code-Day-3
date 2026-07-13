@@ -262,18 +262,20 @@ export function useChatDraft(userIdRef) {
 
     attachments.value = [...attachments.value, placeholder]
 
+    let signedId = null
     try {
-      const sign = await api.post('/api/v1/chat/attachments/sign', {
+      const prepared = await api.post('/api/v1/chat/attachments/prepare', {
         fileName: file.name,
         mimeType: file.type,
         fileSize: file.size
       })
+      signedId = prepared.attachmentId
 
       const token = getAuthToken()
-      const uploadResponse = await fetch(sign.uploadUrl, {
-        method: sign.method || 'PUT',
+      const uploadResponse = await fetch(prepared.uploadUrl, {
+        method: prepared.method || 'PUT',
         headers: {
-          ...(sign.headers || {}),
+          ...(prepared.headers || {}),
           ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
         body: file
@@ -284,16 +286,16 @@ export function useChatDraft(userIdRef) {
       }
 
       const readyAttachment = normalizeAttachment({
-        id: sign.attachmentId,
+        id: prepared.attachmentId,
         fileName: file.name,
         mimeType: file.type,
         fileSize: file.size,
         status: 'ready',
         localPreviewUrl,
-        url: sign.previewUrl
+        url: prepared.previewUrl
       })
 
-      previewCache.set(sign.attachmentId, localPreviewUrl)
+      previewCache.set(prepared.attachmentId, localPreviewUrl)
 
       attachments.value = attachments.value.map(item =>
         item.id === placeholder.id ? readyAttachment : item
@@ -302,12 +304,25 @@ export function useChatDraft(userIdRef) {
       scheduleDraftSync(userId)
       return readyAttachment
     } catch (err) {
+      if (signedId) {
+        try {
+          await api.delete(`/api/v1/chat/attachments/${signedId}`)
+        } catch (deleteErr) {
+          console.error('Failed to clean up attachment after upload error:', deleteErr)
+        }
+      }
+
+      const message = err?.data?.statusMessage
+        || err?.data?.message
+        || err?.message
+        || 'อัปโหลดไม่สำเร็จ'
+
       attachments.value = attachments.value.map(item =>
         item.id === placeholder.id
-          ? { ...item, status: 'failed', error: err.message || 'อัปโหลดไม่สำเร็จ' }
+          ? { ...item, status: 'failed', error: message }
           : item
       )
-      throw err
+      throw new Error(message)
     }
   }
 
@@ -383,6 +398,17 @@ export function useChatDraft(userIdRef) {
     }
   }
 
+  /** Clear composer UI without orphaning server attachments (needed before OCR/plan). */
+  function clearComposerLocal() {
+    if (syncTimer) {
+      clearTimeout(syncTimer)
+      syncTimer = null
+    }
+    attachments.value.forEach(revokePreviewUrl)
+    attachments.value = []
+    draftText.value = ''
+  }
+
   function watchDraft(userId) {
     watch(draftText, () => {
       scheduleDraftSync(userId.value)
@@ -412,6 +438,7 @@ export function useChatDraft(userIdRef) {
     removeAttachment,
     retryUpload,
     clearDraft,
+    clearComposerLocal,
     scheduleDraftSync,
     syncDraftNow,
     watchDraft

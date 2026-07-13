@@ -1,14 +1,17 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useGroupStore, useAuthStore } from '#imports'
 import HexBadge from '~/components/score/HexBadge.vue'
-import { Users, Copy, Share2, MessageCircle, Flame, Check } from 'lucide-vue-next'
+import { Users, Copy, Share2, Flame, Check, LogOut } from 'lucide-vue-next'
+import { confirmDialog } from '~/composables/useConfirmDialog'
+import { formatTimeAgo } from '~/composables/useSocialHelpers'
 
 const groupStore = useGroupStore()
 const authStore = useAuthStore()
 
-const currentTab = ref('leaderboard') // 'leaderboard' or 'feed'
+const currentTab = ref('leaderboard')
 const copied = ref(false)
+const isLeaving = ref(false)
 
 const newGroupName = ref('')
 const joinInviteCode = ref('')
@@ -18,8 +21,12 @@ const groupError = ref('')
 
 const group = computed(() => groupStore.currentGroup)
 const currentUser = computed(() => authStore.user || { displayName: '' })
+const isSoloGroup = computed(() => group.value?.membersCount === 1)
+const hasFeedEvents = computed(() => groupStore.feedEvents.length > 0)
 
-const ranks = ['gold', 'silver', 'bronze', 'blue']
+onMounted(() => {
+  groupStore.fetchGroupDetails()
+})
 
 function getBadgeVariant(index) {
   if (index === 0) return 'gold'
@@ -67,6 +74,29 @@ async function handleJoinGroup() {
     groupError.value = err.message || 'เข้าร่วมกลุ่มล้มเหลว'
   } finally {
     isJoining.value = false
+  }
+}
+
+async function handleLeaveGroup() {
+  const confirmed = await confirmDialog(
+    'คุณต้องการออกจากกลุ่มนี้หรือไม่? หากคุณเป็นเจ้าของกลุ่ม สิทธิ์จะถูกโอนให้สมาชิกคนแรก หรือกลุ่มจะถูกลบหากเหลือคนเดียว',
+    {
+      title: 'ออกจากกลุ่ม',
+      confirmText: 'ออกจากกลุ่ม',
+      cancelText: 'ยกเลิก',
+      variant: 'danger'
+    }
+  )
+  if (!confirmed) return
+
+  isLeaving.value = true
+  groupError.value = ''
+  try {
+    await groupStore.leaveGroup()
+  } catch (err) {
+    groupError.value = err.message || 'ออกจากกลุ่มล้มเหลว'
+  } finally {
+    isLeaving.value = false
   }
 }
 
@@ -156,10 +186,18 @@ const formatEventText = (e) => {
           <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
             <Users class="w-5 h-5" />
           </div>
-          <div class="flex flex-col">
+          <div class="flex flex-col flex-1 min-w-0">
             <span class="text-xs text-ink-muted leading-none">กลุ่มของคุณ</span>
-            <h2 class="text-base font-bold text-ink mt-1.5 leading-none">{{ group?.name }}</h2>
+            <h2 class="text-base font-bold text-ink mt-1.5 leading-none truncate">{{ group?.name }}</h2>
           </div>
+          <button
+            @click="handleLeaveGroup"
+            class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-tier-risk border border-tier-risk/30 rounded-lg hover:bg-tier-risk/5 transition cursor-pointer shrink-0"
+            :disabled="isLeaving"
+          >
+            <LogOut class="w-3.5 h-3.5" />
+            {{ isLeaving ? 'กำลังออก...' : 'ออกจากกลุ่ม' }}
+          </button>
         </div>
 
         <div class="flex items-center justify-between border-t border-border-subtle pt-3 text-xs">
@@ -181,10 +219,17 @@ const formatEventText = (e) => {
             <span class="text-sm font-bold text-ink mt-1">{{ group?.membersCount }} / {{ group?.maxMembers }} คน</span>
           </div>
         </div>
+
+        <p
+          v-if="isSoloGroup"
+          class="text-xs text-ink-muted border-t border-border-subtle pt-3 leading-relaxed"
+        >
+          ตอนนี้มีแค่คุณในกลุ่ม — แชร์รหัสเชิญ <span class="font-bold text-ink">{{ group?.inviteCode }}</span> ให้เพื่อนเข้าร่วมและเริ่มแข่งขันกัน
+        </p>
       </div>
 
-      <!-- Tab Switchers (Mobile Only) -->
-      <div class="tab-switch md:hidden">
+      <!-- Tab switchers -->
+      <div class="tab-switch">
         <button 
           @click="currentTab = 'leaderboard'"
           class="tab-switch-btn"
@@ -201,18 +246,15 @@ const formatEventText = (e) => {
         </button>
       </div>
 
-      <!-- Responsive Layout Columns -->
-      <div class="flex flex-col md:grid md:grid-cols-3 md:gap-6 items-start gap-5">
-        
-        <!-- Leaderboard Column -->
-        <div 
-          class="w-full md:col-span-2 space-y-3"
-          :class="currentTab === 'leaderboard' ? 'block' : 'hidden md:block'"
-        >
-          <h3 class="hidden md:block text-xs font-extrabold text-ink-muted uppercase tracking-wider mb-1">ตารางอันดับกลุ่ม (Leaderboard)</h3>
+      <div class="space-y-5">
+        <!-- Leaderboard -->
+        <div v-show="currentTab === 'leaderboard'" class="w-full space-y-3">
+          <h3 class="text-xs font-extrabold text-ink-muted uppercase tracking-wider mb-1">
+            ตารางอันดับกลุ่ม (Leaderboard)
+          </h3>
           <div 
             v-for="(member, index) in groupStore.leaderboard" 
-            :key="member.displayName"
+            :key="member.id || member.displayName"
             class="surface-card-sm flex items-center justify-between transition-colors border-2 rounded-xl p-3"
             :class="member.displayName === currentUser.displayName ? 'border-primary/40 bg-duo-green-light/20' : 'border-border-subtle bg-surface-card'"
           >
@@ -257,12 +299,22 @@ const formatEventText = (e) => {
           </div>
         </div>
 
-        <!-- Activity Feed Column -->
-        <div 
-          class="w-full md:col-span-1 space-y-3"
-          :class="currentTab === 'feed' ? 'block' : 'hidden md:block'"
-        >
-          <h3 class="hidden md:block text-xs font-extrabold text-ink-muted uppercase tracking-wider mb-1">กิจกรรมล่าสุด (Activity Feed)</h3>
+        <!-- Activity Feed -->
+        <div v-show="currentTab === 'feed'" class="w-full space-y-3">
+          <h3 class="text-xs font-extrabold text-ink-muted uppercase tracking-wider mb-1">
+            กิจกรรมล่าสุด (Activity Feed)
+          </h3>
+
+          <div
+            v-if="!hasFeedEvents"
+            class="surface-card p-6 border-2 border-dashed border-border-subtle rounded-xl text-center space-y-2"
+          >
+            <p class="text-sm font-bold text-ink">ยังไม่มีกิจกรรม</p>
+            <p class="text-xs text-ink-muted leading-relaxed">
+              กิจกรรมจะปรากฏเมื่อคุณหรือเพื่อนในวงเปลี่ยนคะแนนหรือปลดล็อกตราเกียรติยศ
+            </p>
+          </div>
+
           <div 
             v-for="e in groupStore.feedEvents" 
             :key="e.id"
@@ -270,9 +322,9 @@ const formatEventText = (e) => {
           >
             <!-- Header -->
             <div class="flex items-center gap-2">
-              <img :src="`https://api.dicebear.com/7.x/avataaars/svg?seed=${e.displayName}`" class="w-6 h-6 rounded-full bg-slate-100" />
+              <img :src="e.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${e.displayName}`" class="w-6 h-6 rounded-full bg-slate-100" />
               <span class="text-xs font-bold text-ink">{{ e.displayName }}</span>
-              <span class="text-micro text-ink-muted ml-auto">เมื่อกี้</span>
+              <span class="text-micro text-ink-muted ml-auto">{{ formatTimeAgo(e.createdAt) }}</span>
             </div>
 
             <!-- Event content -->
@@ -282,7 +334,6 @@ const formatEventText = (e) => {
 
             <!-- Reactions row -->
             <div class="flex flex-wrap items-center gap-1.5 border-t border-border-subtle pt-2.5">
-              <!-- Render existing reaction counters -->
               <button 
                 v-for="(count, emoji) in e.reactions"
                 :key="emoji"
@@ -293,7 +344,6 @@ const formatEventText = (e) => {
                 <span>{{ count }}</span>
               </button>
 
-              <!-- Reaction Quick Add buttons -->
               <div class="flex gap-1 ml-auto">
                 <button 
                   v-for="emoji in ['👍', '🎉', '👏', '❤️']" 
@@ -307,9 +357,9 @@ const formatEventText = (e) => {
             </div>
           </div>
         </div>
-
       </div>
 
+      <p v-if="groupError" class="text-xs font-semibold text-tier-risk text-center">{{ groupError }}</p>
     </div>
 
   </div>

@@ -1,6 +1,7 @@
-import { defineEventHandler, createError } from 'h3'
+import { defineEventHandler, createError, getQuery } from 'h3'
 import { useDB } from '../../../../utils/db'
-import { ensureSocialSeedData, getUserScore } from '../../../../utils/social'
+import { purgeSeedUsers } from '../../../../utils/groupFeed'
+import { getUserScore } from '../../../../utils/social'
 
 export default defineEventHandler(async (event) => {
   const auth = event.context.auth
@@ -14,7 +15,7 @@ export default defineEventHandler(async (event) => {
   const search = (query.q as string || '').trim().toLowerCase()
 
   try {
-    await ensureSocialSeedData(db)
+    await purgeSeedUsers(db)
 
     let sql = `
       SELECT

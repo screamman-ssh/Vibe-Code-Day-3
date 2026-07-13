@@ -1,9 +1,9 @@
 <script setup>
 import { computed } from 'vue'
-import { Check, X, Plus, Trash2 } from 'lucide-vue-next'
+import { Check, X, Plus } from 'lucide-vue-next'
+import SpendingRecordCard from '~/components/chat/SpendingRecordCard.vue'
 import {
   ACTION_TYPES,
-  TX_CATEGORIES,
   CATEGORY_LABELS,
   createEmptyTransaction,
   planSummary,
@@ -23,6 +23,16 @@ const actions = computed(() => Array.isArray(props.plan?.actions) ? props.plan.a
 const title = computed(() => planSummary(actions.value))
 
 const txCount = computed(() => countTransactionActions(actions.value))
+
+const planState = computed(() => props.plan?.state || 'pending')
+
+const hasNonTxActions = computed(() =>
+  actions.value.some(action => action.type !== ACTION_TYPES.CREATE_TX)
+)
+
+const showActions = computed(() =>
+  props.editable && (planState.value === 'pending' || planState.value === 'failed')
+)
 
 function formatCurrency(amount) {
   const n = Number(amount)
@@ -65,12 +75,16 @@ function actionSummary(action) {
   }
 }
 
-function isEditableTx(action) {
-  return props.editable && action.type === ACTION_TYPES.CREATE_TX
+function isCreateTx(action) {
+  return action.type === ACTION_TYPES.CREATE_TX
 }
 
 function isEditableSocial(action) {
   return props.editable && action.type === ACTION_TYPES.CREATE_SOCIAL_POST
+}
+
+function isNonTxAction(action) {
+  return !isCreateTx(action)
 }
 
 function addTransactionRow() {
@@ -88,84 +102,29 @@ function canConfirm() {
 </script>
 
 <template>
-  <div class="preview-card">
-    <p class="preview-card__title">{{ title }}</p>
+  <div
+    class="action-preview"
+    :class="{ 'action-preview--tx-only': txCount > 0 && !hasNonTxActions }"
+  >
+    <p v-if="hasNonTxActions || txCount === 0" class="action-preview__title">{{ title }}</p>
 
-    <div v-if="txCount > 0 && editable" class="preview-card__table-wrap">
-      <table class="preview-card__table">
-        <thead>
-          <tr>
-            <th>ประเภท</th>
-            <th>จำนวนเงิน</th>
-            <th>หมวด</th>
-            <th>ร้าน/รายการ</th>
-            <th>วันที่</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          <template v-for="(action, idx) in actions" :key="idx">
-            <tr v-if="isEditableTx(action)">
-              <td>
-                <select v-model="action.data.txType" class="preview-card__input" :disabled="disabled">
-                  <option value="expense">รายจ่าย</option>
-                  <option value="income">รายรับ</option>
-                </select>
-              </td>
-              <td>
-                <input
-                  v-model.number="action.data.amount"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  class="preview-card__input preview-card__input--amount"
-                  :disabled="disabled"
-                />
-              </td>
-              <td>
-                <select v-model="action.data.category" class="preview-card__input" :disabled="disabled">
-                  <option v-for="cat in TX_CATEGORIES" :key="cat" :value="cat">
-                    {{ CATEGORY_LABELS[cat] || cat }}
-                  </option>
-                </select>
-              </td>
-              <td>
-                <input
-                  v-model="action.data.merchant"
-                  type="text"
-                  class="preview-card__input"
-                  placeholder="ร้านค้า"
-                  :disabled="disabled"
-                />
-              </td>
-              <td>
-                <input
-                  v-model="action.data.date"
-                  type="text"
-                  class="preview-card__input preview-card__input--date"
-                  placeholder="today"
-                  :disabled="disabled"
-                />
-              </td>
-              <td>
-                <button
-                  type="button"
-                  class="preview-card__icon-btn"
-                  :disabled="disabled"
-                  aria-label="ลบรายการ"
-                  @click="removeAction(idx)"
-                >
-                  <Trash2 class="w-3.5 h-3.5" />
-                </button>
-              </td>
-            </tr>
-          </template>
-        </tbody>
-      </table>
+    <div v-if="txCount > 0" class="action-preview__tx-stack">
+      <template v-for="(action, idx) in actions" :key="`tx-${idx}`">
+        <SpendingRecordCard
+          v-if="isCreateTx(action)"
+          :action="action"
+          :disabled="disabled"
+          :editable="editable"
+          :state="planState"
+          :show-remove="editable && planState !== 'applied' && txCount > 1"
+          @remove="removeAction(idx)"
+        />
+      </template>
 
       <button
+        v-if="editable && planState !== 'applied'"
         type="button"
-        class="preview-card__add-row"
+        class="action-preview__add-row"
         :disabled="disabled"
         @click="addTransactionRow"
       >
@@ -174,30 +133,30 @@ function canConfirm() {
       </button>
     </div>
 
-    <div class="preview-card__list">
+    <div v-if="hasNonTxActions" class="action-preview__list">
       <div
         v-for="(action, idx) in actions"
         :key="`summary-${idx}`"
-        v-show="!isEditableTx(action)"
-        class="preview-card__item"
+        v-show="isNonTxAction(action)"
+        class="action-preview__item"
       >
-        <p class="preview-card__item-title">{{ actionTitle(action) }}</p>
+        <p class="action-preview__item-title">{{ actionTitle(action) }}</p>
 
         <textarea
           v-if="isEditableSocial(action)"
           v-model="action.data.content"
           rows="3"
           maxlength="500"
-          class="preview-card__textarea"
+          class="action-preview__textarea"
           placeholder="ข้อความโพสต์..."
           :disabled="disabled"
         />
-        <p v-else class="preview-card__item-sub">{{ actionSummary(action) }}</p>
+        <p v-else class="action-preview__item-sub">{{ actionSummary(action) }}</p>
 
         <button
-          v-if="editable && !disabled"
+          v-if="editable && !disabled && planState !== 'applied'"
           type="button"
-          class="preview-card__remove-inline"
+          class="action-preview__remove-inline"
           @click="removeAction(idx)"
         >
           ลบ
@@ -205,10 +164,14 @@ function canConfirm() {
       </div>
     </div>
 
-    <div class="preview-card__actions">
+    <p v-if="plan.error && planState === 'failed'" class="action-preview__error">
+      บันทึกไม่สำเร็จ: {{ plan.error }}
+    </p>
+
+    <div v-if="showActions" class="action-preview__actions">
       <button
         type="button"
-        class="preview-card__btn preview-card__btn--confirm"
+        class="action-preview__btn action-preview__btn--confirm"
         :disabled="!canConfirm()"
         @click="emit('confirm')"
       >
@@ -217,7 +180,7 @@ function canConfirm() {
       </button>
       <button
         type="button"
-        class="preview-card__btn preview-card__btn--cancel"
+        class="action-preview__btn action-preview__btn--cancel"
         :disabled="disabled"
         @click="emit('cancel')"
       >
@@ -229,83 +192,38 @@ function canConfirm() {
 </template>
 
 <style scoped>
-.preview-card {
+.action-preview {
   border-radius: 12px;
   border: 2px solid var(--color-border-subtle);
   background: color-mix(in oklch, var(--color-primary) 6%, white);
   padding: 0.75rem 0.875rem;
 }
 
-.preview-card__title {
+.action-preview--tx-only {
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.action-preview__title {
   margin: 0 0 0.5rem;
   font-size: var(--text-label);
   font-weight: 700;
   color: var(--color-ink);
 }
 
-.preview-card__table-wrap {
+.action-preview__tx-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
   margin-bottom: 0.75rem;
-  overflow-x: auto;
 }
 
-.preview-card__table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--text-caption);
+.action-preview--tx-only .action-preview__tx-stack {
+  margin-bottom: 0.5rem;
 }
 
-.preview-card__table th,
-.preview-card__table td {
-  padding: 0.25rem;
-  text-align: left;
-  vertical-align: middle;
-}
-
-.preview-card__table th {
-  color: var(--color-ink-muted);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.preview-card__input {
-  width: 100%;
-  min-width: 4.5rem;
-  padding: 0.35rem 0.45rem;
-  border-radius: 8px;
-  border: 1px solid var(--color-border-subtle);
-  background: white;
-  font-size: var(--text-caption);
-  color: var(--color-ink);
-}
-
-.preview-card__input--amount {
-  min-width: 5rem;
-}
-
-.preview-card__input--date {
-  min-width: 6rem;
-}
-
-.preview-card__icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border: none;
-  border-radius: 8px;
-  background: color-mix(in oklch, var(--color-danger, #dc2626) 12%, white);
-  color: var(--color-danger, #dc2626);
-  cursor: pointer;
-}
-
-.preview-card__icon-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.preview-card__add-row {
-  margin-top: 0.5rem;
+.action-preview__add-row {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
@@ -317,41 +235,42 @@ function canConfirm() {
   font-weight: 600;
   color: var(--color-primary);
   cursor: pointer;
+  align-self: flex-start;
 }
 
-.preview-card__add-row:disabled {
+.action-preview__add-row:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.preview-card__list {
+.action-preview__list {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   margin-bottom: 0.75rem;
 }
 
-.preview-card__item {
+.action-preview__item {
   background: rgba(255, 255, 255, 0.75);
   border: 1px solid var(--color-border-subtle);
   border-radius: 10px;
   padding: 0.5rem 0.625rem;
 }
 
-.preview-card__item-title {
+.action-preview__item-title {
   margin: 0;
   font-size: var(--text-label);
   font-weight: 700;
 }
 
-.preview-card__item-sub {
+.action-preview__item-sub {
   margin: 0.125rem 0 0;
   font-size: var(--text-caption);
   color: var(--color-ink-muted);
   white-space: pre-line;
 }
 
-.preview-card__textarea {
+.action-preview__textarea {
   width: 100%;
   margin-top: 0.375rem;
   padding: 0.5rem 0.625rem;
@@ -362,7 +281,7 @@ function canConfirm() {
   resize: vertical;
 }
 
-.preview-card__remove-inline {
+.action-preview__remove-inline {
   margin-top: 0.375rem;
   border: none;
   background: transparent;
@@ -372,12 +291,18 @@ function canConfirm() {
   cursor: pointer;
 }
 
-.preview-card__actions {
+.action-preview__error {
+  margin: 0 0 0.5rem;
+  font-size: var(--text-caption);
+  color: var(--color-danger, #dc2626);
+}
+
+.action-preview__actions {
   display: flex;
   gap: 0.5rem;
 }
 
-.preview-card__btn {
+.action-preview__btn {
   flex: 1;
   display: inline-flex;
   align-items: center;
@@ -391,17 +316,17 @@ function canConfirm() {
   border: 2px solid transparent;
 }
 
-.preview-card__btn:disabled {
+.action-preview__btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
 
-.preview-card__btn--confirm {
+.action-preview__btn--confirm {
   background: var(--color-primary);
   color: white;
 }
 
-.preview-card__btn--cancel {
+.action-preview__btn--cancel {
   background: white;
   color: var(--color-ink);
   border-color: var(--color-border-subtle);

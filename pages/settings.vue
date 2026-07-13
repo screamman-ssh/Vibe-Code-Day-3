@@ -37,6 +37,15 @@ const success = ref('')
 
 const isPremium = computed(() => usageStore.tier === 'premium')
 
+const ocrQuotaLabel = computed(() => {
+  const used = usageStore.ocrUsedToday
+  const limit = usageStore.ocrLimit
+  if (!Number.isFinite(limit)) {
+    return `${used} / ${t('settings.quotaUnlimited')}`
+  }
+  return `${used} / ${limit} ${t('settings.quotaSuffix')}`
+})
+
 function handleLanguageChange() {
   locale.value = currentLocale.value
   if (typeof window !== 'undefined') {
@@ -237,7 +246,7 @@ async function handleLogout() {
       <!-- OCR Quota status -->
       <div class="flex justify-between items-center text-xs pl-1">
         <span class="text-ink-muted">{{ $t('settings.ocrQuota') }}</span>
-        <span class="font-bold text-ink">{{ usageStore.ocrUsedToday }} / {{ usageStore.ocrLimit }} {{ $t('settings.quotaSuffix') }}</span>
+        <span class="font-bold text-ink">{{ ocrQuotaLabel }}</span>
       </div>
     </div>
 

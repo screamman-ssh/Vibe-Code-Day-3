@@ -4,7 +4,9 @@ import {
   MAX_CHAT_ATTACHMENTS,
   createAttachmentId,
   chatAttachmentKey,
-  validateAttachmentMeta
+  validateAttachmentMeta,
+  pruneOrphanedChatAttachments,
+  countComposerAttachments
 } from '../../../../utils/chatAttachments'
 
 export default defineEventHandler(async (event) => {
@@ -23,13 +25,10 @@ export default defineEventHandler(async (event) => {
   const userId = auth.userId
 
   try {
-    const countRow = await db.prepare(`
-      SELECT COUNT(*) as count
-      FROM chat_attachments
-      WHERE user_id = ? AND status IN ('pending', 'ready')
-    `).bind(userId).first<{ count: number }>()
+    await pruneOrphanedChatAttachments(db, userId)
 
-    if ((countRow?.count || 0) >= MAX_CHAT_ATTACHMENTS) {
+    const activeCount = await countComposerAttachments(db, userId)
+    if (activeCount >= MAX_CHAT_ATTACHMENTS) {
       throw createError({ statusCode: 400, statusMessage: 'Maximum 8 images per draft' })
     }
 
@@ -47,7 +46,7 @@ export default defineEventHandler(async (event) => {
       validated.mimeType,
       validated.fileName,
       validated.fileSize,
-      countRow?.count || 0
+      activeCount
     ).run()
 
     const origin = getRequestURL(event).origin

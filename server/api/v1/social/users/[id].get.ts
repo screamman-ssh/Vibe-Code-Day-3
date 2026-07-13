@@ -1,6 +1,7 @@
 import { defineEventHandler, createError } from 'h3'
 import { useDB } from '../../../../utils/db'
-import { ensureSocialSeedData, formatSocialPost, SOCIAL_POST_SELECT, fetchPostLikeStatus, fetchRepostStatus, getUserScore } from '../../../../utils/social'
+import { purgeSeedUsers } from '../../../../utils/groupFeed'
+import { formatSocialPost, SOCIAL_POST_SELECT, fetchPostLikeStatus, fetchRepostStatus, getUserScore } from '../../../../utils/social'
 
 export default defineEventHandler(async (event) => {
   const auth = event.context.auth
@@ -17,7 +18,7 @@ export default defineEventHandler(async (event) => {
   const userId = auth.userId
 
   try {
-    await ensureSocialSeedData(db)
+    await purgeSeedUsers(db)
 
     const user = await db.prepare(`
       SELECT id, display_name as displayName, avatar_url as avatarUrl, bio, logging_streak_days as streakDays

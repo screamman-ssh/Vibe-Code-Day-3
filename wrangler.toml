@@ -13,5 +13,5 @@ binding = "CHAT_IMAGES"
 bucket_name = "moneycircle-chat"
 
 [vars]
-LLM_BASE_URL = "https://ai-service1.yami.workers.dev/v1"
+LLM_BASE_URL = "https://ai-service1.yami.workers.dev/lizu/v1"
 LLM_MODEL = "unsloth/gemma-4-12b-it-qat"

@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // No snapshot exists, calculate and return
-    return await calculateUserScore(event, userId)
+    return await calculateUserScore(db, userId)
   } catch (err) {
     throw createError({
       statusCode: 500,

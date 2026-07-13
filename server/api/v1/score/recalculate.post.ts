@@ -36,7 +36,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Run dynamic score calculation
-    return await calculateUserScore(event, userId)
+    return await calculateUserScore(db, userId)
   } catch (err) {
     throw createError({
       statusCode: 500,

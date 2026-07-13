@@ -181,13 +181,13 @@ function goProfile(userId) {
       <section class="surface-card-sm shadow-sm">
         <label for="social-user-search" class="sr-only">ค้นหาชื่อผู้ใช้</label>
         <div class="relative">
-          <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
+          <Search class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" aria-hidden="true" />
           <input
             id="social-user-search"
             v-model="searchQuery"
             type="search"
             placeholder="ค้นหาชื่อผู้ใช้..."
-            class="input-field pl-10 bg-surface-bg border-border-subtle"
+            class="input-field !pl-10 bg-surface-bg border-border-subtle"
             @keyup.enter="handleSearch"
           />
         </div>

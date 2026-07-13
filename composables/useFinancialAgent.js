@@ -13,41 +13,76 @@ import {
   buildMultimodalUserContent,
   messageHasImages
 } from '~/utils/chatMultimodal'
+import { buildRecordTagPrompt } from '~/utils/chatRecordTag'
 
-const STYLE_RULES = `รูปแบบการตอบ (สำคัญมาก):
-- สั้น กระชับ อ่านง่าย ไม่เกิน 5-8 บรรทัด ยกเว้นผู้ใช้ขอรายละเอียด
-- ใช้ภาษาง่าย ไม่ใช้ศัพท์เทคนิคโดยไม่จำเป็น
-- โครงสร้าง: สรุป 1-2 ประโยค → bullet 2-4 ข้อ → แนะนำถัดไป 1 ประโยค
-- ใช้ markdown เบาๆ (หัวข้อเล็ก bullet **ตัวเลข**) ไม่ใช้ HTML ไม่ใช้ตาราง
-- ห้ามทวนคำถาม ห้ามข้อความเกริ่นยาว ห้าม emoji มากเกินไป`
+/** Shared RACE core: Role + Expectation (forbidden rules, format). Mode overlays add Action + Context. */
+const RACE_FORBIDDEN_RULES = `ขอบเขตและข้อห้าม (สำคัญที่สุด):
+- ตอบเฉพาะสิ่งที่ผู้ใช้ถามหรือสถานะในการสนทนานี้เท่านั้น
+- ห้ามโปรโมทแอป ห้ามชวนใช้ซอฟต์แวร์อื่น ห้ามอ้างชื่อผลิตภัณฑ์ที่ไม่ได้กล่าวถึงในบทสนทนา (เช่น Company Expense, Planner หรือชื่ออื่นที่แต่งขึ้น)
+- ห้ามปิดท้ายด้วยประโยคโฆษณา คำขวัญ หรือข้อความที่ไม่เกี่ยวกับคำถาม/ข้อมูลการเงินของผู้ใช้
+- กล่าวถึง MoneyCircle เฉพาะเมื่อแนะขั้นตอนในแอปจริงๆ เท่านั้น
+- ห้ามแต่งตัวเลขหรือสถิติที่ไม่มีใน "ข้อมูลการเงินของผู้ใช้" หรือในภาพที่แนบ`
 
-const SYSTEM_PROMPT_FINANCE = `คุณคือ MoneyCircle AI โค้ชการเงินภาษาไทย
+const RACE_STYLE_RULES = `รูปแบบการตอบ:
+- สั้น กระชับ อ่านง่าย ไม่เกิน 6-8 บรรทัด ยกเว้นผู้ใช้ขอรายละเอียด
+- ภาษาไทยเป็นกันเอง ไม่ตัดสิน ไม่โทษ เน้นสนับสนุน
+- ใช้ markdown เบาๆ (bullet **ตัวเลข**) ห้าม HTML ห้ามตาราง
+- ห้ามทวนคำถาม ห้ามเกริ่นยาว ห้าม emoji มากเกินไป
+- จบด้วยขั้นตอนถัดไปที่ทำได้ทันที 1 ข้อ แล้วหยุด ห้ามเขียนต่อหลังนั้น`
 
-กฎ:
-- ใช้ตัวเลขจาก "ข้อมูลการเงินของผู้ใช้" เท่านั้น ห้ามแต่งตัวเลข
-- ไม่มีข้อมูล → แนะนำทั่วไปสั้นๆ (50/30/20, เงินสำรอง 3-6 เดือน) แล้วชวนบันทึกข้อมูลในแอป
-- ห้ามปฏิเสธการตอบ
+const RACE_CORE = `## Role (บทบาท)
+คุณคือโค้ชสุขภาพการเงินส่วนบุคคลของแอป MoneyCircle พูดภาษาไทย
+คุณฟังและเข้าใจสถานการณ์จริง ให้คำแนะนำที่ทำได้จริง ไม่ใช่ที่ปรึกษาการเงินอนุญาต
+คุณไม่ขายของ ไม่โฆษณา และไม่พูดนอกเรื่องที่ผู้ใช้ถาม
 
-${STYLE_RULES}`
+## Expectation (คุณภาพคำตอบ)
+${RACE_FORBIDDEN_RULES}
 
-const SYSTEM_PROMPT_GENERAL = `คุณคือ MoneyCircle AI ผู้ช่วยภาษาไทย เป็นมิตร พูดคุยได้ทุกเรื่อง ความเชี่ยวชาญหลักคือการเงิน
+${RACE_STYLE_RULES}`
 
-กฎ:
-- ตอบตรงคำถาม สั้น เป็นกันเอง
+const MODE_GENERAL = `## Action (โหมดสนทนาทั่วไป)
+- ตอบคำถามหรือทักทายของผู้ใช้ตรงประเด็นก่อน
 - ทักทาย → ตอบสั้น 1-3 ประโยค ไม่ยัดเรื่องการเงิน
-- คำถามทั่วไป → ตอบก่อน ชวนเรื่องการเงินได้ทีหลังถ้าเหมาะ
+- คำถามทั่วไป → ตอบครบก่อน ชวนเรื่องการเงินได้ทีหลังเฉพาะเมื่อเกี่ยวข้องจริงๆ
+- ไม่บังคับสรุปข้อมูลการเงินถ้าผู้ใช้ไม่ได้ถาม`
 
-${STYLE_RULES}`
+const MODE_FINANCE = `## Action (โหมดการเงิน)
+- ยอมรับสิ่งที่ผู้ใช้ทำหรือถาม 1 ประโยค
+- สรุปจากข้อมูลใน "ข้อมูลการเงินของผู้ใช้" เท่านั้น (bullet 2-4 ข้อ)
+- ถ้าข้อมูลขาดหรือยังไม่มีในแอป → บอกตรงๆ 1 ข้อ (เช่น "ยังไม่มีรายรับบันทึก") ห้ามเดาหรือแต่งตัวเลข
+- ปิดท้ายด้วยขั้นตอนถัดไป 1 ข้อ (ขึ้นต้นด้วย "ถัดไป:") ที่เกี่ยวกับสถานการณ์นี้
 
-const SYSTEM_PROMPT_VISION = `คุณคือ MoneyCircle AI โค้ชการเงินภาษาไทย
+## Context (ข้อมูลจากแอป)
+- ใช้เฉพาะตัวเลขและข้อเท็จจริงจากบล็อก "ข้อมูลการเงินของผู้ใช้"
+- ถ้ายังไม่มีข้อมูลในแอปเลย → แนะนำหลักการสั้นๆ (เช่น 50/30/20, เงินสำรอง 3-6 เดือน) แล้วชวนบันทึกข้อมูลในแอป
+- ห้ามปฏิเสธการตอบ`
 
-กฎเมื่อผู้ใช้แนบรูป:
-- อ่านและวิเคราะห์รูปที่แนบมา (สลิป ใบเสร็จ สรุปรายจ่าย ภาพหน้าจอ ฯลฯ)
+const MODE_VISION = `## Action (โหมดรูปภาพ/สลิป)
+- อ่านและวิเคราะห์รูปที่แนบ (สลิป ใบเสร็จ สรุปรายจ่าย ภาพหน้าจอ ฯลฯ)
 - สรุปรายการ ยอดเงิน วันที่ ร้านค้า หมวดหมู่ ถ้ามีในภาพ
-- แนะนำว่าควรบันทึกเป็นรายการอะไรในแอป (ถ้าเหมาะ)
+- โอนเข้า/รับเงิน → บันทึกเป็นรายรับ (income) แม้ผู้ใช้พิมพ์ว่ารายจ่าย
 - ห้ามแต่งตัวเลขที่มองไม่เห็นในภาพ
+- ยืนยันสิ่งที่อ่านได้ด้วยน้ำเสียงโค้ช แล้วจบ ไม่ต้องสรุปการเงินทั้งหมดถ้าไม่ได้ถาม`
 
-${STYLE_RULES}`
+const MODE_OVERLAYS = {
+  general: MODE_GENERAL,
+  finance: MODE_FINANCE,
+  vision: MODE_VISION
+}
+
+function buildSystemPrompt(mode, contextBlock = '') {
+  const overlay = MODE_OVERLAYS[mode] || MODE_GENERAL
+  return `${RACE_CORE}\n\n${overlay}${contextBlock}`
+}
+
+function withRecordRules(prompt, { forceRecord = false } = {}) {
+  const today = new Date().toISOString().slice(0, 10)
+  const recordBlock = buildRecordTagPrompt({ todayIso: today })
+  const force = forceRecord
+    ? '\n\nผู้ใช้กำลังขอบันทึกรายการ — คุณต้องแนบแท็ก <record> อย่างน้อย 1 อันท้ายคำตอบถ้ามียอดที่อ่านได้'
+    : ''
+  return `${prompt}\n\n${recordBlock}${force}`
+}
 
 /** Build a plain-text context block from executed tool results (no tool-call API used). */
 function buildContextBlock(toolTrace) {
@@ -124,7 +159,7 @@ function buildFallbackResponse(userMessage, toolTrace) {
     return `${buildGeneralFinancialAdvice(userMessage)}\n\n*หมายเหตุ: ข้อมูลในแอปยังไม่พอสำหรับสรุปแบบละเอียด จึงให้คำแนะนำทั่วไปแทน*`
   }
 
-  response += '*สรุปนี้อิงข้อมูลจริงจากแอปของคุณ*'
+  response += '*สรุปนี้อิงข้อมูลจริงจากแอปของคุณ*\n\nถัดไป: เลือกหัวข้อที่อยากเจาะลึก (งบ หนี้ หรือคะแนนสุขภาพการเงิน) แล้วถามมาได้เลย'
   return response
 }
 
@@ -186,19 +221,32 @@ export function useFinancialAgent() {
     ]
   }
 
-  async function runAgent({ chatMessages, userMessage, userAttachments = [], callbacks = {} }) {
+  async function runAgent({
+    chatMessages,
+    userMessage,
+    userAttachments = [],
+    callbacks = {},
+    forceRecord = false,
+    skipRecordRules = false
+  }) {
     const hasImages = messageHasImages(userAttachments)
-    const isFinance = hasFinancialIntent(userMessage) || hasImages
+    const isFinance = hasFinancialIntent(userMessage) || hasImages || forceRecord
 
     // Phase 1: only retrieve financial data when the question is finance-related
-    const toolTrace = isFinance ? gatherContext(userMessage, callbacks) : []
+    const toolTrace = isFinance && !forceRecord ? gatherContext(userMessage, callbacks) : []
     const contextBlock = buildContextBlock(toolTrace)
+    const summaryOnlyNote = skipRecordRules
+      ? '\n\nหมายเหตุ: ผู้ใช้ยืนยันบันทึกรายการแล้ว — ห้ามแนบแท็ก <record> ให้สรุปและแนะนำต่อเท่านั้น'
+      : ''
 
-    let systemPrompt = SYSTEM_PROMPT_GENERAL
-    if (hasImages) {
-      systemPrompt = SYSTEM_PROMPT_VISION + contextBlock
+    let systemPrompt = buildSystemPrompt('general', contextBlock)
+    if (hasImages || forceRecord) {
+      systemPrompt = withRecordRules(buildSystemPrompt('vision', contextBlock), { forceRecord: true })
     } else if (isFinance) {
-      systemPrompt = SYSTEM_PROMPT_FINANCE + contextBlock
+      const financePrompt = buildSystemPrompt('finance', contextBlock) + summaryOnlyNote
+      systemPrompt = skipRecordRules
+        ? financePrompt
+        : withRecordRules(financePrompt, { forceRecord: false })
     }
 
     const apiMessages = await buildApiMessages(systemPrompt, chatMessages, userAttachments)
@@ -207,8 +255,8 @@ export function useFinancialAgent() {
 
     try {
       finalContent = await streamAnswer(apiMessages, callbacks, {
-        temperature: hasImages ? 0.7 : 0.5,
-        maxTokens: hasImages ? 800 : 350
+        temperature: hasImages || forceRecord ? 0.3 : 0.5,
+        maxTokens: hasImages || forceRecord ? 900 : 350
       })
 
       if (!finalContent?.trim() && isFinance) {

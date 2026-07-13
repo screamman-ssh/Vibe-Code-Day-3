@@ -1,7 +1,16 @@
 import OpenAI from 'openai'
 
-const DEFAULT_BASE_URL = 'https://ai-service1.yami.workers.dev/v1'
-const DEFAULT_MODEL = 'unsloth/gemma-4-12b-it-qat'
+const FALLBACK_BASE_URL = 'https://ai-service1.yami.workers.dev/lizu/v1'
+const FALLBACK_MODEL = 'unsloth/gemma-4-12b-it-qat'
+
+function getLlmClientConfig() {
+  const config = useRuntimeConfig()
+  return {
+    baseUrl: config.public.llmBaseUrl || FALLBACK_BASE_URL,
+    model: config.public.llmModel || FALLBACK_MODEL,
+    apiKey: config.public.aiApiKey
+  }
+}
 
 function yieldToUI() {
   return new Promise(resolve => requestAnimationFrame(resolve))
@@ -62,21 +71,21 @@ export async function streamChatCompletion({
   temperature = 0.5,
   maxTokens = 350
 }) {
-  const config = useRuntimeConfig()
+  const { baseUrl, model, apiKey } = getLlmClientConfig()
   const filter = createReasoningStreamFilter()
 
   const body = {
-    model: DEFAULT_MODEL,
+    model,
     messages,
     stream: true,
     temperature,
     max_tokens: maxTokens
   }
 
-  const response = await fetch(`${DEFAULT_BASE_URL}/chat/completions`, {
+  const response = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${config.public.aiApiKey}`,
+      Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(body)
@@ -140,16 +149,16 @@ export async function chatCompletionOnce({
   temperature = 0,
   maxTokens = 500
 }) {
-  const config = useRuntimeConfig()
+  const { baseUrl, model, apiKey } = getLlmClientConfig()
 
-  const response = await fetch(`${DEFAULT_BASE_URL}/chat/completions`, {
+  const response = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${config.public.aiApiKey}`,
+      Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      model: DEFAULT_MODEL,
+      model,
       messages,
       stream: false,
       temperature,
@@ -168,12 +177,11 @@ export async function chatCompletionOnce({
 }
 
 export function createOpenAIClient() {
-  const config = useRuntimeConfig()
-  const apiKey = config.public.aiApiKey
+  const { baseUrl, apiKey } = getLlmClientConfig()
 
   return new OpenAI({
     apiKey: apiKey,
-    baseURL: DEFAULT_BASE_URL,
+    baseURL: baseUrl,
     dangerouslyAllowBrowser: true,
     fetch: async (url, init) => {
       const headers = { ...init.headers }
@@ -188,4 +196,4 @@ export function createOpenAIClient() {
   })
 }
 
-export { DEFAULT_MODEL, DEFAULT_BASE_URL }
+export { FALLBACK_MODEL as DEFAULT_MODEL, FALLBACK_BASE_URL as DEFAULT_BASE_URL }

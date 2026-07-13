@@ -1,53 +1,3 @@
-export const SOCIAL_SEED_USERS = [
-  { id: 'usr_nune', google_id: 'google_gid_nune', display_name: 'Nune', bio: 'กำลังสร้างวินัยการเงินใหม่ 🌱', subscription_tier: 'free', logging_streak_days: 12, score: 72, tier: 'Steady', tier_th: 'มั่นคง' },
-  { id: 'usr_boss', google_id: 'google_gid_boss', display_name: 'Boss', bio: 'ออมเงิน ลดหนี้ สร้างอนาคต 💪', subscription_tier: 'premium', logging_streak_days: 8, score: 68, tier: 'Steady', tier_th: 'มั่นคง' },
-  { id: 'usr_peak', google_id: 'google_gid_peak', display_name: 'Peak', bio: 'เริ่มต้นจัดการเงินส่วนตัว', subscription_tier: 'free', logging_streak_days: 3, score: 54, tier: 'Building', tier_th: 'กำลังสร้าง' },
-  { id: 'usr_jane', google_id: 'google_gid_jane', display_name: 'Jane', bio: 'บันทึกทุกบาท รู้ทุกทาง ✨', subscription_tier: 'free', logging_streak_days: 1, score: 48, tier: 'Building', tier_th: 'กำลังสร้าง' }
-]
-
-export const SOCIAL_SEED_POSTS = [
-  {
-    id: 'post_nune_badge',
-    user_id: 'usr_nune',
-    post_type: 'badge_earned',
-    content: null,
-    payload: { badge_name: 'Budget Boss' },
-    created_offset_hours: -26
-  },
-  {
-    id: 'post_boss_text',
-    user_id: 'usr_boss',
-    post_type: 'text',
-    content: 'เพิ่งตั้งงบหมวดอาหารใหม่ ลดลง 20% แล้วรู้สึกว่าคุมได้มากขึ้น!',
-    payload: {},
-    created_offset_hours: -8
-  },
-  {
-    id: 'post_boss_score',
-    user_id: 'usr_boss',
-    post_type: 'score_changed',
-    content: null,
-    payload: { previous_score: 65, new_score: 68, tier: 'Steady' },
-    created_offset_hours: -3
-  },
-  {
-    id: 'post_peak_challenge',
-    user_id: 'usr_peak',
-    post_type: 'challenge_completed',
-    content: null,
-    payload: { challenge_name: 'บันทึกค่าใช้จ่ายครบ 5 ครั้ง' },
-    created_offset_hours: -1
-  },
-  {
-    id: 'post_jane_text',
-    user_id: 'usr_jane',
-    post_type: 'text',
-    content: 'วันนี้บันทึกครบทุกรายการแล้ว รู้สึกดีมากที่เห็นภาพรวมชัดขึ้น 📊',
-    payload: {},
-    created_offset_hours: 0
-  }
-]
-
 export const SOCIAL_POST_SELECT = `
   sp.id,
   sp.user_id as userId,
@@ -71,34 +21,6 @@ export const SOCIAL_POST_SELECT = `
   orig.payload as origPayload,
   orig.created_at as origCreatedAt
 `
-
-export async function ensureSocialSeedData(db: any) {
-  const userStatements = []
-  const scoreStatements = []
-
-  for (const u of SOCIAL_SEED_USERS) {
-    userStatements.push(db.prepare(`
-      INSERT OR IGNORE INTO users (id, google_id, display_name, bio, subscription_tier, logging_streak_days, onboarding_complete)
-      VALUES (?, ?, ?, ?, ?, ?, 1)
-    `).bind(u.id, u.google_id, u.display_name, u.bio, u.subscription_tier, u.logging_streak_days))
-
-    const snapshotId = `snp_${crypto.randomUUID().replace(/-/g, '')}`
-    scoreStatements.push(db.prepare(`
-      INSERT OR IGNORE INTO score_snapshots (id, user_id, total_score, tier, tier_th, details)
-      VALUES (?, ?, ?, ?, ?, '{}')
-    `).bind(snapshotId, u.id, u.score, u.tier, u.tier_th))
-  }
-
-  const postStatements = SOCIAL_SEED_POSTS.map(p => {
-    const timeStr = new Date(Date.now() + p.created_offset_hours * 60 * 60 * 1000).toISOString()
-    return db.prepare(`
-      INSERT OR IGNORE INTO social_posts (id, user_id, post_type, content, payload, created_at)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).bind(p.id, p.user_id, p.post_type, p.content, JSON.stringify(p.payload), timeStr)
-  })
-
-  await db.batch([...userStatements, ...scoreStatements, ...postStatements])
-}
 
 export function parsePostPayload(payload: string) {
   try {

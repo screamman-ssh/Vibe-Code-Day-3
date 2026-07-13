@@ -74,3 +74,56 @@ export function validateAttachmentMeta(fileName: unknown, mimeType: unknown, fil
 
   return { ok: true as const, fileName: name, mimeType, fileSize: size }
 }
+
+export async function getDraftAttachmentIds(db: any, userId: string): Promise<string[]> {
+  const row = await db.prepare(`
+    SELECT attachment_ids_json as attachmentIdsJson
+    FROM chat_drafts
+    WHERE user_id = ?
+  `).bind(userId).first<{ attachmentIdsJson?: string }>()
+
+  return parseAttachmentIds(row?.attachmentIdsJson)
+}
+
+/** Drop stale uploads so the 8-image cap applies to the current composer only. */
+export async function pruneOrphanedChatAttachments(db: any, userId: string) {
+  const draftIds = await getDraftAttachmentIds(db, userId)
+
+  if (draftIds.length) {
+    const placeholders = draftIds.map(() => '?').join(', ')
+    await db.prepare(`
+      UPDATE chat_attachments
+      SET status = 'orphan', updated_at = CURRENT_TIMESTAMP
+      WHERE user_id = ? AND status = 'ready' AND id NOT IN (${placeholders})
+    `).bind(userId, ...draftIds).run()
+
+    await db.prepare(`
+      DELETE FROM chat_attachments
+      WHERE user_id = ? AND status = 'pending'
+        AND id NOT IN (${placeholders})
+        AND datetime(created_at) < datetime('now', '-15 minutes')
+    `).bind(userId, ...draftIds).run()
+  } else {
+    await db.prepare(`
+      UPDATE chat_attachments
+      SET status = 'orphan', updated_at = CURRENT_TIMESTAMP
+      WHERE user_id = ? AND status = 'ready'
+    `).bind(userId).run()
+
+    await db.prepare(`
+      DELETE FROM chat_attachments
+      WHERE user_id = ? AND status = 'pending'
+        AND datetime(created_at) < datetime('now', '-15 minutes')
+    `).bind(userId).run()
+  }
+}
+
+export async function countComposerAttachments(db: any, userId: string): Promise<number> {
+  const row = await db.prepare(`
+    SELECT COUNT(*) as count
+    FROM chat_attachments
+    WHERE user_id = ? AND status IN ('pending', 'ready')
+  `).bind(userId).first<{ count: number }>()
+
+  return row?.count || 0
+}

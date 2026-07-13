@@ -71,11 +71,30 @@ export function normalizeCategory(input) {
   return 'Other'
 }
 
+export function parseAmount(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (value == null) return NaN
+  const cleaned = String(value).replace(/,/g, '').replace(/[^\d.-]/g, '').trim()
+  return Number(cleaned)
+}
+
 export function resolveActionDate(value) {
   if (!value || value === 'today') {
     return new Date().toISOString().slice(0, 10)
   }
-  return value
+
+  const raw = String(value).trim()
+  // Accept ISO datetime from OCR (e.g. 2025-03-25T13:13:00) → date only
+  const isoDay = raw.match(/^(\d{4}-\d{2}-\d{2})/)
+  if (isoDay) return isoDay[1]
+
+  const dmy = raw.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/)
+  if (dmy) {
+    const [, d, m, y] = dmy
+    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
+  }
+
+  return raw.slice(0, 10)
 }
 
 export function createEmptyTransaction() {
@@ -92,6 +111,62 @@ export function createEmptyTransaction() {
   }
 }
 
+/**
+ * Best-effort parse of Thai/English spend text into a create_transaction action.
+ * Used so the confirm card always appears even when LLM JSON fails.
+ */
+export function heuristicParseToActions(text = '') {
+  const source = String(text || '').trim()
+  if (!source) return [createEmptyTransaction()]
+
+  const amountPatterns = [
+    /([\d,]+\.\d{2})\s*(?:บาท|baht|thb)?/i,
+    /(?:ยอด|amount|จำนวน|ราคา|ซื้อ|จ่าย|โอน|สแกน)[^\d]{0,12}([\d,]+(?:\.\d+)?)/i,
+    /([\d,]+(?:\.\d+)?)\s*(?:บาท|baht|thb)/i,
+    /\b([\d,]{3,}(?:\.\d+)?)\b/
+  ]
+
+  let amount = 0
+  for (const pattern of amountPatterns) {
+    const match = source.match(pattern)
+    if (!match?.[1]) continue
+    const n = parseAmount(match[1])
+    if (Number.isFinite(n) && n > 0) {
+      amount = n
+      break
+    }
+  }
+
+  // Prefer slip signals over casual "รายจ่าย" in user prompt
+  const incomeSignal = /โอนเข้า|รับโอน|รับเงิน|transfer in|deposit|รายรับ|เข้าบัญชี|income|เงินเดือน|จาก\s*[A-Z]/i.test(source)
+  const expenseSignal = /โอนออก|ซื้อ|สแกนซื้อ|ชำระบิล|expense/i.test(source)
+  const isIncome = incomeSignal && !expenseSignal
+
+  let merchant = ''
+  const fromMatch = source.match(/(?:จาก|from)[:\s]*([A-Za-z0-9\u0E00-\u0E7F ._-]{2,40})/i)
+  const toMatch = source.match(/(?:ไปที่|to|ผู้รับ)[:\s]*([A-Za-z0-9\u0E00-\u0E7F ._-]{2,40})/i)
+  const buyMatch = source.match(/(?:ซื้อ|สแกน)([^\d]{1,40}?)(?:\d|$)/)
+  if (fromMatch?.[1]) merchant = fromMatch[1].trim()
+  else if (toMatch?.[1]) merchant = toMatch[1].trim()
+  else if (buyMatch?.[1]) merchant = buyMatch[1].replace(/[ของ]/g, '').trim()
+
+  return [{
+    type: ACTION_TYPES.CREATE_TX,
+    data: {
+      txType: isIncome ? 'income' : 'expense',
+      amount,
+      category: isIncome ? 'Income' : normalizeCategory(source),
+      merchant,
+      note: '',
+      date: resolveActionDate(
+        source.match(/\b(20\d{2}-\d{2}-\d{2})(?:T[\d:]*)?/)?.[1]
+        || source.match(/\b(\d{1,2}\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+\d{2,4})\b/i)?.[1]
+        || 'today'
+      )
+    }
+  }]
+}
+
 export function normalizeAction(action) {
   if (!action?.type || !action?.data) return null
 
@@ -99,7 +174,7 @@ export function normalizeAction(action) {
 
   switch (action.type) {
     case ACTION_TYPES.CREATE_TX: {
-      const amount = Number(d.amount)
+      const amount = parseAmount(d.amount)
       if (!Number.isFinite(amount) || amount <= 0) return null
       return {
         type: action.type,
@@ -117,7 +192,7 @@ export function normalizeAction(action) {
       if (!d.transactionId) return null
       const patch = { transactionId: d.transactionId }
       if (d.txType) patch.txType = d.txType === 'income' ? 'income' : 'expense'
-      if (d.amount != null) patch.amount = Number(d.amount)
+      if (d.amount != null) patch.amount = parseAmount(d.amount)
       if (d.category) patch.category = normalizeCategory(d.category)
       if (d.merchant != null) patch.merchant = String(d.merchant).trim()
       if (d.note != null) patch.note = String(d.note).trim()
@@ -128,7 +203,7 @@ export function normalizeAction(action) {
       if (!d.transactionId) return null
       return { type: action.type, data: { transactionId: d.transactionId } }
     case ACTION_TYPES.SET_BUDGET: {
-      const limit = Number(d.limitAmount)
+      const limit = parseAmount(d.limitAmount)
       if (!d.category || !Number.isFinite(limit) || limit < 0) return null
       return {
         type: action.type,
@@ -140,7 +215,7 @@ export function normalizeAction(action) {
       }
     }
     case ACTION_TYPES.ADD_DEBT: {
-      const balance = Number(d.balance)
+      const balance = parseAmount(d.balance)
       if (!d.name || !Number.isFinite(balance) || balance < 0) return null
       return {
         type: action.type,
@@ -154,7 +229,7 @@ export function normalizeAction(action) {
       }
     }
     case ACTION_TYPES.RECORD_DEBT_PAYMENT: {
-      const amount = Number(d.amount)
+      const amount = parseAmount(d.amount)
       if (!d.debtName || !Number.isFinite(amount) || amount <= 0) return null
       return {
         type: action.type,

@@ -1,6 +1,6 @@
 import { defineEventHandler, createError } from 'h3'
 import { useDB } from '../../../utils/db'
-import { parseAttachmentIds } from '../../../utils/chatAttachments'
+import { parseAttachmentIds, pruneOrphanedChatAttachments } from '../../../utils/chatAttachments'
 
 function attachmentFilePath(id: string) {
   return `/api/v1/chat/attachments/${id}/file`
@@ -16,6 +16,8 @@ export default defineEventHandler(async (event) => {
   const userId = auth.userId
 
   try {
+    await pruneOrphanedChatAttachments(db, userId)
+
     const draft = await db.prepare(`
       SELECT text, attachment_ids_json as attachmentIdsJson, updated_at as updatedAt
       FROM chat_drafts

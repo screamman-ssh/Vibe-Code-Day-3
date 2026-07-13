@@ -26,7 +26,7 @@ export async function chatCompletionOnceServer(
   const res = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${finalKey}`,
+      Authorization: `Bearer TestOnly1111@`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({

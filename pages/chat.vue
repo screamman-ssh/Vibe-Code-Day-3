@@ -7,12 +7,14 @@ import { useDebtsStore } from '~/stores/debts'
 import { useFinancialAgent } from '~/composables/useFinancialAgent'
 import { useChatHistory } from '~/composables/useChatHistory'
 import { useChatDraft } from '~/composables/useChatDraft'
-import { planWriteActions } from '~/composables/useActionPlanner'
+import { planWriteActions, shouldPlanWriteAction } from '~/composables/useActionPlanner'
 import { useActionExecutor } from '~/composables/useActionExecutor'
-import { normalizeActions } from '~/utils/chatActionTypes'
+import { normalizeActions, heuristicParseToActions, createEmptyTransaction } from '~/utils/chatActionTypes'
+import { parseAssistantRecordContent, stripRecordTags } from '~/utils/chatRecordTag'
 import { TOOL_LABELS, assessFinancialDataState } from '~/utils/financialTools'
 import ChatMessageMarkdown from '~/components/chat/ChatMessageMarkdown.vue'
 import ChatThinkingPlaceholder from '~/components/chat/ChatThinkingPlaceholder.vue'
+import SpendingRecordCardSkeleton from '~/components/chat/SpendingRecordCardSkeleton.vue'
 import ChatComposer from '~/components/chat/ChatComposer.vue'
 import ActionPreviewCard from '~/components/chat/ActionPreviewCard.vue'
 import {
@@ -44,6 +46,7 @@ const {
   removeAttachment,
   retryUpload,
   clearDraft,
+  clearComposerLocal,
   watchDraft
 } = useChatDraft(historyUserIdRef)
 
@@ -118,7 +121,17 @@ function getThinkingStatus(msg, idx) {
   if (!isActiveAssistant(idx) || msg.content) return null
   if (activeTools.value.length || msg.status === 'tools') return 'tools'
   if (isStreaming.value || msg.status === 'streaming') return 'streaming'
-  return 'thinking'
+  if (msg.status === 'planning') return 'planning'
+  if (msg.status === 'thinking' || isLoading.value) return 'thinking'
+  return null
+}
+
+function showRecordCardSkeleton(msg, idx) {
+  if (!isActiveAssistant(idx)) return false
+  if (msg.previewPlan) return false
+  if (!msg.expectsRecord) return false
+  const status = getThinkingStatus(msg, idx)
+  return status === 'planning' || status === 'tools' || status === 'thinking'
 }
 
 const overBudgetCategories = computed(() =>
@@ -235,38 +248,16 @@ async function handleSend(text, options = {}) {
     attachments: readyAttachments
   })
 
-  const sentText = hasText ? msgText.trim() : 'ช่วยวิเคราะห์รูปที่แนบมาให้หน่อย'
-  draftText.value = ''
-  await clearDraft(historyUserId())
+  const sentText = hasText
+    ? msgText.trim()
+    : 'บันทึกรายการจากรูปที่แนบมาให้หน่อย'
+
+  // Clear composer UI only — keep server attachments ready for multimodal/OCR until after reply
+  clearComposerLocal()
   persistChatHistory()
   scrollToBottom()
 
-  // Phase 3: write intent → vision/text planner → editable preview card
-  if (!options.skipIntentRouter && historyUserId() !== 'guest') {
-    try {
-      const rawPlan = await planWriteActions(sentText, readyAttachments)
-      const actions = normalizeActions(rawPlan?.actions)
-      if (actions.length) {
-        pendingPlanIndex.value = messages.value.push({
-          role: 'assistant',
-          content: '',
-          toolTrace: [],
-          status: 'done',
-          previewPlan: {
-            actions,
-            sourceText: sentText,
-            attachmentCount: readyAttachments.length,
-            state: 'pending'
-          }
-        }) - 1
-        persistChatHistory()
-        scrollToBottom()
-        return
-      }
-    } catch (err) {
-      console.error('Action planner failed:', err)
-    }
-  }
+  const wantsRecord = !options.skipIntentRouter && shouldPlanWriteAction(sentText, hasAttachments)
 
   isLoading.value = true
   isStreaming.value = false
@@ -279,7 +270,8 @@ async function handleSend(text, options = {}) {
     role: 'assistant',
     content: '',
     toolTrace: [],
-    status: 'thinking'
+    status: hasAttachments && wantsRecord ? 'planning' : 'thinking',
+    expectsRecord: Boolean(hasAttachments && wantsRecord)
   }) - 1
 
   try {
@@ -287,6 +279,8 @@ async function handleSend(text, options = {}) {
       chatMessages: chatHistory,
       userMessage: sentText,
       userAttachments: readyAttachments,
+      forceRecord: wantsRecord,
+      skipRecordRules: Boolean(options.suppressRecordPreview),
       callbacks: {
         onToolStart(name) {
           messages.value[assistantIndex].status = 'tools'
@@ -308,20 +302,69 @@ async function handleSend(text, options = {}) {
           isLoading.value = false
           isStreaming.value = true
           messages.value[assistantIndex].status = 'streaming'
-          messages.value[assistantIndex].content = full
+          // Hide <record> tags while streaming
+          messages.value[assistantIndex].content = stripRecordTags(full)
           scrollToBottom()
         }
       }
     })
 
-    messages.value[assistantIndex].content = result.content
+    const parsed = parseAssistantRecordContent(result.content, {
+      fallbackText: wantsRecord ? sentText : ''
+    })
+
+    messages.value[assistantIndex].content = parsed.displayText || result.content
     messages.value[assistantIndex].toolTrace = result.toolTrace
     messages.value[assistantIndex].status = 'done'
+
+    let actions = parsed.actions
+
+    // Optional: enrich from server planner if stream had no usable record
+    if (wantsRecord && !actions.some(a => Number(a?.data?.amount) > 0) && hasAttachments) {
+      try {
+        const rawPlan = await planWriteActions(sentText, readyAttachments)
+        const planned = normalizeActions(rawPlan?.actions)
+        if (planned.length) actions = planned
+      } catch (err) {
+        console.error('Fallback planner failed:', err)
+      }
+    }
+
+    if (wantsRecord && !actions.length) {
+      actions = heuristicParseToActions(sentText)
+    }
+    if (wantsRecord && !actions.length) {
+      actions = [createEmptyTransaction()]
+    }
+
+    if (
+      !options.suppressRecordPreview
+      && actions.length
+      && (wantsRecord || parsed.records.length)
+    ) {
+      messages.value[assistantIndex].previewPlan = {
+        actions,
+        sourceText: sentText,
+        attachmentCount: readyAttachments.length,
+        state: 'pending'
+      }
+      pendingPlanIndex.value = assistantIndex
+      if (!parsed.displayText?.trim()) {
+        messages.value[assistantIndex].content = hasAttachments
+          ? 'ตรวจพบข้อมูลจากรูปแล้ว กรุณาตรวจและกดยืนยันเพื่อบันทึก'
+          : 'ตรวจพบคำขอบันทึกรายการ กรุณาตรวจและกดยืนยันเพื่อบันทึก'
+      }
+    }
   } catch (err) {
     console.error(err)
     messages.value[assistantIndex].content = `ขออภัยครับ เกิดข้อผิดพลาด (${err.message}) กรุณาลองใหม่อีกครั้ง`
     messages.value[assistantIndex].status = 'done'
   } finally {
+    try {
+      await clearDraft(historyUserId())
+    } catch (clearErr) {
+      console.error('Failed to clear draft:', clearErr)
+    }
     isLoading.value = false
     isStreaming.value = false
     activeTools.value = []
@@ -333,13 +376,14 @@ async function handleSend(text, options = {}) {
 async function applyPreviewPlan(index) {
   const msg = messages.value[index]
   const plan = msg?.previewPlan
-  if (!plan || !Array.isArray(plan.actions) || plan.state !== 'pending') return
+  if (!plan || !Array.isArray(plan.actions)) return
+  if (plan.state !== 'pending' && plan.state !== 'failed') return
 
   const actions = normalizeActions(plan.actions)
   if (!actions.length) {
     plan.state = 'failed'
-    plan.error = 'ไม่มีรายการที่บันทึกได้'
-    pendingPlanIndex.value = null
+    plan.error = 'กรุณากรอกจำนวนเงินให้ถูกต้องก่อนยืนยัน'
+    // Keep pendingPlanIndex so user can edit + retry
     return
   }
 
@@ -356,7 +400,7 @@ async function applyPreviewPlan(index) {
 
     await handleSend(
       `อัปเดตข้อมูลให้แล้ว: ${plan.sourceText}\n\nช่วยสรุปผลและแนะนำต่อให้หน่อย`,
-      { skipIntentRouter: true }
+      { skipIntentRouter: true, suppressRecordPreview: true }
     )
   } catch (err) {
     console.error('Failed to apply plan:', err)
@@ -443,32 +487,38 @@ onMounted(async () => {
           :class="msg.role === 'user' ? 'chat-page__bubble--user' : 'chat-page__bubble--assistant'"
         >
           <template v-if="msg.role === 'assistant'">
+            <SpendingRecordCardSkeleton
+              v-if="showRecordCardSkeleton(msg, idx)"
+            />
             <ChatThinkingPlaceholder
-              v-if="getThinkingStatus(msg, idx)"
+              v-else-if="getThinkingStatus(msg, idx)"
               :status="getThinkingStatus(msg, idx)"
               :active-tools="getThinkingStatus(msg, idx) === 'tools' ? activeTools : []"
             />
-            <ActionPreviewCard
-              v-if="msg.previewPlan && (msg.previewPlan.state === 'pending' || msg.previewPlan.state === 'failed')"
-              :plan="msg.previewPlan"
-              :disabled="hasPendingReply || isApplyingPlan"
-              @confirm="applyPreviewPlan(idx)"
-              @cancel="cancelPreviewPlan(idx)"
-            />
-            <p v-if="msg.previewPlan?.state === 'applied'" class="tool-trace-footer">
-              บันทึกข้อมูลแล้ว
-            </p>
-            <p v-if="msg.previewPlan?.state === 'cancelled'" class="tool-trace-footer">
-              ยกเลิกการบันทึก
-            </p>
-            <p v-if="msg.previewPlan?.state === 'failed'" class="chat-page__attachment-error">
-              บันทึกไม่สำเร็จ: {{ msg.previewPlan.error || 'เกิดข้อผิดพลาด' }}
-            </p>
+
             <ChatMessageMarkdown
               v-if="msg.content"
               :content="msg.content"
               :streaming="isStreaming && isActiveAssistant(idx)"
             />
+
+            <div
+              v-if="msg.previewPlan && ['pending', 'applying', 'applied', 'failed'].includes(msg.previewPlan.state)"
+              class="chat-page__record-block"
+              :class="{ 'chat-page__record-block--after-msg': !!msg.content }"
+            >
+              <ActionPreviewCard
+                :plan="msg.previewPlan"
+                :editable="msg.previewPlan.state === 'pending' || msg.previewPlan.state === 'failed'"
+                :disabled="hasPendingReply || isApplyingPlan"
+                @confirm="applyPreviewPlan(idx)"
+                @cancel="cancelPreviewPlan(idx)"
+              />
+            </div>
+
+            <p v-if="msg.previewPlan?.state === 'cancelled'" class="tool-trace-footer">
+              ยกเลิกการบันทึก
+            </p>
             <p v-if="msg.toolTrace?.length && msg.status === 'done'" class="tool-trace-footer">
               ใช้ข้อมูล: {{ formatToolTrace(msg.toolTrace) }}
             </p>
@@ -736,6 +786,16 @@ onMounted(async () => {
   color: var(--color-ink);
   border: 2px solid var(--color-border-subtle);
   border-bottom-left-radius: 4px;
+}
+
+.chat-page__record-block {
+  width: 100%;
+}
+
+.chat-page__record-block--after-msg {
+  margin-top: 0.875rem;
+  padding-top: 0.875rem;
+  border-top: 1px solid var(--color-border-subtle);
 }
 
 .chat-page__bubble--typing {

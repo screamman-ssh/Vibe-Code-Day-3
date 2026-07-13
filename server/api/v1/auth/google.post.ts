@@ -101,26 +101,19 @@ export default defineEventHandler(async (event) => {
   let tier = 'free'
   let onboarding = 1
 
-  if (token.startsWith('mock_token_')) {
-    const persona = token.replace('mock_token_', '')
-    googleId = `google_gid_${persona}`
-    displayName = persona === 'nune' ? 'Nune' : persona === 'boss' ? 'Boss' : persona
-    tier = persona === 'boss' ? 'premium' : 'free'
-  } else {
-    try {
-      const payload = await verifyGoogleIdToken(token, googleClientId)
-      googleId = payload.sub
-      email = payload.email || ''
-      displayName = payload.name || payload.email || 'กูเกิลยูสเซอร์'
-      avatarUrl = payload.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`
-      tier = 'free'
-      onboarding = 0 // New users need onboarding
-    } catch (err: any) {
-      throw createError({
-        statusCode: 401,
-        statusMessage: `Google Token Verification Failed: ${err.message}`
-      })
-    }
+  try {
+    const payload = await verifyGoogleIdToken(token, googleClientId)
+    googleId = payload.sub
+    email = payload.email || ''
+    displayName = payload.name || payload.email || 'กูเกิลยูสเซอร์'
+    avatarUrl = payload.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`
+    tier = 'free'
+    onboarding = 0 // New users need onboarding
+  } catch (err: any) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: `Google Token Verification Failed: ${err.message}`
+    })
   }
 
   // Find user by google_id

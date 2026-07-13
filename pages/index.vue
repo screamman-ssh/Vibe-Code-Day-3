@@ -341,7 +341,7 @@ function navigateToScore() {
             class="tile-pastel tile-pastel--teal col-span-2 p-4 border-2 border-primary/20 bg-duo-green-light/10 rounded-xl cursor-pointer hover:scale-[1.005] transition-transform flex items-center justify-between gap-4"
           >
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center text-primary animate-bounce">
+              <div class="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center text-primary">
                 <ShieldCheck class="w-5.5 h-5.5" />
               </div>
               <div class="flex flex-col">

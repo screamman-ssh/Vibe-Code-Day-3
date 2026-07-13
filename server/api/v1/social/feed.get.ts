@@ -1,7 +1,7 @@
 import { defineEventHandler, getQuery, createError } from 'h3'
 import { useDB } from '../../../utils/db'
+import { purgeSeedUsers } from '../../../utils/groupFeed'
 import {
-  ensureSocialSeedData,
   formatSocialPost,
   SOCIAL_POST_SELECT,
   fetchPostLikeStatus,
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    await ensureSocialSeedData(db)
+    await purgeSeedUsers(db)
 
     const followingCountRow = await db.prepare(`
       SELECT COUNT(*) as c FROM user_follows WHERE follower_id = ?

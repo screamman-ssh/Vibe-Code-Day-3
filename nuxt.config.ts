@@ -9,6 +9,8 @@ export default defineNuxtConfig({
     public: {
       aiApiKey: 'TestOnly1111@',
       googleClientId: process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID || '',
+      llmBaseUrl: process.env.NUXT_PUBLIC_LLM_BASE_URL || 'https://ai-service1.yami.workers.dev/lizu/v1',
+      llmModel: process.env.NUXT_PUBLIC_LLM_MODEL || 'unsloth/gemma-4-12b-it-qat',
     },
   },
   ssr: false,

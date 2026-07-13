@@ -320,27 +320,32 @@ function getAuthToken() {
 }
 
 async function uploadReceiptImage(file) {
-  const sign = await api.post('/api/v1/chat/attachments/sign', {
+  const prepared = await api.post('/api/v1/chat/attachments/prepare', {
     fileName: file.name,
     mimeType: file.type,
     fileSize: file.size
   })
 
   const token = getAuthToken()
-  const uploadResponse = await fetch(sign.uploadUrl, {
-    method: sign.method || 'PUT',
+  const uploadResponse = await fetch(prepared.uploadUrl, {
+    method: prepared.method || 'PUT',
     headers: {
-      ...(sign.headers || {}),
+      ...(prepared.headers || {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {})
     },
     body: file
   })
 
   if (!uploadResponse.ok) {
+    try {
+      await api.delete(`/api/v1/chat/attachments/${prepared.attachmentId}`)
+    } catch {
+      // ignore cleanup errors
+    }
     throw new Error('อัปโหลดรูปไม่สำเร็จ')
   }
 
-  return sign.attachmentId
+  return prepared.attachmentId
 }
 
 async function parseOcrTextToTx(ocrText) {

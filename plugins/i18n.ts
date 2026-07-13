@@ -58,7 +58,9 @@ export default defineNuxtPlugin((nuxtApp) => {
           totalDebt: 'Total Accumulative Debt',
           premiumBadge: 'Premium Feature',
           premiumTitle: 'Get AI advice for your budget and savings plan',
-          premiumDesc: 'Receive personalized debt strategies and daily category advice.'
+          premiumDesc: 'Receive personalized debt strategies and daily category advice.',
+          premium: 'Premium',
+          free: 'Free'
         },
         settings: {
           title: 'User Settings',
@@ -78,6 +80,8 @@ export default defineNuxtPlugin((nuxtApp) => {
           upgradeBtn: 'Upgrade to Premium (Beta)',
           lifetimeActive: 'Lifetime Active',
           ocrQuota: 'OCR quota today:',
+          quotaSuffix: 'scans',
+          quotaUnlimited: 'Unlimited',
           disclaimer: 'MoneyCircle and AI advice are for educational and tracking purposes, not official financial advice.',
           logoutBtn: 'Log Out',
           langSelect: 'System Language',
@@ -135,7 +139,9 @@ export default defineNuxtPlugin((nuxtApp) => {
           totalDebt: 'หนี้สะสมทั้งหมด',
           premiumBadge: 'ฟีเจอร์พรีเมียม',
           premiumTitle: 'ขอคำปรึกษาจาก AI โค้ชสำหรับแผนหนี้สินและการออม',
-          premiumDesc: 'รับคำแนะนำกลยุทธ์ชำระหนี้และการลดหมวดใช้จ่ายฟุ่มเฟือยประเมินรายวัน'
+          premiumDesc: 'รับคำแนะนำกลยุทธ์ชำระหนี้และการลดหมวดใช้จ่ายฟุ่มเฟือยประเมินรายวัน',
+          premium: 'พรีเมียม',
+          free: 'ฟรี'
         },
         settings: {
           title: 'ตั้งค่าผู้ใช้งาน',
@@ -155,6 +161,8 @@ export default defineNuxtPlugin((nuxtApp) => {
           upgradeBtn: 'อัปเกรดเป็นพรีเมียม (Beta)',
           lifetimeActive: 'เปิดใช้งานถาวร',
           ocrQuota: 'โควตาสแกนใบเสร็จ OCR วันนี้:',
+          quotaSuffix: 'ครั้ง',
+          quotaUnlimited: 'ไม่จำกัด',
           disclaimer: 'แอปพลิเคชัน MoneyCircle และคำแนะนำวิเคราะห์ของ AI โค้ชทั้งหมดจัดทำขึ้นเพื่อกระตุ้นและอำนวยความสะดวกในการจดบันทึกรายจ่ายส่วนบุคคลและสร้างวินัยที่ดี ไม่ใช่คำแนะนำทางการเงินที่ได้รับอนุญาตอย่างเป็นทางการ',
           logoutBtn: 'ออกจากระบบ',
           langSelect: 'ภาษาของระบบ (Language)',

@@ -5,7 +5,7 @@ import { TOOL_LABELS } from '~/utils/financialTools'
 const props = defineProps({
   status: {
     type: String,
-    default: 'thinking' // thinking | tools | streaming
+    default: 'thinking' // thinking | tools | streaming | planning
   },
   activeTools: {
     type: Array,
@@ -16,6 +16,7 @@ const props = defineProps({
 const statusText = computed(() => {
   if (props.status === 'tools') return 'กำลังดึงข้อมูลจากแอป...'
   if (props.status === 'streaming') return 'กำลังพิมพ์คำตอบ...'
+  if (props.status === 'planning') return 'กำลังอ่านสลิปและเตรียมรายการ...'
   return 'กำลังคิดคำตอบ...'
 })
 </script>

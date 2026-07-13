@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "nuxt dev",
     "build": "nuxt build",
+    "build:watch": "nuxt build --watch",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
@@ -22,7 +23,14 @@
     "db:migrate:chat:remote": "wrangler d1 execute vibe_code_training --remote --file=./migrations/0005_chat_history.sql",
     "db:migrate:drafts:local": "wrangler d1 execute vibe_code_training --local --file=./migrations/0006_chat_drafts.sql",
     "db:migrate:drafts:remote": "wrangler d1 execute vibe_code_training --remote --file=./migrations/0006_chat_drafts.sql",
-    "pages:dev": "npm run build && npm run db:migrate:local && npm run db:migrate:drafts:local && wrangler pages dev dist --d1=65b810fc-498b-4575-8e3c-f0b4a8413d04 --r2=CHAT_IMAGES:moneycircle-chat --local",
+    "db:migrate:purge-seed:local": "wrangler d1 execute vibe_code_training --local --file=./migrations/0007_purge_seed_users.sql",
+    "db:migrate:purge-seed:remote": "wrangler d1 execute vibe_code_training --remote --file=./migrations/0007_purge_seed_users.sql",
+    "pages:wrangler": "wrangler pages dev dist --d1=65b810fc-498b-4575-8e3c-f0b4a8413d04 --r2=CHAT_IMAGES:moneycircle-chat --local",
+    "pages:prepare:local": "npm run build && npm run db:migrate:local && npm run db:migrate:drafts:local",
+    "pages:serve": "npm run pages:wrangler",
+    "pages:serve:watch": "node scripts/dev-watch.mjs",
+    "pages:dev": "npm run pages:prepare:local && npm run pages:wrangler",
+    "pages:dev:watch": "npm run pages:prepare:local && npm run pages:serve:watch",
     "pages:deploy": "npm run build && wrangler pages deploy dist"
   },
   "dependencies": {
@@ -39,6 +47,7 @@
     "@pinia/nuxt": "^0.9.0",
     "@tailwindcss/vite": "^4.3.2",
     "@vite-pwa/nuxt": "^1.1.1",
+    "concurrently": "^9.2.1",
     "nuxt": "^3.12.4",
     "tailwindcss": "^4.3.2",
     "wrangler": "^4.14.0"

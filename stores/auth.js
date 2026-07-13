@@ -19,26 +19,6 @@ export const useAuthStore = defineStore('auth', () => {
   const isLoggedIn = computed(() => !!user.value)
   const needsOnboarding = computed(() => user.value && !user.value.onboardingComplete)
 
-  async function loginAsPersona(persona) {
-    try {
-      const res = await $fetch('/api/v1/auth/google', {
-        method: 'POST',
-        body: { id_token: `mock_token_${persona}` }
-      })
-      
-      user.value = res.user
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('user', JSON.stringify(res.user))
-        localStorage.setItem('accessToken', res.accessToken)
-        localStorage.setItem('refreshToken', res.refreshToken)
-      }
-      return user.value
-    } catch (err) {
-      console.error('Persona login failed:', err)
-      throw err
-    }
-  }
-
   async function loginWithGoogle(idToken) {
     try {
       const res = await $fetch('/api/v1/auth/google', {
@@ -145,7 +125,6 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     isLoggedIn,
     needsOnboarding,
-    loginAsPersona,
     loginWithGoogle,
     loginAsGuest,
     completeOnboarding,
