@@ -125,7 +125,7 @@ function goProfile(userId) {
 
       <div
         v-if="socialStore.feedFilter === 'following' && socialStore.followingCount === 0"
-        class="py-8 text-center space-y-2 border border-dashed border-slate-200 rounded-xl bg-white"
+        class="py-8 text-center space-y-2 border border-dashed border-border-subtle rounded-xl bg-surface-card"
       >
         <Users class="w-8 h-8 mx-auto text-slate-400" />
         <p class="text-sm font-semibold text-ink">ยังไม่ได้ติดตามใคร</p>
@@ -137,7 +137,7 @@ function goProfile(userId) {
 
       <div
         v-if="socialStore.feedFilter === 'group' && !socialStore.hasGroup"
-        class="py-8 text-center space-y-2 border border-dashed border-slate-200 rounded-xl bg-white"
+        class="py-8 text-center space-y-2 border border-dashed border-border-subtle rounded-xl bg-surface-card"
       >
         <Users class="w-8 h-8 mx-auto text-slate-400" />
         <p class="text-sm font-semibold text-ink">ยังไม่ได้เข้าร่วมกลุ่ม</p>
@@ -156,21 +156,21 @@ function goProfile(userId) {
 
         <p
           v-if="socialStore.feedPosts.length === 0 && socialStore.feedFilter === 'public'"
-          class="text-center text-sm text-slate-500 py-10 bg-white rounded-xl border border-slate-200/80"
+          class="text-center text-sm text-ink-muted py-10 bg-surface-card rounded-xl border border-border-subtle"
         >
           ยังไม่มีโพสต์สาธารณะ — ลองโพสต์อะไรสักอย่าง!
         </p>
 
         <p
           v-if="socialStore.feedPosts.length === 0 && socialStore.feedFilter === 'following' && socialStore.followingCount > 0"
-          class="text-center text-sm text-slate-500 py-10 bg-white rounded-xl border border-slate-200/80"
+          class="text-center text-sm text-ink-muted py-10 bg-surface-card rounded-xl border border-border-subtle"
         >
           ยังไม่มีโพสต์ในฟีด — ลองโพสต์อะไรสักอย่าง!
         </p>
 
         <p
           v-if="socialStore.feedPosts.length === 0 && socialStore.feedFilter === 'group' && socialStore.hasGroup"
-          class="text-center text-sm text-slate-500 py-10 bg-white rounded-xl border border-slate-200/80"
+          class="text-center text-sm text-ink-muted py-10 bg-surface-card rounded-xl border border-border-subtle"
         >
           ยังไม่มีกิจกรรมในกลุ่ม{{ socialStore.groupName ? ` ${socialStore.groupName}` : '' }}
         </p>
@@ -197,14 +197,14 @@ function goProfile(userId) {
         <div
           v-for="user in socialStore.discoverUsers"
           :key="user.id"
-          class="flex items-center gap-3 p-3 bg-white border border-slate-200/80 rounded-2xl"
+          class="flex items-center gap-3 p-3 bg-surface-card border border-border-subtle rounded-2xl"
         >
           <button type="button" class="flex items-center gap-3 flex-1 min-w-0 text-left cursor-pointer" @click="goProfile(user.id)">
-            <img :src="user.avatarUrl" class="w-10 h-10 rounded-full bg-slate-100 shrink-0" alt="" />
+            <img :src="user.avatarUrl" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 shrink-0" alt="" />
             <div class="min-w-0">
               <p class="text-sm font-semibold text-ink truncate">{{ user.displayName }}</p>
-              <p class="text-caption text-slate-500 truncate">{{ user.bio || user.tierTh }}</p>
-              <p class="text-micro text-slate-400 mt-0.5">{{ user.score }} คะแนน · บันทึก {{ user.streakDays }} วัน</p>
+              <p class="text-caption text-ink-muted truncate">{{ user.bio || user.tierTh }}</p>
+              <p class="text-micro text-ink-muted mt-0.5">{{ user.score }} คะแนน · บันทึก {{ user.streakDays }} วัน</p>
             </div>
           </button>
 
@@ -223,7 +223,7 @@ function goProfile(userId) {
           </button>
         </div>
 
-        <p v-if="socialStore.discoverUsers.length === 0" class="text-center text-sm text-slate-500 py-8 bg-white rounded-xl border border-slate-200/80">
+        <p v-if="socialStore.discoverUsers.length === 0" class="text-center text-sm text-ink-muted py-8 bg-surface-card rounded-xl border border-border-subtle">
           ไม่พบผู้ใช้
         </p>
       </div>

@@ -633,7 +633,7 @@ function handleUpgrade() {
         <div class="flex items-center gap-2">
           <button 
             @click="prevMonth"
-            class="p-1 hover:bg-slate-100 rounded text-ink-muted hover:text-ink cursor-pointer"
+            class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-ink-muted hover:text-ink cursor-pointer"
           >
             <ChevronLeft class="w-4 h-4" />
           </button>
@@ -642,7 +642,7 @@ function handleUpgrade() {
           </span>
           <button 
             @click="nextMonth"
-            class="p-1 hover:bg-slate-100 rounded text-ink-muted hover:text-ink cursor-pointer"
+            class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-ink-muted hover:text-ink cursor-pointer"
           >
             <ChevronRight class="w-4 h-4" />
           </button>
@@ -662,7 +662,7 @@ function handleUpgrade() {
             @click="handleDayClick(cell)"
             class="aspect-square flex flex-col justify-between p-1 rounded-lg border text-center transition cursor-pointer select-none text-label font-black relative"
             :class="[
-              !cell.isCurrentMonth ? 'text-ink-muted/40 border-transparent bg-slate-50/20' : 'text-ink border-border-subtle bg-surface-card hover:bg-slate-50',
+              !cell.isCurrentMonth ? 'text-ink-muted/40 border-transparent bg-slate-50/20 dark:bg-slate-800/10' : 'text-ink border-border-subtle bg-surface-card hover:bg-slate-50 dark:hover:bg-slate-800/60',
               selectedDate === cell.dateString ? 'ring-2 ring-primary border-primary text-primary scale-[1.03]' : ''
             ]"
           >
@@ -708,7 +708,7 @@ function handleUpgrade() {
       <div 
         v-for="tx in monthTransactions" 
         :key="tx.id"
-        class="surface-card-sm flex items-center justify-between hover:bg-slate-50/50 transition relative group"
+        class="surface-card-sm flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition relative group"
       >
         <div class="flex items-center gap-3">
           <div 
@@ -742,13 +742,13 @@ function handleUpgrade() {
           <div class="flex gap-1">
             <button 
               @click="openEditModal(tx)"
-              class="p-1.5 text-ink-muted hover:text-primary rounded hover:bg-slate-100 cursor-pointer"
+              class="p-1.5 text-ink-muted hover:text-primary rounded hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
             >
               <Edit3 class="w-3.5 h-3.5" />
             </button>
             <button 
               @click="handleDelete(tx.id)"
-              class="p-1.5 text-ink-muted hover:text-tier-risk rounded hover:bg-slate-100 cursor-pointer"
+              class="p-1.5 text-ink-muted hover:text-tier-risk rounded hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
             >
               <Trash2 class="w-3.5 h-3.5" />
             </button>
@@ -766,7 +766,7 @@ function handleUpgrade() {
         <!-- Close Button -->
         <button 
           @click="showDailyModal = false; selectedDate = null"
-          class="absolute top-4 right-4 text-ink-muted hover:text-ink cursor-pointer bg-slate-100 hover:bg-slate-200 w-8 h-8 rounded-full flex items-center justify-center border-2 border-border-subtle"
+          class="absolute top-4 right-4 text-ink-muted hover:text-ink cursor-pointer bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 w-8 h-8 rounded-full flex items-center justify-center border-2 border-border-subtle"
         >
           <X class="w-5 h-5" />
         </button>
@@ -777,7 +777,7 @@ function handleUpgrade() {
         </h3>
 
         <!-- Daily Aggregate Widget -->
-        <div class="grid grid-cols-2 gap-3 bg-slate-50 border-2 border-border-subtle p-3 rounded-xl text-xs font-black">
+        <div class="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-800/50 border-2 border-border-subtle p-3 rounded-xl text-xs font-black">
           <div class="flex justify-between items-center">
             <span class="text-ink-muted">รายรับวันนี้:</span>
             <span class="text-primary">{{ formatCurrency(dailyTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0)) }}</span>
@@ -797,7 +797,7 @@ function handleUpgrade() {
           <div 
             v-for="tx in dailyTransactions" 
             :key="tx.id"
-            class="p-3 border-2 border-border-subtle bg-slate-50/50 rounded-xl flex items-center justify-between hover:bg-slate-50 transition relative group"
+            class="p-3 border-2 border-border-subtle bg-slate-50/50 dark:bg-slate-800/20 rounded-xl flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/60 transition relative group"
           >
             <div class="flex items-center gap-3">
               <div 
@@ -823,13 +823,13 @@ function handleUpgrade() {
               <div class="flex gap-0.5">
                 <button 
                   @click="openEditModal(tx)"
-                  class="p-1 hover:bg-slate-100 rounded text-ink-muted hover:text-primary cursor-pointer"
+                  class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-ink-muted hover:text-primary cursor-pointer"
                 >
                   <Edit3 class="w-3.5 h-3.5" />
                 </button>
                 <button 
                   @click="handleDelete(tx.id)"
-                  class="p-1 hover:bg-slate-100 rounded text-ink-muted hover:text-tier-risk cursor-pointer"
+                  class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-ink-muted hover:text-tier-risk cursor-pointer"
                 >
                   <Trash2 class="w-3.5 h-3.5" />
                 </button>
@@ -952,7 +952,7 @@ function handleUpgrade() {
       <div class="w-full max-w-md bg-surface-card rounded-xl p-6 border-2 border-border-subtle space-y-4 relative overflow-y-auto max-h-[90vh]">
         <button 
           @click="showScanModal = false"
-          class="absolute top-4 right-4 text-ink-muted hover:text-ink cursor-pointer bg-slate-100 hover:bg-slate-200 w-8 h-8 rounded-full flex items-center justify-center border-2 border-border-subtle"
+          class="absolute top-4 right-4 text-ink-muted hover:text-ink cursor-pointer bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 w-8 h-8 rounded-full flex items-center justify-center border-2 border-border-subtle"
         >
           <X class="w-5 h-5" />
         </button>
@@ -973,7 +973,7 @@ function handleUpgrade() {
         />
 
         <!-- Daily Quota Counter -->
-        <div class="flex justify-between items-center bg-slate-50 border-2 border-border-subtle p-3 rounded-xl text-xs">
+        <div class="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 border-2 border-border-subtle p-3 rounded-xl text-xs">
           <span class="font-bold text-ink">โควตาสแกนวันนี้: {{ usageStore.ocrUsedToday }} / {{ usageStore.ocrLimit }} ครั้ง</span>
           <span v-if="isPremium" class="text-micro font-black bg-duo-green-light/40 text-primary border border-primary/20 px-2 py-0.5 rounded-full">พรีเมียม</span>
           <span v-else class="text-micro font-black bg-sunshine-yellow/10 text-tier-building border border-tier-building/20 px-2 py-0.5 rounded-full">แผนฟรี</span>
@@ -983,7 +983,7 @@ function handleUpgrade() {
         <div 
           v-if="!ocrQueue.length && !isOcrLoading"
           @click="triggerCamera"
-          class="border-2 border-dashed border-cloud-gray hover:border-primary rounded-xl p-8 text-center flex flex-col items-center justify-center gap-3 bg-slate-50/50 cursor-pointer transition"
+          class="border-2 border-dashed border-cloud-gray hover:border-primary rounded-xl p-8 text-center flex flex-col items-center justify-center gap-3 bg-slate-50/50 dark:bg-slate-800/20 cursor-pointer transition"
         >
           <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
             <Camera class="w-6 h-6" />
@@ -1019,13 +1019,13 @@ function handleUpgrade() {
             <div
               v-for="item in ocrQueue"
               :key="item.id"
-              class="border-2 border-border-subtle rounded-xl p-3 bg-slate-50/40 space-y-2"
+              class="border-2 border-border-subtle rounded-xl p-3 bg-slate-50/40 dark:bg-slate-800/20 space-y-2"
             >
               <div class="flex gap-3 items-start">
                 <img
                   :src="item.previewUrl"
                   :alt="item.fileName"
-                  class="w-16 h-16 rounded-lg object-cover border border-border-subtle bg-white"
+                  class="w-16 h-16 rounded-lg object-cover border border-border-subtle bg-surface-card"
                 />
                 <div class="min-w-0 flex-1">
                   <p class="text-xs font-bold text-ink truncate">{{ item.fileName }}</p>
@@ -1047,7 +1047,7 @@ function handleUpgrade() {
                   <button
                     v-if="item.status === 'error'"
                     @click="retryQueueItem(item.id)"
-                    class="p-2 rounded-lg bg-white border border-border-subtle text-ink-muted hover:text-ink cursor-pointer"
+                    class="p-2 rounded-lg bg-surface-card border border-border-subtle text-ink-muted hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                     title="ลองใหม่"
                   >
                     <RefreshCw class="w-4 h-4" />
@@ -1055,7 +1055,7 @@ function handleUpgrade() {
                   <button
                     v-if="item.status !== 'uploading' && item.status !== 'ocr' && item.status !== 'parsing'"
                     @click="removeQueueItem(item.id)"
-                    class="p-2 rounded-lg bg-white border border-border-subtle text-ink-muted hover:text-tier-risk cursor-pointer"
+                    class="p-2 rounded-lg bg-surface-card border border-border-subtle text-ink-muted hover:text-tier-risk hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                     title="ลบ"
                   >
                     <Trash2 class="w-4 h-4" />

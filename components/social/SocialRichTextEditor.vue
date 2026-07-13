@@ -49,11 +49,11 @@ function applyLink() {
 </script>
 
 <template>
-  <div class="rounded-xl border-2 border-border-subtle bg-white overflow-hidden">
+  <div class="rounded-xl border-2 border-border-subtle bg-surface-card overflow-hidden">
     <div class="flex items-center gap-0.5 px-2 py-1.5 border-b border-border-subtle bg-surface-bg">
       <button
         type="button"
-        class="w-8 h-8 flex items-center justify-center rounded-lg text-ink-muted hover:text-ink hover:bg-white transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+        class="w-8 h-8 flex items-center justify-center rounded-lg text-ink-muted hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         title="ตัวหนา"
         :disabled="disabled"
         @click="applyBold"
@@ -62,7 +62,7 @@ function applyLink() {
       </button>
       <button
         type="button"
-        class="w-8 h-8 flex items-center justify-center rounded-lg text-ink-muted hover:text-ink hover:bg-white transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+        class="w-8 h-8 flex items-center justify-center rounded-lg text-ink-muted hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         title="ตัวเอียง"
         :disabled="disabled"
         @click="applyItalic"
@@ -71,7 +71,7 @@ function applyLink() {
       </button>
       <button
         type="button"
-        class="w-8 h-8 flex items-center justify-center rounded-lg text-ink-muted hover:text-ink hover:bg-white transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+        class="w-8 h-8 flex items-center justify-center rounded-lg text-ink-muted hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         title="รายการ"
         :disabled="disabled"
         @click="applyList"
@@ -80,7 +80,7 @@ function applyLink() {
       </button>
       <button
         type="button"
-        class="w-8 h-8 flex items-center justify-center rounded-lg text-ink-muted hover:text-ink hover:bg-white transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+        class="w-8 h-8 flex items-center justify-center rounded-lg text-ink-muted hover:text-ink hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         title="ลิงก์"
         :disabled="disabled"
         @click="applyLink"

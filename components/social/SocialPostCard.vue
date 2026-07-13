@@ -175,7 +175,7 @@ async function handleDeletePost() {
 </script>
 
 <template>
-  <article class="bg-white rounded-xl border border-slate-200/80 px-4 py-4 sm:px-5 hover:border-slate-300/80 transition-colors">
+  <article class="bg-surface-card rounded-xl border border-border-subtle px-4 py-4 sm:px-5 hover:border-border-subtle/80 transition-colors">
     <div class="flex gap-3">
       <button
         type="button"
@@ -233,12 +233,12 @@ async function handleDeletePost() {
 
           <div
             v-if="showPostMenu"
-            class="absolute right-0 top-full mt-1 z-20 w-40 bg-white border border-slate-200 rounded-xl shadow-lg py-1"
+            class="absolute right-0 top-full mt-1 z-20 w-40 bg-surface-card border border-border-subtle rounded-xl shadow-lg py-1"
           >
             <button
               v-if="!isOwn"
               type="button"
-              class="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer"
+              class="w-full flex items-center gap-2 px-3 py-2 text-sm text-ink hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
               :disabled="isReported"
               @click.stop="handleReport"
             >
@@ -248,7 +248,7 @@ async function handleDeletePost() {
             <button
               v-if="isOwn"
               type="button"
-              class="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
+              class="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"
               @click.stop="handleDeletePost"
             >
               <Trash2 class="w-4 h-4" />

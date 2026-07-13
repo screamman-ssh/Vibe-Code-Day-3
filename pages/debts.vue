@@ -454,7 +454,7 @@ async function triggerAiAnalysis() {
 
         <!-- Total Original Debt borrowed -->
         <div class="surface-card p-4 flex items-center gap-3 bg-surface-card border border-border-subtle">
-          <div class="w-10 h-10 rounded-full bg-slate-50 text-ink-muted flex items-center justify-center shrink-0">
+          <div class="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-800/50 text-ink-muted flex items-center justify-center shrink-0">
             <DollarSign class="w-5 h-5" />
           </div>
           <div class="flex flex-col">
@@ -477,7 +477,7 @@ async function triggerAiAnalysis() {
         <div 
           v-for="d in debts" 
           :key="d.id"
-          class="surface-card p-4 space-y-4 hover:bg-slate-50/50 transition relative group bg-surface-card border border-border-subtle"
+          class="surface-card p-4 space-y-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition relative group bg-surface-card border border-border-subtle"
         >
           <!-- Card Header details -->
           <div class="flex items-start justify-between">
@@ -492,13 +492,13 @@ async function triggerAiAnalysis() {
             <div class="flex items-center gap-1.5">
               <button 
                 @click="openEditModal(d)"
-                class="p-1.5 text-ink-muted hover:text-primary hover:bg-slate-100 rounded cursor-pointer transition"
+                class="p-1.5 text-ink-muted hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded cursor-pointer transition"
               >
                 <Edit class="w-4 h-4" />
               </button>
               <button 
                 @click="handleDeleteDebt(d.id)"
-                class="p-1.5 text-ink-muted hover:text-tier-risk hover:bg-slate-100 rounded cursor-pointer transition"
+                class="p-1.5 text-ink-muted hover:text-tier-risk hover:bg-slate-100 dark:hover:bg-slate-800 rounded cursor-pointer transition"
               >
                 <Trash2 class="w-4 h-4" />
               </button>
@@ -506,12 +506,12 @@ async function triggerAiAnalysis() {
           </div>
 
           <!-- Progress bar visualization -->
-          <div class="space-y-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+          <div class="space-y-1.5 bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/50">
             <div class="flex justify-between text-micro text-ink-muted leading-none">
               <span>ชำระไปแล้ว {{ percentPaid(d) }}%</span>
               <span>คงค้าง {{ formatCurrency(d.balance) }} / ตั้งต้น {{ formatCurrency(d.originalAmount ?? d.balance) }}</span>
             </div>
-            <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+            <div class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
               <div 
                 class="bg-accent-emerald h-full rounded-full transition-all duration-500" 
                 :style="{ width: `${percentPaid(d)}%` }"
@@ -564,7 +564,7 @@ async function triggerAiAnalysis() {
           <label class="field-label font-bold text-ink text-label">เลือกบัญชีหนี้สินเพื่อจำลอง</label>
           <select 
             v-model="selectedDebtForSim"
-            class="input-field bg-slate-50 border border-slate-200 text-xs py-1.5 min-h-9 cursor-pointer"
+            class="input-field bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 text-xs py-1.5 min-h-9 cursor-pointer"
           >
             <option value="all">ทุกบัญชีรวมกัน (All Debts)</option>
             <option 
@@ -578,7 +578,7 @@ async function triggerAiAnalysis() {
         </div>
 
         <!-- Show baseline vs total sim payback sum -->
-        <div class="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs">
+        <div class="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800/50 text-xs">
           <div>
             <span class="text-ink-muted text-caption block leading-none">ยอดผ่อนปกติ (ขั้นต่ำ)</span>
             <span class="font-bold text-ink text-[13px] mt-1 block">{{ formatCurrency(targetMinPaybackSum) }} / เดือน</span>
@@ -660,7 +660,7 @@ async function triggerAiAnalysis() {
             </div>
 
             <!-- SVG Line Graph box -->
-            <div class="bg-slate-50 border border-slate-100 p-3 rounded-2xl">
+            <div class="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/50 p-3 rounded-2xl">
               <svg viewBox="0 0 500 180" class="w-full h-auto overflow-visible select-none">
                 <!-- Horizontal Grid Lines -->
                 <line x1="40" y1="10" x2="480" y2="10" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="2,2" />
@@ -735,7 +735,7 @@ async function triggerAiAnalysis() {
             <input 
               v-model="calcPrincipal" 
               type="number" 
-              class="input-field bg-slate-50 border border-slate-200 py-2 min-h-10 text-xs" 
+              class="input-field bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 py-2 min-h-10 text-xs" 
             />
           </div>
 
@@ -745,7 +745,7 @@ async function triggerAiAnalysis() {
               <input 
                 v-model="calcApr" 
                 type="number" 
-                class="input-field bg-slate-50 border border-slate-200 py-2 min-h-10 text-xs" 
+                class="input-field bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 py-2 min-h-10 text-xs" 
               />
             </div>
             <div class="space-y-1">
@@ -753,7 +753,7 @@ async function triggerAiAnalysis() {
               <input 
                 v-model="calcMonths" 
                 type="number" 
-                class="input-field bg-slate-50 border border-slate-200 py-2 min-h-10 text-xs" 
+                class="input-field bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 py-2 min-h-10 text-xs" 
               />
             </div>
           </div>

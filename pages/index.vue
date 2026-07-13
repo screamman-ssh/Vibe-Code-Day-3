@@ -262,11 +262,11 @@ function navigateToScore() {
             <div class="space-y-2.5 mt-5">
               <div class="flex justify-between items-center border-b border-sky-100 pb-1.5">
                 <span class="text-caption font-bold text-ink-muted leading-none">{{ $t('dashboard.income') }}</span>
-                <span class="text-sm font-brand font-black text-primary leading-none">{{ formatCurrency(monthlyIncome) }}</span>
+                <span class="text-base font-brand font-black text-primary leading-none">{{ formatCurrency(monthlyIncome) }}</span>
               </div>
               <div class="flex justify-between items-center">
                 <span class="text-caption font-bold text-ink-muted leading-none">{{ $t('dashboard.expense') }}</span>
-                <span class="text-sm font-brand font-black text-tier-risk leading-none">{{ formatCurrency(monthlyExpense) }}</span>
+                <span class="text-base font-brand font-black text-tier-risk leading-none">{{ formatCurrency(monthlyExpense) }}</span>
               </div>
             </div>
           </div>
@@ -283,7 +283,7 @@ function navigateToScore() {
             <div class="space-y-2 mt-5">
               <div class="flex flex-col">
                 <span class="text-caption font-bold text-ink-muted leading-none">{{ $t('dashboard.spent') }}</span>
-                <span class="text-sm font-brand font-black text-ink mt-1.5">{{ formatCurrency(totalBudgetSpent) }}</span>
+                <span class="text-lg font-brand font-black text-ink mt-1.5 leading-none">{{ formatCurrency(totalBudgetSpent) }}</span>
               </div>
               <div class="w-full bg-slate-200/50 rounded-full h-2 mt-1.5 overflow-hidden">
                 <div 
@@ -313,7 +313,7 @@ function navigateToScore() {
               </div>
               <div class="flex flex-col text-right justify-center">
                 <span class="text-micro font-bold text-ink-muted leading-none">{{ $t('dashboard.totalDebt') }}</span>
-                <span class="text-sm font-brand font-black text-ink mt-1.5 leading-none">
+                <span class="text-lg font-brand font-black text-ink mt-1.5 leading-none">
                   {{ formatCurrency(debtsStore.totalBalance) }}
                 </span>
               </div>

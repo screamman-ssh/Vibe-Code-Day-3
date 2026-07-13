@@ -86,7 +86,7 @@ function handleSubmit() {
       <div class="flex items-center gap-0.5 text-ink-muted">
         <button
           type="button"
-          class="w-9 h-9 flex items-center justify-center rounded-full text-ink-muted hover:bg-white/80 hover:text-ink transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          class="w-9 h-9 flex items-center justify-center rounded-full text-ink-muted hover:bg-slate-100/80 dark:hover:bg-slate-800/80 hover:text-ink transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           title="ตัวหนา"
           :disabled="disabled"
           @click="applyBold"
@@ -95,7 +95,7 @@ function handleSubmit() {
         </button>
         <button
           type="button"
-          class="w-9 h-9 flex items-center justify-center rounded-full text-ink-muted hover:bg-white/80 hover:text-ink transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          class="w-9 h-9 flex items-center justify-center rounded-full text-ink-muted hover:bg-slate-100/80 dark:hover:bg-slate-800/80 hover:text-ink transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           title="โค้ด"
           :disabled="disabled"
           @click="applyCode"
@@ -104,7 +104,7 @@ function handleSubmit() {
         </button>
         <button
           type="button"
-          class="w-9 h-9 flex items-center justify-center rounded-full text-ink-muted hover:bg-white/80 hover:text-ink transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          class="w-9 h-9 flex items-center justify-center rounded-full text-ink-muted hover:bg-slate-100/80 dark:hover:bg-slate-800/80 hover:text-ink transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           title="กล่าวถึง"
           :disabled="disabled"
           @click="applyMention"
@@ -113,7 +113,7 @@ function handleSubmit() {
         </button>
         <button
           type="button"
-          class="w-9 h-9 flex items-center justify-center rounded-full text-ink-muted hover:bg-white/80 hover:text-ink transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          class="w-9 h-9 flex items-center justify-center rounded-full text-ink-muted hover:bg-slate-100/80 dark:hover:bg-slate-800/80 hover:text-ink transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           title="ตัวเอียง"
           :disabled="disabled"
           @click="applyItalic"
@@ -122,7 +122,7 @@ function handleSubmit() {
         </button>
         <button
           type="button"
-          class="w-9 h-9 flex items-center justify-center rounded-full text-ink-muted hover:bg-white/80 hover:text-ink transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          class="w-9 h-9 flex items-center justify-center rounded-full text-ink-muted hover:bg-slate-100/80 dark:hover:bg-slate-800/80 hover:text-ink transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           title="รายการ"
           :disabled="disabled"
           @click="applyList"
@@ -131,7 +131,7 @@ function handleSubmit() {
         </button>
         <button
           type="button"
-          class="w-9 h-9 flex items-center justify-center rounded-full text-ink-muted hover:bg-white/80 hover:text-ink transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          class="w-9 h-9 flex items-center justify-center rounded-full text-ink-muted hover:bg-slate-100/80 dark:hover:bg-slate-800/80 hover:text-ink transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           title="ลิงก์"
           :disabled="disabled"
           @click="applyLink"
