@@ -5,6 +5,17 @@ type ChatMessage =
   | { role: 'system' | 'user' | 'assistant'; content: string }
   | { role: 'system' | 'user' | 'assistant'; content: any }
 
+function withLlmNoThinking(body: Record<string, unknown>) {
+  return {
+    ...body,
+    reasoning_effort: 'none',
+    chat_template_kwargs: {
+      enable_thinking: false,
+      ...(body.chat_template_kwargs as Record<string, unknown> | undefined)
+    }
+  }
+}
+
 export async function chatCompletionOnceServer(
   event: H3Event,
   {
@@ -29,13 +40,13 @@ export async function chatCompletionOnceServer(
       Authorization: `Bearer TestOnly1111@`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({
+    body: JSON.stringify(withLlmNoThinking({
       model,
       messages,
       stream: false,
       temperature,
       max_tokens: maxTokens
-    })
+    }))
   })
 
   if (!res.ok) {
@@ -45,6 +56,5 @@ export async function chatCompletionOnceServer(
 
   const json: any = await res.json()
   const msg = json?.choices?.[0]?.message || {}
-  return (msg.content || msg.reasoning_content || '') as string
+  return (typeof msg.content === 'string' ? msg.content : '') as string
 }
-

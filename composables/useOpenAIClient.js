@@ -1,4 +1,5 @@
 import OpenAI from 'openai'
+import { withLlmNoThinking } from '~/utils/llmRequestOptions'
 
 const FALLBACK_BASE_URL = 'https://ai-service1.yami.workers.dev/lizu/v1'
 const FALLBACK_MODEL = 'unsloth/gemma-4-12b-it-qat'
@@ -16,52 +17,11 @@ function yieldToUI() {
   return new Promise(resolve => requestAnimationFrame(resolve))
 }
 
-/** Gemma on this endpoint often streams into reasoning_content, not content. */
+/** Use final answer tokens only — ignore reasoning/thinking channel. */
 export function extractDeltaText(delta) {
   if (!delta) return ''
   if (typeof delta.content === 'string' && delta.content) return delta.content
-  if (typeof delta.reasoning_content === 'string' && delta.reasoning_content) {
-    return delta.reasoning_content
-  }
   return ''
-}
-
-export function extractThaiFromReasoning(text) {
-  if (!text) return ''
-  const lines = text.split('\n').map(line => line.trim()).filter(Boolean)
-  for (let i = lines.length - 1; i >= 0; i--) {
-    const line = lines[i].replace(/^\*\s*/, '')
-    if (/[\u0E00-\u0E7F]/.test(line)) return line
-  }
-  return ''
-}
-
-export function createReasoningStreamFilter() {
-  let buffer = ''
-  let visible = ''
-  let visibleStarted = false
-
-  return {
-    push(deltaText) {
-      if (!deltaText) return { full: visible, delta: '' }
-
-      buffer += deltaText
-      if (!visibleStarted) {
-        const thaiIndex = buffer.search(/[\u0E00-\u0E7F]/)
-        if (thaiIndex === -1) return { full: visible, delta: '' }
-        visibleStarted = true
-        visible = buffer.slice(thaiIndex)
-        return { full: visible, delta: visible }
-      }
-
-      visible += deltaText
-      return { full: visible, delta: deltaText }
-    },
-    getFull() {
-      if (visible.trim()) return visible.trim()
-      return extractThaiFromReasoning(buffer) || buffer.trim()
-    }
-  }
 }
 
 export async function streamChatCompletion({
@@ -72,15 +32,14 @@ export async function streamChatCompletion({
   maxTokens = 350
 }) {
   const { baseUrl, model, apiKey } = getLlmClientConfig()
-  const filter = createReasoningStreamFilter()
 
-  const body = {
+  const body = withLlmNoThinking({
     model,
     messages,
     stream: true,
     temperature,
     max_tokens: maxTokens
-  }
+  })
 
   const response = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
@@ -103,6 +62,7 @@ export async function streamChatCompletion({
   const reader = response.body.getReader()
   const decoder = new TextDecoder()
   let sseBuffer = ''
+  let full = ''
 
   while (true) {
     const { done, value } = await reader.read()
@@ -133,15 +93,13 @@ export async function streamChatCompletion({
       const piece = extractDeltaText(payload.choices?.[0]?.delta)
       if (!piece) continue
 
-      const { full, delta } = filter.push(piece)
-      if (!delta) continue
-
+      full += piece
       await yieldToUI()
-      await onToken?.(delta, full)
+      await onToken?.(piece, full)
     }
   }
 
-  return filter.getFull()
+  return full.trim()
 }
 
 export async function chatCompletionOnce({
@@ -157,13 +115,13 @@ export async function chatCompletionOnce({
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({
+    body: JSON.stringify(withLlmNoThinking({
       model,
       messages,
       stream: false,
       temperature,
       max_tokens: maxTokens
-    })
+    }))
   })
 
   if (!response.ok) {
@@ -173,7 +131,7 @@ export async function chatCompletionOnce({
 
   const json = await response.json()
   const msg = json?.choices?.[0]?.message || {}
-  return msg.content || msg.reasoning_content || ''
+  return typeof msg.content === 'string' ? msg.content : ''
 }
 
 export function createOpenAIClient() {
@@ -196,4 +154,4 @@ export function createOpenAIClient() {
   })
 }
 
-export { FALLBACK_MODEL as DEFAULT_MODEL, FALLBACK_BASE_URL as DEFAULT_BASE_URL }
+export { FALLBACK_MODEL as DEFAULT_MODEL, FALLBACK_BASE_URL as DEFAULT_BASE_URL, withLlmNoThinking }

@@ -5,7 +5,7 @@ import { storeToRefs } from 'pinia'
 import { useScoreStore } from '~/stores/score'
 import { useDebtsStore } from '~/stores/debts'
 import { alertDialog, confirmDialog } from '~/composables/useConfirmDialog'
-import { createOpenAIClient, DEFAULT_MODEL } from '~/composables/useOpenAIClient'
+import { createOpenAIClient, DEFAULT_MODEL, withLlmNoThinking } from '~/composables/useOpenAIClient'
 import ChatMessageMarkdown from '~/components/chat/ChatMessageMarkdown.vue'
 import { 
   Wallet, 
@@ -363,13 +363,13 @@ async function triggerAiAnalysis() {
   try {
     const openai = createOpenAIClient()
 
-    const response = await openai.chat.completions.create({
+    const response = await openai.chat.completions.create(withLlmNoThinking({
       model: DEFAULT_MODEL,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ]
-    })
+    }))
 
     aiAnalysisResult.value = response.choices[0].message.content
     isAiLoading.value = false
