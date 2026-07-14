@@ -149,7 +149,7 @@ async function handleDeleteCategory(categoryName) {
       </p>
 
       <!-- Overall progress bar -->
-      <div class="w-full bg-slate-100 rounded-full h-2.5 mt-4 overflow-hidden">
+      <div class="w-full bg-progress-track rounded-full h-2.5 mt-4 overflow-hidden">
         <div 
           class="h-full rounded-full transition-all duration-500"
           :class="adherencePercentage >= 100 ? 'bg-tier-risk' : adherencePercentage >= 85 ? 'bg-tier-building' : 'bg-accent-emerald'"
@@ -202,7 +202,7 @@ async function handleDeleteCategory(categoryName) {
           <!-- Bottom elements -->
           <div class="space-y-3 mt-4">
             <!-- Progress bar -->
-            <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+            <div class="w-full bg-progress-track rounded-full h-1.5 overflow-hidden">
               <div 
                 class="h-full rounded-full transition-all duration-300"
                 :class="c.spentAmount > c.limitAmount ? 'bg-tier-risk' : (c.spentAmount / (c.limitAmount || 1)) >= 0.85 ? 'bg-tier-building' : 'bg-accent-emerald'"

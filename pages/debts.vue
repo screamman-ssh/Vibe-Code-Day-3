@@ -511,7 +511,7 @@ async function triggerAiAnalysis() {
               <span>ชำระไปแล้ว {{ percentPaid(d) }}%</span>
               <span>คงค้าง {{ formatCurrency(d.balance) }} / ตั้งต้น {{ formatCurrency(d.originalAmount ?? d.balance) }}</span>
             </div>
-            <div class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+            <div class="w-full bg-progress-track rounded-full h-1.5 overflow-hidden">
               <div 
                 class="bg-accent-emerald h-full rounded-full transition-all duration-500" 
                 :style="{ width: `${percentPaid(d)}%` }"

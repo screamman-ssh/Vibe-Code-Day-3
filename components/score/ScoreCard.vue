@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, onMounted } from 'vue'
+import { computed } from 'vue'
 import { Flame } from 'lucide-vue-next'
 
 import { useI18n } from 'vue-i18n'
@@ -92,18 +92,8 @@ const daysLabels = computed(() => {
     : ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา']
 })
 
-// Gauge track color adapts to theme
-const isDark = ref(false)
-onMounted(() => {
-  if (typeof window !== 'undefined') {
-    isDark.value = document.documentElement.classList.contains('dark')
-    const observer = new MutationObserver(() => {
-      isDark.value = document.documentElement.classList.contains('dark')
-    })
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
-  }
-})
-const trackColor = computed(() => isDark.value ? '#1e3340' : '#f1f5f9')
+// Gauge track follows semantic progress-track token (light + dark)
+const trackColor = 'var(--color-progress-track)'
 </script>
 
 <template>

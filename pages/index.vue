@@ -217,7 +217,7 @@ function navigateToScore() {
           </div>
 
           <!-- Quest Progress Bar -->
-          <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200">
+          <div class="w-full bg-progress-track rounded-full h-3 overflow-hidden border border-border-subtle">
             <div 
               class="h-full rounded-full bg-primary transition-all duration-500"
               :style="{ width: `${questsProgressPercent}%` }"
@@ -285,7 +285,7 @@ function navigateToScore() {
                 <span class="text-caption font-bold text-ink-muted leading-none">{{ $t('dashboard.spent') }}</span>
                 <span class="text-lg font-brand font-black text-ink mt-1.5 leading-none">{{ formatCurrency(totalBudgetSpent) }}</span>
               </div>
-              <div class="w-full bg-slate-200/50 rounded-full h-2 mt-1.5 overflow-hidden">
+              <div class="w-full bg-progress-track rounded-full h-2 mt-1.5 overflow-hidden">
                 <div 
                   class="bg-primary h-full rounded-full transition-all duration-500" 
                   :style="{ width: `${Math.min((totalBudgetSpent / (totalBudgetLimit || 1)) * 100, 100)}%` }"
@@ -325,7 +325,7 @@ function navigateToScore() {
                 <span class="text-tier-building">เป้าหมายชำระคืนคืบหน้า</span>
                 <span class="text-ink">เคลียร์หนี้แล้ว {{ debtPayoffPercent }}%</span>
               </div>
-              <div class="w-full bg-slate-200/50 rounded-full h-2 overflow-hidden">
+              <div class="w-full bg-progress-track rounded-full h-2 overflow-hidden">
                 <div 
                   class="bg-amber-500 h-full rounded-full transition-all duration-500" 
                   :style="{ width: `${debtPayoffPercent}%` }"

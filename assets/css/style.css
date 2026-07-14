@@ -11,6 +11,8 @@
   --color-accent-emerald-hover: #D0311E;  /* Red-Orange hover */
   --color-surface-bg: #ffffff;            /* Snow — primary background */
   --color-surface-card: #ffffff;          /* Snow — card surfaces */
+  --color-surface-hover: #f1f5f9;         /* Interactive lift on surfaces */
+  --color-progress-track: #e8eef2;        /* Progress bar track */
   --color-ink: #4b4b4b;                   /* Eel — primary text */
   --color-ink-muted: #777777;             /* Wolf — secondary text */
   --color-border-subtle: #e5e5e5;         /* Swan — card borders */
@@ -63,6 +65,8 @@
 .dark {
   --color-surface-bg: #131f24;            /* Deep teal-slate background */
   --color-surface-card: #1a2c35;          /* Elevated card surface */
+  --color-surface-hover: color-mix(in srgb, #ffffff 18%, var(--color-surface-card));
+  --color-progress-track: color-mix(in srgb, #ffffff 14%, var(--color-surface-card));
   --color-ink: #e8ecf0;                   /* High-contrast but not pure white */
   --color-ink-muted: #8a9ba7;             /* Muted text, still readable */
   --color-border-subtle: #2a3f4a;         /* Subtle but visible edges */
@@ -582,7 +586,7 @@ body {
 }
 
 .dark .streak-day--pending {
-  @apply bg-slate-700;
+  @apply bg-surface-hover;
 }
 
 .dark .mission-card {

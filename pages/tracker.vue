@@ -633,7 +633,7 @@ function handleUpgrade() {
         <div class="flex items-center gap-2">
           <button 
             @click="prevMonth"
-            class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-ink-muted hover:text-ink cursor-pointer"
+            class="p-1 hover:bg-surface-hover rounded text-ink-muted hover:text-ink cursor-pointer"
           >
             <ChevronLeft class="w-4 h-4" />
           </button>
@@ -642,7 +642,7 @@ function handleUpgrade() {
           </span>
           <button 
             @click="nextMonth"
-            class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-ink-muted hover:text-ink cursor-pointer"
+            class="p-1 hover:bg-surface-hover rounded text-ink-muted hover:text-ink cursor-pointer"
           >
             <ChevronRight class="w-4 h-4" />
           </button>
@@ -662,7 +662,7 @@ function handleUpgrade() {
             @click="handleDayClick(cell)"
             class="aspect-square flex flex-col justify-between p-1 rounded-lg border text-center transition cursor-pointer select-none text-label font-black relative"
             :class="[
-              !cell.isCurrentMonth ? 'text-ink-muted/40 border-transparent bg-slate-50/20 dark:bg-slate-800/10' : 'text-ink border-border-subtle bg-surface-card hover:bg-slate-50 dark:hover:bg-slate-800/60',
+              !cell.isCurrentMonth ? 'text-ink-muted/65 border-transparent bg-slate-50/20 dark:bg-surface-hover/30' : 'text-ink border-border-subtle bg-surface-card hover:bg-surface-hover dark:hover:border-sky-blue/45',
               selectedDate === cell.dateString ? 'ring-2 ring-primary border-primary text-primary scale-[1.03]' : ''
             ]"
           >
