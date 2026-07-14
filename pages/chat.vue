@@ -9,6 +9,8 @@ import { useChatHistory } from '~/composables/useChatHistory'
 import { useChatDraft } from '~/composables/useChatDraft'
 import { planWriteActions, shouldPlanWriteAction } from '~/composables/useActionPlanner'
 import { useActionExecutor } from '~/composables/useActionExecutor'
+import { useApi } from '~/composables/useApi'
+import { chatCompletionOnce } from '~/composables/useOpenAIClient'
 import { normalizeActions, heuristicParseToActions, createEmptyTransaction } from '~/utils/chatActionTypes'
 import { parseAssistantRecordContent, stripRecordTags } from '~/utils/chatRecordTag'
 import { TOOL_LABELS, assessFinancialDataState } from '~/utils/financialTools'
@@ -26,6 +28,7 @@ import {
 } from 'lucide-vue-next'
 
 const auth = useAuthStore()
+const api = useApi()
 const txStore = useTransactionsStore()
 const budgetStore = useBudgetStore()
 const debtsStore = useDebtsStore()
@@ -82,11 +85,13 @@ async function restoreChatHistory() {
         && !saved.some(message => message.role === 'user')
 
       messages.value = onlyWelcome ? createWelcomeState() : saved
+      followUpSuggestions.value = []
       showSuggestions.value = !messages.value.some(message => message.role === 'user')
       return
     }
 
     messages.value = createWelcomeState()
+    followUpSuggestions.value = []
     showSuggestions.value = true
   } finally {
     isHistoryLoading.value = false
@@ -103,6 +108,9 @@ const isHistoryLoading = ref(false)
 const attachmentErrors = ref([])
 const pendingPlanIndex = ref(null)
 const isApplyingPlan = ref(false)
+const followUpSuggestions = ref([])
+const suggestionsLoading = ref(false)
+let suggestRequestId = 0
 
 const hasPendingReply = computed(() => isLoading.value || isStreaming.value)
 const hasPendingPlan = computed(() => pendingPlanIndex.value != null)
@@ -134,42 +142,59 @@ function showRecordCardSkeleton(msg, idx) {
   return status === 'planning' || status === 'tools' || status === 'thinking'
 }
 
-const overBudgetCategories = computed(() =>
-  budgetStore.categories.filter(c => c.spentAmount > c.limitAmount)
-)
+const starterSuggestions = [
+  { label: 'เริ่มคุมงบยังไงดี', prompt: 'แนะนำวิธีเริ่มต้นคุมงบประมาณสำหรับมือใหม่' },
+  { label: 'เงินสำรองฉุกเฉิน', prompt: 'ควรมีเงินสำรองฉุกเฉินเท่าไหร่' },
+  { label: 'Snowball vs Avalanche', prompt: 'อธิบายวิธีปลดหนี้ Snowball และ Avalanche' },
+  { label: 'กฎ 50/30/20', prompt: 'กฎ 50/30/20 คืออะไร ใช้ยังไง' }
+]
+
+const FOLLOWUP_SYSTEM_PROMPT = `สร้างคำถามถัดไปสำหรับแชทการเงิน ตอบ JSON เท่านั้น:
+{"suggestions":[{"label":"สั้น","prompt":"ข้อความเต็มที่ผู้ใช้จะถาม"}]}
+กฎ: 3-4 ข้อ, ภาษาไทย, เป็นคำถามที่ผู้ใช้จะถามต่อจากบทสนทนา ห้ามคำสั่งแก้ปัญหาทั่วไป`
+
+function parseSuggestionPayload(raw) {
+  if (!raw || typeof raw !== 'string') return []
+  let text = raw.trim()
+  const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/i)
+  if (fence?.[1]) text = fence[1].trim()
+  const start = text.indexOf('{')
+  const end = text.lastIndexOf('}')
+  const arrStart = text.indexOf('[')
+  let parsed = null
+  try {
+    if (start !== -1 && end > start) parsed = JSON.parse(text.slice(start, end + 1))
+    else if (arrStart !== -1) parsed = JSON.parse(text.slice(arrStart, text.lastIndexOf(']') + 1))
+  } catch {
+    return []
+  }
+
+  const list = Array.isArray(parsed)
+    ? parsed
+    : Array.isArray(parsed?.suggestions)
+      ? parsed.suggestions
+      : Array.isArray(parsed?.questions)
+        ? parsed.questions
+        : []
+
+  return list
+    .map((item) => {
+      if (typeof item === 'string' && item.trim()) {
+        const prompt = item.trim()
+        return { label: prompt.slice(0, 24), prompt: prompt.slice(0, 280) }
+      }
+      const label = String(item?.label || item?.title || item?.text || '').trim()
+      const prompt = String(item?.prompt || item?.question || item?.text || label).trim()
+      if (!label || !prompt) return null
+      return { label: label.slice(0, 40), prompt: prompt.slice(0, 280) }
+    })
+    .filter(Boolean)
+    .slice(0, 4)
+}
 
 const suggestions = computed(() => {
-  const chips = []
-  const dataState = assessFinancialDataState()
-
-  if (!dataState.hasAnyData) {
-    return [
-      { label: 'เริ่มคุมงบยังไงดี', prompt: 'แนะนำวิธีเริ่มต้นคุมงบประมาณสำหรับมือใหม่' },
-      { label: 'เงินสำรองฉุกเฉิน', prompt: 'ควรมีเงินสำรองฉุกเฉินเท่าไหร่' },
-      { label: 'Snowball vs Avalanche', prompt: 'อธิบายวิธีปลดหนี้ Snowball และ Avalanche' },
-      { label: 'กฎ 50/30/20', prompt: 'กฎ 50/30/20 คืออะไร ใช้ยังไง' }
-    ]
-  }
-
-  if (overBudgetCategories.value.length) {
-    const cat = overBudgetCategories.value[0].category
-    chips.push({
-      label: `${cat} เกินงบ`,
-      prompt: `หมวด ${cat} เกินงบ ช่วยแนะนำการลดรายจ่าย`
-    })
-  }
-  if (debtsStore.totalBalance > 0) {
-    chips.push({
-      label: 'วางแผนปลดหนี้',
-      prompt: `วางแผนปลดหนี้จากยอดคงค้าง ${debtsStore.totalBalance.toLocaleString()} บาท`
-    })
-  }
-  chips.push(
-    { label: 'วิเคราะห์รายจ่าย', prompt: 'วิเคราะห์การใช้จ่ายเดือนนี้ให้หน่อย' },
-    { label: 'ลดรายจ่าย', prompt: 'แนะนำแผนคุมงบประมาณลดหย่อนรายจ่าย' },
-    { label: 'จัดการหนี้', prompt: 'ขอแนวทางจัดการและชำระหนี้สินสะสม' }
-  )
-  return chips.slice(0, 5)
+  if (!hasUserMessages.value) return starterSuggestions
+  return followUpSuggestions.value
 })
 
 const contextSummary = computed(() => {
@@ -177,6 +202,78 @@ const contextSummary = computed(() => {
   if (!dataState.hasAnyData) return 'ยังไม่มีข้อมูล — ให้คำแนะนำทั่วไปได้'
   return `${txStore.items.length} ธุรกรรม · ${budgetStore.categories.length} หมวดงบ · ${debtsStore.items.length} บัญชีหนี้`
 })
+
+async function generateFollowUpsClient(history, summary) {
+  const transcript = history
+    .map(m => `${m.role === 'user' ? 'ผู้ใช้' : 'AI'}: ${m.content}`)
+    .join('\n')
+
+  const raw = await chatCompletionOnce({
+    messages: [
+      { role: 'system', content: FOLLOWUP_SYSTEM_PROMPT },
+      {
+        role: 'user',
+        content: `สรุปข้อมูล:\n${summary}\n\nบทสนทนา:\n${transcript}\n\nสร้างคำถามถัดไป`
+      }
+    ],
+    temperature: 0.4,
+    maxTokens: 400
+  })
+
+  return parseSuggestionPayload(raw)
+}
+
+async function fetchFollowUpSuggestions() {
+  const requestId = ++suggestRequestId
+  suggestionsLoading.value = true
+  followUpSuggestions.value = []
+
+  const history = messages.value
+    .filter(m => (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim())
+    .map(m => ({ role: m.role, content: m.content.trim() }))
+    .slice(-6)
+
+  const summary = contextSummary.value
+
+  try {
+    let chips = []
+
+    try {
+      const res = await api.post('/api/v1/chat/suggestions', {
+        messages: history,
+        contextSummary: summary
+      })
+      chips = Array.isArray(res?.suggestions) ? res.suggestions : []
+      chips = chips
+        .filter(s => s?.label && s?.prompt)
+        .slice(0, 4)
+    } catch (err) {
+      console.error('Follow-up suggestions API failed:', err)
+    }
+
+    if (!chips.length) {
+      try {
+        chips = await generateFollowUpsClient(history, summary)
+      } catch (err) {
+        console.error('Follow-up suggestions client fallback failed:', err)
+      }
+    }
+
+    if (requestId !== suggestRequestId) return
+
+    followUpSuggestions.value = chips
+    showSuggestions.value = chips.length > 0
+  } catch (err) {
+    if (requestId !== suggestRequestId) return
+    console.error('Failed to fetch follow-up suggestions:', err)
+    followUpSuggestions.value = []
+    showSuggestions.value = false
+  } finally {
+    if (requestId === suggestRequestId) {
+      suggestionsLoading.value = false
+    }
+  }
+}
 
 function scrollToBottom() {
   nextTick(() => {
@@ -193,6 +290,9 @@ function formatToolTrace(trace) {
 
 async function resetChat() {
   if (hasPendingReply.value) return
+  suggestRequestId += 1
+  suggestionsLoading.value = false
+  followUpSuggestions.value = []
   await clearHistory(historyUserId())
   await clearDraft(historyUserId())
   messages.value = createWelcomeState()
@@ -241,6 +341,9 @@ async function handleSend(text, options = {}) {
 
   if ((!hasText && !hasAttachments) || hasPendingReply.value || hasUploadingAttachments.value || hasPendingPlan.value) return
 
+  suggestRequestId += 1
+  suggestionsLoading.value = false
+  followUpSuggestions.value = []
   showSuggestions.value = false
   messages.value.push({
     role: 'user',
@@ -370,6 +473,9 @@ async function handleSend(text, options = {}) {
     activeTools.value = []
     persistChatHistory()
     scrollToBottom()
+    if (messages.value[assistantIndex]?.status === 'done') {
+      void fetchFollowUpSuggestions()
+    }
   }
 }
 
@@ -447,7 +553,7 @@ onMounted(async () => {
           <Sparkles class="w-4 h-4 fill-current" />
         </div>
         <div class="min-w-0">
-          <h1 class="chat-page__title font-brand">AI โค้ชการเงิน</h1>
+          <h1 class="chat-page__title font-brand">Monye (AI Money Coach)</h1>
           <p class="chat-page__meta flex items-center gap-1 truncate">
             <Database class="w-3 h-3 shrink-0" />
             <span class="truncate">{{ contextSummary }}</span>
@@ -551,10 +657,23 @@ onMounted(async () => {
 
     <!-- Footer: suggestions + input -->
     <footer class="chat-page__footer">
-      <div v-if="showSuggestions || !hasUserMessages" class="chat-page__suggestions">
+      <div
+        v-if="suggestionsLoading && hasUserMessages && !hasPendingReply"
+        class="chat-page__suggestions"
+      >
         <p class="chat-page__suggestions-label">
           <Lightbulb class="w-3 h-3" />
-          <span>ลองถาม</span>
+          <span>กำลังคิดคำถาม…</span>
+        </p>
+      </div>
+
+      <div
+        v-else-if="(showSuggestions || !hasUserMessages) && suggestions.length"
+        class="chat-page__suggestions"
+      >
+        <p class="chat-page__suggestions-label">
+          <Lightbulb class="w-3 h-3" />
+          <span>{{ hasUserMessages ? 'ถามต่อ' : 'ลองถาม' }}</span>
         </p>
         <div class="chat-page__suggestions-scroll scrollbar-none">
           <button
@@ -562,19 +681,12 @@ onMounted(async () => {
             :key="s.prompt"
             type="button"
             class="chat-page__chip"
-            :disabled="hasPendingReply"
+            :disabled="hasPendingReply || suggestionsLoading"
             @click="handleSend(s.prompt)"
           >
             {{ s.label }}
           </button>
         </div>
-      </div>
-
-      <div v-else-if="hasUserMessages && !hasPendingReply" class="chat-page__suggestions-toggle">
-        <button type="button" class="chat-page__chip chat-page__chip--ghost" @click="showSuggestions = true">
-          <Lightbulb class="w-3 h-3" />
-          แสดงคำถามแนะนำ
-        </button>
       </div>
 
       <p v-if="attachmentErrors.length" class="chat-page__attachment-error">
@@ -850,10 +962,6 @@ onMounted(async () => {
   overflow-x: auto;
   padding-bottom: 0.25rem;
   -webkit-overflow-scrolling: touch;
-}
-
-.chat-page__suggestions-toggle {
-  margin-bottom: 0.625rem;
 }
 
 .chat-page__chip {
